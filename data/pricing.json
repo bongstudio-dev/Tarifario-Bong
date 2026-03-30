@@ -1,0 +1,272 @@
+{
+  "version": "2.0",
+  "updated_at": "2026-03-24",
+  "author": "Bong Studio",
+  "methodology": "Metodo Bong - formula por fases",
+  "disclaimer": "Referencia orientativa basada en la metodologia propia de Bong Studio.",
+  "config": {
+    "X_a": 45,
+    "X_b": 22,
+    "X_c": 15,
+    "Y": 1.2
+  },
+  "markets": [
+    { "id": "latam", "label": "LATAM", "coef": 1.0 },
+    { "id": "usa", "label": "USA", "coef": 1.35 },
+    { "id": "europa", "label": "Europa", "coef": 1.25 }
+  ],
+  "expertise": [
+    { "id": "jr", "label": "Junior", "coef": 0.5 },
+    { "id": "mid", "label": "Mid", "coef": 0.7 },
+    { "id": "sr", "label": "Senior", "coef": 0.85 },
+    { "id": "std", "label": "Estudio", "coef": 1.0 }
+  ],
+  "complexity": [
+    { "id": "low", "label": "Baja", "coef": 1.0 },
+    { "id": "mid", "label": "Media", "coef": 1.3 },
+    { "id": "high", "label": "Alta", "coef": 1.7 }
+  ],
+  "output_types": [
+    { "id": "static", "label": "Estatico", "coef": 1.0 },
+    { "id": "motion", "label": "Motion", "coef": 1.2 },
+    { "id": "interactive", "label": "Interactivo / 3D", "coef": 1.4 }
+  ],
+  "revisions": [
+    { "id": "1", "label": "1 ronda", "extra_hours_coef": 0.0 },
+    { "id": "2", "label": "2 rondas", "extra_hours_coef": 0.15 },
+    { "id": "3", "label": "3 rondas", "extra_hours_coef": 0.3 },
+    { "id": "plus", "label": "+3 rondas", "extra_hours_coef": 0.5 }
+  ],
+  "addons": [
+    {
+      "id": "logo",
+      "label": "Logo",
+      "H_a": 0,
+      "H_b": 4,
+      "H_c": 1
+    },
+    {
+      "id": "palette",
+      "label": "Paleta",
+      "H_a": 0,
+      "H_b": 2,
+      "H_c": 0.5
+    },
+    {
+      "id": "typography",
+      "label": "Tipografia",
+      "H_a": 0,
+      "H_b": 2,
+      "H_c": 0.5
+    },
+    {
+      "id": "manual_extend",
+      "label": "Manual extendido",
+      "H_a": 0,
+      "H_b": 2,
+      "H_c": 8
+    },
+    {
+      "id": "brandboard",
+      "label": "Brandboard",
+      "H_a": 0,
+      "H_b": 1,
+      "H_c": 3
+    },
+    {
+      "id": "stationery",
+      "label": "Papeleria",
+      "H_a": 0,
+      "H_b": 1.5,
+      "H_c": 3.5
+    },
+    {
+      "id": "social_pack_5",
+      "label": "Posts redes x5",
+      "H_a": 0,
+      "H_b": 3,
+      "H_c": 5
+    },
+    {
+      "id": "social_pack_10",
+      "label": "Posts redes x10",
+      "H_a": 0,
+      "H_b": 5,
+      "H_c": 9
+    },
+    {
+      "id": "feed_instagram",
+      "label": "Feed Instagram",
+      "H_a": 0,
+      "H_b": 8,
+      "H_c": 8
+    },
+    {
+      "id": "naming_sprint",
+      "label": "Naming",
+      "H_a": 5,
+      "H_b": 5,
+      "H_c": 2
+    },
+    {
+      "id": "tagline",
+      "label": "Tagline",
+      "H_a": 1.5,
+      "H_b": 2,
+      "H_c": 0.5
+    },
+    {
+      "id": "motion_system",
+      "label": "Salida motion",
+      "H_a": 0,
+      "H_b": 1,
+      "H_c": 6
+    }
+  ],
+  "services": [
+    {
+      "id": "rrss_post",
+      "name": "Pieza RRSS",
+      "category": "Piezas",
+      "caption": "Post estatico de respuesta rapida.",
+      "H_a": 0,
+      "H_b": 1.5,
+      "H_c": 0.5,
+      "default_output_type": "static",
+      "included_addons": [],
+      "optional_addons": ["social_pack_5", "motion_system"]
+    },
+    {
+      "id": "banner",
+      "name": "Banner digital",
+      "category": "Piezas",
+      "caption": "Pieza puntual para ads o web.",
+      "H_a": 0,
+      "H_b": 2,
+      "H_c": 1,
+      "default_output_type": "static",
+      "included_addons": [],
+      "optional_addons": []
+    },
+    {
+      "id": "canva_pack",
+      "name": "Plantillas Canva x5",
+      "category": "Piezas",
+      "caption": "Sistema editable para equipo o cliente.",
+      "H_a": 0,
+      "H_b": 1,
+      "H_c": 4,
+      "default_output_type": "static",
+      "included_addons": [],
+      "optional_addons": ["social_pack_5", "social_pack_10"]
+    },
+    {
+      "id": "post_animado",
+      "name": "Post animado",
+      "category": "Piezas",
+      "caption": "Pieza en movimiento para redes.",
+      "H_a": 0,
+      "H_b": 2,
+      "H_c": 4,
+      "default_output_type": "motion",
+      "included_addons": [],
+      "optional_addons": ["social_pack_5"]
+    },
+    {
+      "id": "papeleria",
+      "name": "Papeleria basica",
+      "category": "Piezas",
+      "caption": "Tarjeta, membretada y sobre.",
+      "H_a": 0,
+      "H_b": 3,
+      "H_c": 4,
+      "default_output_type": "static",
+      "included_addons": ["stationery"],
+      "optional_addons": ["brandboard"]
+    },
+    {
+      "id": "logo_animado",
+      "name": "Logo animado",
+      "category": "Identidad",
+      "caption": "Identidad breve con salida motion.",
+      "H_a": 0,
+      "H_b": 2,
+      "H_c": 8,
+      "default_output_type": "motion",
+      "included_addons": ["logo", "motion_system"],
+      "optional_addons": ["tagline"]
+    },
+    {
+      "id": "presentacion",
+      "name": "Presentacion corporativa",
+      "category": "Piezas",
+      "caption": "Deck para ventas, marca o inversores.",
+      "H_a": 2,
+      "H_b": 10,
+      "H_c": 5,
+      "default_output_type": "static",
+      "included_addons": [],
+      "optional_addons": ["tagline"]
+    },
+    {
+      "id": "logotipo",
+      "name": "Logotipo",
+      "category": "Identidad",
+      "caption": "Solo logo, sin sistema completo.",
+      "H_a": 2,
+      "H_b": 12,
+      "H_c": 3,
+      "default_output_type": "static",
+      "included_addons": ["logo"],
+      "optional_addons": ["palette", "typography", "motion_system"]
+    },
+    {
+      "id": "manual_marca",
+      "name": "Manual de marca",
+      "category": "Identidad",
+      "caption": "Sistema normativo y criterios de uso.",
+      "H_a": 1,
+      "H_b": 5,
+      "H_c": 10,
+      "default_output_type": "static",
+      "included_addons": ["manual_extend"],
+      "optional_addons": ["stationery", "social_pack_5"]
+    },
+    {
+      "id": "identidad_visual",
+      "name": "Identidad visual",
+      "category": "Identidad",
+      "caption": "Sistema visual con estrategia y piezas base.",
+      "H_a": 4,
+      "H_b": 29,
+      "H_c": 11,
+      "default_output_type": "static",
+      "included_addons": ["logo", "palette", "typography"],
+      "optional_addons": ["manual_extend", "stationery", "social_pack_5"]
+    },
+    {
+      "id": "branding_std",
+      "name": "Branding completo",
+      "category": "Branding",
+      "caption": "Proyecto integral con estrategia y sistema.",
+      "H_a": 9,
+      "H_b": 39,
+      "H_c": 16,
+      "default_output_type": "static",
+      "included_addons": ["logo", "palette", "typography", "brandboard"],
+      "optional_addons": ["manual_extend", "stationery", "social_pack_5", "naming_sprint", "tagline"]
+    },
+    {
+      "id": "branding_premium",
+      "name": "Branding premium",
+      "category": "Branding",
+      "caption": "Mismo scope con contexto de mayor riesgo y visibilidad.",
+      "H_a": 12,
+      "H_b": 45,
+      "H_c": 20,
+      "default_output_type": "static",
+      "included_addons": ["logo", "palette", "typography", "brandboard"],
+      "optional_addons": ["manual_extend", "stationery", "social_pack_10", "naming_sprint", "tagline"]
+    }
+  ]
+}

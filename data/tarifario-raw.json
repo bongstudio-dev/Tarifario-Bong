@@ -1,0 +1,88 @@
+{
+  "source": "tarifario.org",
+  "scraped_at": "2026-03-23",
+  "source_updated_at": "2025-12",
+  "currency": "ARS",
+  "notes": "Curated snapshot of the services currently mapped by the calculator.",
+  "categories": [
+    {
+      "name": "Diseño Gráfico",
+      "subcategories": [
+        {
+          "name": "Identidad / Corporativa",
+          "services": [
+            {
+              "name": "Diseño de Marca",
+              "description": "Manual normativo y aplicaciones básicas (hasta 5 piezas)",
+              "clienteA": null,
+              "clienteB": 480626,
+              "clienteC": 317213
+            },
+            {
+              "name": "Diseño de Marca Básico",
+              "description": "Sin aplicaciones, manual normativo básico",
+              "clienteA": null,
+              "clienteB": null,
+              "clienteC": 153800
+            },
+            {
+              "name": "Identidad corporativa",
+              "description": "Logotipo, isotipo, aplicaciones básicas y guía de uso",
+              "clienteA": 1166319,
+              "clienteB": 789828,
+              "clienteC": 410935
+            },
+            {
+              "name": "Rediseño de una identidad",
+              "description": "",
+              "clienteA": 1177533,
+              "clienteB": 797839,
+              "clienteC": 415741
+            }
+          ]
+        },
+        {
+          "name": "Diseño de producto / Packaging",
+          "services": [
+            {
+              "name": "Diseño de envase mediana complejidad",
+              "description": "Desarrollo de gráfica para cajas, bricks, etc. (tiraje intermedio)",
+              "clienteA": 528688,
+              "clienteB": 336438,
+              "clienteC": 187444
+            }
+          ]
+        },
+        {
+          "name": "Web / Diseño y maquetación",
+          "services": [
+            {
+              "name": "Diseño y maquetación de sitio responsivo/adaptativo",
+              "description": "Home y 5 secciones para 3 dispositivos (PC, mobile, tablet)",
+              "clienteA": 1047764,
+              "clienteB": 903577,
+              "clienteC": 749776
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Marketing",
+      "subcategories": [
+        {
+          "name": "Identidad / Corporativa",
+          "services": [
+            {
+              "name": "Naming",
+              "description": "Proceso definición de nombre de marca",
+              "clienteA": 346051,
+              "clienteB": 245119,
+              "clienteC": 139381
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

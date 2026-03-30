@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Currency Carousel Tuner</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --surface: rgba(255, 255, 255, 0.92);
+      --text: #12271f;
+      --text-muted: #7b8f84;
+      --border: rgba(18, 39, 31, 0.12);
+      --accent: #149655;
+      --accent-contrast: #ffffff;
+      --font-sans: "Satoshi", sans-serif;
+      --font-mono: "Space Mono", monospace;
+      --ease-x1: 0.12;
+      --ease-y1: 0.92;
+      --ease-x2: 0.22;
+      --ease-y2: 1;
+
+      --carousel-width: 197px;
+      --carousel-padding-y: 3px;
+      --carousel-padding-x: 6px;
+      --carousel-gap: 2px;
+      --nav-size: 28px;
+      --nav-font-size: 13px;
+      --nav-row-gap: 8px;
+      --stage-nav-gap: 10px;
+      --stage-height: 40px;
+      --highlight-width: 108px;
+      --track-slot: 40px;
+      --anim-distance: 24px;
+      --side-opacity-motion: 0.41;
+      --side-opacity-rest: 0.18;
+      --label-size: 15px;
+      --anim-duration: 520ms;
+      --radius: 999px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      display: grid;
+      grid-template-columns: minmax(320px, 460px) 1fr;
+    }
+
+    .panel {
+      padding: 28px 22px 24px;
+      border-right: 1px solid var(--border);
+      background: rgba(255,255,255,0.45);
+      overflow: auto;
+    }
+
+    .panel h1,
+    .panel h2,
+    .preview h2,
+    .preview p { margin: 0; }
+
+    .panel h1 {
+      font-size: 1.2rem;
+      letter-spacing: -0.04em;
+    }
+
+    .panel-copy {
+      margin-top: 8px;
+      color: #51665b;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      max-width: 34ch;
+    }
+
+    .controls {
+      margin-top: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .control label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .value {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: #5c7166;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(18, 39, 31, 0.14);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+      cursor: pointer;
+    }
+
+    .actions {
+      margin-top: 22px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    .output {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.62);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      border: 0;
+      resize: vertical;
+      background: transparent;
+      color: var(--text);
+      font: 12px/1.45 var(--font-mono);
+      outline: none;
+    }
+
+    .preview {
+      padding: 36px;
+      display: grid;
+      place-items: center;
+    }
+
+    .preview-card {
+      width: min(100%, 780px);
+      min-height: 380px;
+      border-radius: 32px;
+      border: 1px solid rgba(18, 39, 31, 0.08);
+      background: rgba(255,255,255,0.46);
+      padding: 42px;
+      display: grid;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .preview h2 {
+      font-size: 2rem;
+      letter-spacing: -0.06em;
+    }
+
+    .preview p {
+      color: #60756a;
+      max-width: 28ch;
+    }
+
+    .currency-toggle {
+      display: flex;
+      justify-content: flex-end;
+      min-width: min(100%, var(--carousel-width));
+    }
+
+    .currency-carousel {
+      display: grid;
+      justify-items: center;
+      gap: var(--stage-nav-gap);
+      width: var(--carousel-width);
+      padding: var(--carousel-padding-y) var(--carousel-padding-x);
+      border-radius: var(--radius);
+      border: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .currency-nav {
+      width: var(--nav-size);
+      height: var(--nav-size);
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--nav-font-size);
+      padding: 0;
+    }
+
+    .currency-nav-row {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--nav-row-gap);
+    }
+
+    .currency-stage {
+      position: relative;
+      height: var(--stage-height);
+      overflow: hidden;
+    }
+
+    .currency-highlight {
+      position: absolute;
+      inset: 0;
+      width: var(--highlight-width);
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: var(--radius);
+      background: var(--accent);
+    }
+
+    .currency-track {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, var(--track-slot));
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      animation: currency-next var(--anim-duration) cubic-bezier(var(--ease-x1), var(--ease-y1), var(--ease-x2), var(--ease-y2));
+    }
+
+    [data-direction="prev"] .currency-track {
+      animation-name: currency-prev;
+    }
+
+    .currency-item {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: rgba(255,255,255,var(--side-opacity-rest));
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: var(--label-size);
+      letter-spacing: 0.08em;
+    }
+
+    .currency-item-active {
+      color: var(--accent-contrast);
+    }
+
+    .currency-item-side {
+      animation: side-fade var(--anim-duration) linear;
+    }
+
+    @keyframes currency-next {
+      from { transform: translateX(var(--anim-distance)); }
+      to { transform: translateX(0); }
+    }
+
+    @keyframes currency-prev {
+      from { transform: translateX(calc(var(--anim-distance) * -1)); }
+      to { transform: translateX(0); }
+    }
+
+    @keyframes side-fade {
+      0% { color: rgba(255,255,255,var(--side-opacity-motion)); }
+      100% { color: rgba(255,255,255,var(--side-opacity-rest)); }
+    }
+
+    @media (max-width: 980px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+      .panel {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="panel">
+    <h1>Currency Carousel Tuner</h1>
+    <p class="panel-copy">Ajustá el selector con sliders. Cuando te cierre, capturás el estado final y te deja listo el bloque para llevar al proyecto.</p>
+
+    <div class="controls" id="controls"></div>
+
+    <div class="actions">
+      <button class="primary" id="capture-button" type="button">Capturar estado final</button>
+      <button id="cycle-button" type="button">Probar animación</button>
+    </div>
+
+    <div class="output">
+      <textarea id="output" spellcheck="false"></textarea>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <section class="preview-card">
+      <h2>Selector de moneda</h2>
+      <p>Pastilla fija al centro, track corriendo por detrás, flechas integradas. La idea es poder afinar esto sin tocar el producto principal.</p>
+
+      <div class="currency-toggle" id="currency-toggle" data-direction="prev"></div>
+    </section>
+  </main>
+
+  <script>
+    const currencies = ["USD", "ARS", "EUR", "BRL", "UYU", "CLP", "MXN", "COP"];
+    let currentIndex = currencies.indexOf("COP");
+    let direction = 1;
+
+    const controlsConfig = [
+      ["carousel-width", "Ancho total", 160, 260, 197],
+      ["carousel-padding-x", "Padding horizontal", 0, 12, 6],
+      ["carousel-padding-y", "Padding vertical", 0, 10, 3],
+      ["carousel-gap", "Gap interno", 0, 12, 2],
+      ["nav-size", "Tamaño flechas", 12, 36, 28],
+      ["nav-font-size", "Flecha font-size", 10, 22, 13],
+      ["nav-row-gap", "Gap entre flechas", 0, 20, 8],
+      ["stage-nav-gap", "Gap pastilla / flechas", 0, 24, 10],
+      ["stage-height", "Alto stage", 28, 54, 40],
+      ["highlight-width", "Ancho pastilla verde", 80, 150, 108],
+      ["track-slot", "Ancho slot track", 40, 90, 40],
+      ["anim-distance", "Distancia animación", 8, 40, 24],
+      ["anim-duration", "Duración animación", 180, 700, 520],
+      ["ease-x1", "Ease ataque X1", 0, 1, 0.12, 0.01],
+      ["ease-y1", "Ease ataque Y1", 0, 1.4, 0.92, 0.01],
+      ["ease-x2", "Ease salida X2", 0, 1, 0.22, 0.01],
+      ["ease-y2", "Ease salida Y2", 0.2, 1.4, 1, 0.01],
+      ["side-opacity-motion", "Opacidad laterales en motion", 0.1, 0.9, 0.41, 0.01],
+      ["side-opacity-rest", "Opacidad laterales en reposo", 0.02, 0.4, 0.18, 0.01],
+      ["label-size", "Tamaño texto", 11, 24, 15]
+    ];
+
+    const controlsEl = document.querySelector("#controls");
+    const toggleEl = document.querySelector("#currency-toggle");
+    const outputEl = document.querySelector("#output");
+
+    function setVar(name, value) {
+      const unitless = new Set([
+        "side-opacity-motion",
+        "side-opacity-rest",
+        "ease-x1",
+        "ease-y1",
+        "ease-x2",
+        "ease-y2"
+      ]);
+      const milliseconds = new Set(["anim-duration"]);
+      const formattedValue = unitless.has(name) ? value : milliseconds.has(name) ? `${value}ms` : `${value}px`;
+      document.documentElement.style.setProperty(`--${name}`, formattedValue);
+    }
+
+    function renderControls() {
+      controlsConfig.forEach(([id, label, min, max, value, step = 1]) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "control";
+        wrapper.innerHTML = `
+          <div class="control-row">
+            <label for="${id}">${label}</label>
+            <span class="value" id="${id}-value">${value}</span>
+          </div>
+          <input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${value}">
+        `;
+        controlsEl.appendChild(wrapper);
+
+        setVar(id, value);
+
+        const input = wrapper.querySelector("input");
+        const valueEl = wrapper.querySelector(".value");
+        input.addEventListener("input", () => {
+          setVar(id, input.value);
+          valueEl.textContent = input.value;
+        });
+      });
+    }
+
+    function renderToggle() {
+      const prev = currencies[(currentIndex - 1 + currencies.length) % currencies.length];
+      const current = currencies[currentIndex];
+      const next = currencies[(currentIndex + 1) % currencies.length];
+
+      toggleEl.dataset.direction = direction > 0 ? "next" : "prev";
+      toggleEl.innerHTML = `
+        <div class="currency-carousel">
+          <div class="currency-stage">
+            <div class="currency-highlight"></div>
+            <div class="currency-track">
+              <button class="currency-item currency-item-side">${prev}</button>
+              <button class="currency-item currency-item-active">${current}</button>
+              <button class="currency-item currency-item-side">${next}</button>
+            </div>
+          </div>
+          <div class="currency-nav-row">
+            <button class="currency-nav" data-shift="-1" type="button" aria-label="Anterior">←</button>
+            <button class="currency-nav" data-shift="1" type="button" aria-label="Siguiente">→</button>
+          </div>
+        </div>
+      `;
+
+      toggleEl.querySelectorAll("[data-shift]").forEach((button) => {
+        button.addEventListener("click", () => {
+          direction = Number(button.dataset.shift);
+          currentIndex = (currentIndex + direction + currencies.length) % currencies.length;
+          renderToggle();
+        });
+      });
+    }
+
+    function captureState() {
+      const values = {};
+      controlsConfig.forEach(([id]) => {
+        values[id] = document.querySelector(`#${id}`).value;
+      });
+
+      outputEl.value = JSON.stringify({
+        currentCurrency: currencies[currentIndex],
+        direction: direction > 0 ? "next" : "prev",
+        vars: values
+      }, null, 2);
+    }
+
+    document.querySelector("#capture-button").addEventListener("click", captureState);
+    document.querySelector("#cycle-button").addEventListener("click", () => {
+      direction = 1;
+      currentIndex = (currentIndex + 1) % currencies.length;
+      renderToggle();
+    });
+
+    renderControls();
+    renderToggle();
+    captureState();
+  </script>
+</body>
+</html>

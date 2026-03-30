@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Step 1 Playground | Tarifario Bong</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --bg-deep: #ece8df;
+      --surface: rgba(0, 0, 0, 0.035);
+      --surface-strong: rgba(255, 255, 255, 0.82);
+      --text: #162821;
+      --text-secondary: #476459;
+      --text-muted: #789486;
+      --dock-text: #12271f;
+      --accent: #0d9b5c;
+      --accent-contrast: #ffffff;
+      --border: rgba(0, 0, 0, 0.08);
+      --shadow: 0 16px 42px rgba(0, 0, 0, 0.08);
+      --font-sans: "Satoshi", sans-serif;
+      --font-mono: "Space Mono", monospace;
+      --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      color: var(--text);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .site-header {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      padding: 26px 18px 0;
+      pointer-events: none;
+    }
+
+    .top-dock {
+      width: min(620px, calc(100vw - 160px));
+      display: grid;
+      grid-template-columns: 54px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(248, 245, 239, 0.94);
+      pointer-events: auto;
+    }
+
+    .dock-brand,
+    .dock-home-link {
+      text-decoration: none;
+    }
+
+    .dock-brand {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 54px;
+      color: var(--accent);
+    }
+
+    .dock-center {
+      display: grid;
+      gap: 2px;
+      justify-items: center;
+      min-width: 0;
+      color: var(--dock-text);
+    }
+
+    .brand-title,
+    .dock-tagline,
+    .scene-title,
+    .scene-kicker,
+    .playground-note {
+      margin: 0;
+    }
+
+    .brand-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-badge,
+    .dock-tagline,
+    .scene-kicker,
+    .playground-note {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .brand-badge {
+      margin-left: 6px;
+      color: var(--accent);
+      font-size: 0.56rem;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    .dock-tagline {
+      color: rgba(18, 39, 31, 0.62);
+      font-size: 0.62rem;
+    }
+
+    .theme-toggle {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.52);
+      color: var(--dock-text);
+      transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .theme-toggle {
+      width: 40px;
+      height: 40px;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 118px 20px 72px;
+    }
+
+    .stage {
+      width: min(100%, 620px);
+      margin: 0 auto;
+    }
+
+    .scene-card {
+      min-height: clamp(520px, 66vh, 720px);
+      padding: 26px 28px;
+      border-radius: 34px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.32);
+      backdrop-filter: blur(14px);
+      display: grid;
+      align-content: start;
+      gap: 0;
+    }
+
+    .scene-kicker {
+      color: var(--accent);
+      font-size: 0.62rem;
+    }
+
+    .scene-title {
+      margin-top: 8px;
+      font-size: clamp(1.45rem, 3.3vw, 2.35rem);
+      line-height: 0.98;
+      letter-spacing: -0.07em;
+      max-width: 10ch;
+      text-wrap: balance;
+    }
+
+    .scene-copy {
+      margin: 10px 0 0;
+      color: var(--text-secondary);
+      max-width: 26ch;
+      font-size: 0.88rem;
+      line-height: 1.38;
+    }
+
+    .playground-toolbar {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .playground-note {
+      color: var(--text-muted);
+      font-size: 0.58rem;
+      line-height: 1.5;
+    }
+
+    .playground-board {
+      position: relative;
+      margin-top: 20px;
+      min-height: 420px;
+      border-radius: 28px;
+      border: 1px dashed rgba(13, 155, 92, 0.24);
+      background: rgba(255, 255, 255, 0.18);
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .playground-slot {
+      position: absolute;
+      border-radius: 999px;
+      border: 1px dashed rgba(13, 155, 92, 0.18);
+      background: rgba(13, 155, 92, 0.03);
+      pointer-events: none;
+      transition: left 220ms var(--ease-out-soft), top 220ms var(--ease-out-soft), width 220ms var(--ease-out-soft), height 220ms var(--ease-out-soft), opacity 180ms ease;
+      opacity: 0;
+    }
+
+    .playground-board.is-reordering .playground-slot {
+      opacity: 1;
+    }
+
+    .type-card {
+      position: absolute;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--text);
+      text-align: left;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: grab;
+      user-select: none;
+      white-space: nowrap;
+      transition: left 220ms var(--ease-out-soft), top 220ms var(--ease-out-soft), border-color 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .type-card:hover {
+      border-color: var(--accent);
+    }
+
+    .type-card.is-dragging {
+      cursor: grabbing;
+      border-color: var(--accent);
+      z-index: 20;
+      transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .type-card-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      color: var(--accent);
+      flex: 0 0 auto;
+    }
+
+    .type-card-mark svg {
+      width: 100%;
+      height: 100%;
+      stroke: currentColor;
+      stroke-width: 1.4;
+      fill: none;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
+    }
+
+    .type-card-title {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    @media (max-width: 720px) {
+      .site-header {
+        padding: 12px 12px 0;
+      }
+
+      .top-dock {
+        width: 100%;
+        grid-template-columns: 48px 1fr 40px;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+
+      .dock-brand {
+        width: 48px;
+        height: 48px;
+      }
+
+      .app-shell {
+        display: block;
+        padding: 102px 14px 42px;
+      }
+
+      .scene-card {
+        min-height: calc(100vh - 158px);
+        padding: 18px 18px;
+        border-radius: 24px;
+      }
+
+      .playground-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .playground-board {
+        min-height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="top-dock">
+      <a class="dock-brand" href="https://bongstudio.ar" aria-label="Ir a Bong Studio">
+        <svg class="bong-logo" width="28" height="33" viewBox="0 0 82 96" aria-hidden="true">
+          <g fill="currentColor">
+            <path d="M72.835 6.726C76.9 10.846 79.507 16.575 79.507 22.86s-2.607 11.995-6.672 16.134c-4.122 4.197-9.778 6.726-16.067 6.726-6.289 0-11.944-2.549-16.009-6.726-4.065-4.12-6.672-9.85-6.672-16.134 0-6.285 2.607-11.995 6.672-16.134C44.824 2.53 50.538 0 56.769 0c6.231 0 11.944 2.549 16.066 6.726Z"/>
+            <path d="M27.34 6.994c1.016 2.664 1.016 5.845 0 8.566-.959 2.414-2.665 4.445-5.215 5.519 13.018 2.28 12.27 23.99-2.358 23.99H.02V.709h17.984c4.831 0 7.937 2.721 9.336 6.285Z"/>
+            <path d="M0 50.51.038 95.598h16.738 14.57V51.085H16.776v18.798L.748 50.51H0Z"/>
+            <path d="m57.843 73.178 11.829-20.465c-3.182-1.667-6.787-2.606-10.621-2.606-12.673 0-22.949 10.27-22.949 22.937 0 12.666 10.276 22.937 22.949 22.937 12.673 0 22.892-10.194 22.95-22.821H57.843Z"/>
+          </g>
+        </svg>
+      </a>
+      <a class="dock-center dock-home-link" href="/" aria-label="Ir al inicio">
+        <p class="brand-title">Tarifario <span class="brand-badge">BETA</span></p>
+        <p class="dock-tagline">Brutally Clear Branding</p>
+      </a>
+      <div class="dock-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="stage">
+      <article class="scene-card">
+        <p class="scene-kicker">Paso 1 Playground</p>
+        <h1 class="scene-title">¿Qué vas a cotizar?</h1>
+        <p class="scene-copy">Version sandbox del primer paso. Las cards se pueden arrastrar, reordenar a mano y soltar donde quieras.</p>
+
+        <div class="playground-toolbar">
+          <p class="playground-note">Easter egg. Arrastrás una card, la soltás sobre otro slot y todas se reordenan manteniendo el mismo ritmo.</p>
+        </div>
+
+        <div class="playground-board" id="playground-board" aria-label="Tablero draggable de servicios"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const CATEGORY_ICONS = {
+      Branding: `
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="8" cy="8" r="4.5"></circle>
+          <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
+        </svg>
+      `,
+      Identidad: `
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M8 2.5 13.5 8 8 13.5 2.5 8Z"></path>
+          <path d="M8 5.25 10.75 8 8 10.75 5.25 8Z" fill="currentColor" stroke="none"></path>
+        </svg>
+      `,
+      Piezas: `
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M3 3h10v10H3Z"></path>
+          <path d="M5.5 5.5h5v5h-5Z" fill="currentColor" stroke="none"></path>
+        </svg>
+      `
+    };
+
+    const board = document.querySelector("#playground-board");
+    const themeToggle = document.querySelector("#theme-toggle");
+
+    let dragState = null;
+    let cardsById = new Map();
+    let slotNodes = [];
+    let servicesOrder = [];
+    let slotPositions = [];
+    let zIndexCounter = 1;
+
+    themeToggle.addEventListener("click", () => {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
+    });
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function createServiceCard(service) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "type-card";
+      button.dataset.service = service.id;
+      button.innerHTML = `
+        <span class="type-card-mark" aria-hidden="true">${CATEGORY_ICONS[service.category] || CATEGORY_ICONS.Branding}</span>
+        <span class="type-card-title">${service.name}</span>
+      `;
+      button.addEventListener("pointerdown", (event) => startDrag(event, button));
+      board.appendChild(button);
+      return button;
+    }
+
+    function ensureSlotNodes(count) {
+      while (slotNodes.length < count) {
+        const slot = document.createElement("div");
+        slot.className = "playground-slot";
+        board.appendChild(slot);
+        slotNodes.push(slot);
+      }
+    }
+
+    function computeSlotLayout(order = servicesOrder) {
+      const boardRect = board.getBoundingClientRect();
+      const insetX = 18;
+      const insetY = 18;
+      const gapX = 12;
+      const gapY = 12;
+      let cursorX = insetX;
+      let cursorY = insetY;
+      let rowHeight = 0;
+      let maxBottom = insetY;
+
+      slotPositions = order.map((id) => {
+        const card = cardsById.get(id);
+        const width = card.offsetWidth;
+        const height = card.offsetHeight;
+
+        if (cursorX + width > boardRect.width - insetX) {
+          cursorX = insetX;
+          cursorY += rowHeight + gapY;
+          rowHeight = 0;
+        }
+
+        const position = {
+          id,
+          left: cursorX,
+          top: cursorY,
+          width,
+          height,
+          centerX: cursorX + width / 2,
+          centerY: cursorY + height / 2
+        };
+
+        cursorX += width + gapX;
+        rowHeight = Math.max(rowHeight, height);
+        maxBottom = Math.max(maxBottom, position.top + position.height);
+        return position;
+      });
+
+      board.style.minHeight = `${Math.max(420, maxBottom + insetY)}px`;
+      ensureSlotNodes(slotPositions.length);
+      slotPositions.forEach((slot, index) => {
+        const node = slotNodes[index];
+        node.style.left = `${slot.left}px`;
+        node.style.top = `${slot.top}px`;
+        node.style.width = `${slot.width}px`;
+        node.style.height = `${slot.height}px`;
+      });
+    }
+
+    function renderCards(exceptId = null) {
+      slotPositions.forEach((slot) => {
+        if (slot.id === exceptId) {
+          return;
+        }
+        const card = cardsById.get(slot.id);
+        if (!card) {
+          return;
+        }
+        card.style.left = `${slot.left}px`;
+        card.style.top = `${slot.top}px`;
+      });
+    }
+
+    function startDrag(event, card) {
+      event.preventDefault();
+      const boardRect = board.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+
+      dragState = {
+        card,
+        id: card.dataset.service,
+        offsetX: event.clientX - cardRect.left,
+        offsetY: event.clientY - cardRect.top,
+        boardRect
+      };
+
+      zIndexCounter += 1;
+      card.style.zIndex = String(zIndexCounter);
+      card.classList.add("is-dragging");
+      board.classList.add("is-reordering");
+      card.setPointerCapture(event.pointerId);
+      card.addEventListener("pointermove", onPointerMove);
+      card.addEventListener("pointerup", stopDrag);
+      card.addEventListener("pointercancel", stopDrag);
+    }
+
+    function getNearestSlotIndex(x, y) {
+      let nearestIndex = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+
+      slotPositions.forEach((slot, index) => {
+        const distance = Math.hypot(x - slot.centerX, y - slot.centerY);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = index;
+        }
+      });
+
+      return nearestIndex;
+    }
+
+    function onPointerMove(event) {
+      if (!dragState) {
+        return;
+      }
+
+      const { card, id, boardRect, offsetX, offsetY } = dragState;
+      const left = clamp(event.clientX - boardRect.left - offsetX, 0, boardRect.width - card.offsetWidth);
+      const top = clamp(event.clientY - boardRect.top - offsetY, 0, boardRect.height - card.offsetHeight);
+
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+
+      const targetIndex = getNearestSlotIndex(
+        event.clientX - boardRect.left,
+        event.clientY - boardRect.top
+      );
+      const currentIndex = servicesOrder.indexOf(id);
+
+      if (targetIndex !== currentIndex) {
+        servicesOrder.splice(currentIndex, 1);
+        servicesOrder.splice(targetIndex, 0, id);
+        computeSlotLayout();
+        renderCards(id);
+      }
+    }
+
+    function stopDrag(event) {
+      if (!dragState) {
+        return;
+      }
+
+      const { card } = dragState;
+      card.classList.remove("is-dragging");
+      board.classList.remove("is-reordering");
+      computeSlotLayout();
+      renderCards();
+      card.removeEventListener("pointermove", onPointerMove);
+      card.removeEventListener("pointerup", stopDrag);
+      card.removeEventListener("pointercancel", stopDrag);
+
+      if (event.pointerId != null) {
+        card.releasePointerCapture(event.pointerId);
+      }
+
+      dragState = null;
+    }
+
+    async function init() {
+      const response = await fetch("./data/pricing.json");
+      const data = await response.json();
+      data.services.forEach((service) => {
+        const card = createServiceCard(service);
+        cardsById.set(service.id, card);
+        servicesOrder.push(service.id);
+      });
+      computeSlotLayout();
+      renderCards();
+    }
+
+    init().catch((error) => {
+      board.innerHTML = `<p style="padding:18px;color:#7b2d2d;">No se pudo cargar el playground: ${error.message}</p>`;
+      console.error(error);
+    });
+  </script>
+</body>
+</html>

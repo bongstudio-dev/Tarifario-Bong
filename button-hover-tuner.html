@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button Hover Tuner</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --panel: rgba(255, 255, 255, 0.5);
+      --text: #162821;
+      --muted: #60756a;
+      --border: rgba(0, 0, 0, 0.08);
+      --accent: #0d9b5c;
+      --fill: #087044;
+      --fill-duration: 240ms;
+      --fill-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --font-sans: "Satoshi", sans-serif;
+      --font-mono: "Space Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f4f1ea 0%, #ece8df 100%);
+      color: var(--text);
+      font-family: var(--font-sans);
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) 1fr;
+    }
+
+    .panel {
+      padding: 28px 22px;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .panel h1,
+    .panel p,
+    .preview h2,
+    .preview p {
+      margin: 0;
+    }
+
+    .panel h1 {
+      font-size: 1.1rem;
+      letter-spacing: -0.04em;
+    }
+
+    .panel-copy {
+      margin-top: 8px;
+      color: var(--muted);
+      max-width: 32ch;
+      line-height: 1.4;
+      font-size: 0.92rem;
+    }
+
+    .controls {
+      margin-top: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .control label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .value {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    input[type="range"],
+    input[type="text"] {
+      width: 100%;
+    }
+
+    input[type="range"] {
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(22, 40, 33, 0.12);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+    }
+
+    input[type="text"] {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--text);
+      font: 12px/1.4 var(--font-mono);
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    .output {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      border: 0;
+      resize: vertical;
+      background: transparent;
+      color: var(--text);
+      font: 12px/1.45 var(--font-mono);
+      outline: none;
+    }
+
+    .preview {
+      padding: 36px;
+      display: grid;
+      place-items: center;
+    }
+
+    .preview-card {
+      width: min(100%, 780px);
+      min-height: 380px;
+      border-radius: 32px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.32);
+      padding: 42px;
+      display: grid;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .preview h2 {
+      font-size: 2rem;
+      letter-spacing: -0.06em;
+    }
+
+    .preview p {
+      color: var(--muted);
+      max-width: 34ch;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 14px;
+    }
+
+    .btn {
+      position: relative;
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      transition: border-color var(--fill-duration) var(--fill-ease), color 180ms ease;
+    }
+
+    .btn-primary::before {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 0;
+      background: var(--fill);
+      transition: height var(--fill-duration) var(--fill-ease);
+      z-index: 0;
+    }
+
+    .btn-primary:hover {
+      border-color: var(--fill);
+    }
+
+    .btn-primary:hover::before {
+      height: 100%;
+    }
+
+    .btn-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      font-weight: 600;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="panel">
+    <h1>Button Hover Tuner</h1>
+    <p class="panel-copy">Ajustá el relleno que sube desde abajo para el botón de Exportar PDF. Cuando te cierre, copiás el bloque CSS.</p>
+
+    <div class="controls">
+      <div class="control">
+        <div class="control-row">
+          <label for="fill-color">Color de relleno</label>
+          <span class="value" id="fill-color-value">#087044</span>
+        </div>
+        <input id="fill-color" type="text" value="#087044">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="fill-duration">Duración</label>
+          <span class="value" id="fill-duration-value">240ms</span>
+        </div>
+        <input id="fill-duration" type="range" min="120" max="900" step="10" value="240">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="ease-x1">Ease X1</label>
+          <span class="value" id="ease-x1-value">0.22</span>
+        </div>
+        <input id="ease-x1" type="range" min="0" max="1" step="0.01" value="0.22">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="ease-y1">Ease Y1</label>
+          <span class="value" id="ease-y1-value">1.00</span>
+        </div>
+        <input id="ease-y1" type="range" min="0" max="1.4" step="0.01" value="1">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="ease-x2">Ease X2</label>
+          <span class="value" id="ease-x2-value">0.36</span>
+        </div>
+        <input id="ease-x2" type="range" min="0" max="1" step="0.01" value="0.36">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="ease-y2">Ease Y2</label>
+          <span class="value" id="ease-y2-value">1.00</span>
+        </div>
+        <input id="ease-y2" type="range" min="0" max="1.4" step="0.01" value="1">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="copy-css" type="button">Copiar CSS</button>
+      <button id="reset" type="button">Reset</button>
+    </div>
+
+    <div class="output">
+      <textarea id="output" spellcheck="false"></textarea>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <section class="preview-card">
+      <h2>Exportar PDF</h2>
+      <p>Hovereá el botón para ver cómo sube el relleno desde abajo. La idea es poder afinar la sensación del gesto antes de tocar producción.</p>
+
+      <div class="result-actions">
+        <button class="btn btn-primary" type="button">
+          <span class="btn-text">Exportar PDF</span>
+        </button>
+        <button class="btn btn-secondary" type="button">Copiar desglose</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const defaults = {
+      fillColor: "#087044",
+      fillDuration: 240,
+      easeX1: 0.22,
+      easeY1: 1,
+      easeX2: 0.36,
+      easeY2: 1
+    };
+
+    const controls = {
+      fillColor: document.querySelector("#fill-color"),
+      fillDuration: document.querySelector("#fill-duration"),
+      easeX1: document.querySelector("#ease-x1"),
+      easeY1: document.querySelector("#ease-y1"),
+      easeX2: document.querySelector("#ease-x2"),
+      easeY2: document.querySelector("#ease-y2")
+    };
+
+    const valueEls = {
+      fillColor: document.querySelector("#fill-color-value"),
+      fillDuration: document.querySelector("#fill-duration-value"),
+      easeX1: document.querySelector("#ease-x1-value"),
+      easeY1: document.querySelector("#ease-y1-value"),
+      easeX2: document.querySelector("#ease-x2-value"),
+      easeY2: document.querySelector("#ease-y2-value")
+    };
+
+    const output = document.querySelector("#output");
+    const copyButton = document.querySelector("#copy-css");
+    const resetButton = document.querySelector("#reset");
+
+    function getState() {
+      return {
+        fillColor: controls.fillColor.value.trim() || defaults.fillColor,
+        fillDuration: Number(controls.fillDuration.value),
+        easeX1: Number(controls.easeX1.value),
+        easeY1: Number(controls.easeY1.value),
+        easeX2: Number(controls.easeX2.value),
+        easeY2: Number(controls.easeY2.value)
+      };
+    }
+
+    function renderOutput(state) {
+      const ease = `cubic-bezier(${state.easeX1}, ${state.easeY1}, ${state.easeX2}, ${state.easeY2})`;
+      output.value = `.btn-primary {\n  background: var(--accent);\n  border-color: var(--accent);\n  color: var(--accent-contrast);\n  font-weight: 700;\n  transition: border-color ${state.fillDuration}ms ${ease}, color 180ms ease;\n}\n\n.btn-primary::before {\n  content: \"\";\n  position: absolute;\n  inset: auto 0 0 0;\n  height: 0;\n  background: ${state.fillColor};\n  transition: height ${state.fillDuration}ms ${ease};\n  z-index: 0;\n}\n\n.btn-primary:hover {\n  border-color: ${state.fillColor};\n}\n\n.btn-primary:hover::before {\n  height: 100%;\n}\n\n.btn-text {\n  position: relative;\n  z-index: 1;\n}`;
+    }
+
+    function applyState() {
+      const state = getState();
+      const ease = `cubic-bezier(${state.easeX1}, ${state.easeY1}, ${state.easeX2}, ${state.easeY2})`;
+
+      document.documentElement.style.setProperty("--fill", state.fillColor);
+      document.documentElement.style.setProperty("--fill-duration", `${state.fillDuration}ms`);
+      document.documentElement.style.setProperty("--fill-ease", ease);
+
+      valueEls.fillColor.textContent = state.fillColor;
+      valueEls.fillDuration.textContent = `${state.fillDuration}ms`;
+      valueEls.easeX1.textContent = state.easeX1.toFixed(2);
+      valueEls.easeY1.textContent = state.easeY1.toFixed(2);
+      valueEls.easeX2.textContent = state.easeX2.toFixed(2);
+      valueEls.easeY2.textContent = state.easeY2.toFixed(2);
+
+      renderOutput(state);
+    }
+
+    Object.values(controls).forEach((control) => {
+      control.addEventListener("input", applyState);
+      control.addEventListener("change", applyState);
+    });
+
+    copyButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(output.value);
+      copyButton.textContent = "Copiado";
+      window.setTimeout(() => {
+        copyButton.textContent = "Copiar CSS";
+      }, 1200);
+    });
+
+    resetButton.addEventListener("click", () => {
+      controls.fillColor.value = defaults.fillColor;
+      controls.fillDuration.value = defaults.fillDuration;
+      controls.easeX1.value = defaults.easeX1;
+      controls.easeY1.value = defaults.easeY1;
+      controls.easeX2.value = defaults.easeX2;
+      controls.easeY2.value = defaults.easeY2;
+      applyState();
+    });
+
+    applyState();
+  </script>
+</body>
+</html>

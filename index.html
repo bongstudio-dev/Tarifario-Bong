@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarifario de Diseño Gráfico 2026 | Calculadora de Presupuestos — Bong Studio</title>
+  <meta
+    name="description"
+    content="Calculá cuánto cobrar por branding, naming y diseño gráfico en Argentina y LATAM con una herramienta simple de Bong Studio."
+  >
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="apple-touch-icon" href="./favicon.svg">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="top-dock">
+      <a class="dock-brand" href="https://bongstudio.ar" aria-label="Ir a Bong Studio">
+        <svg class="bong-logo" width="28" height="33" viewBox="0 0 82 96" aria-hidden="true">
+          <g fill="currentColor">
+            <path d="M72.835 6.726C76.9 10.846 79.507 16.575 79.507 22.86s-2.607 11.995-6.672 16.134c-4.122 4.197-9.778 6.726-16.067 6.726-6.289 0-11.944-2.549-16.009-6.726-4.065-4.12-6.672-9.85-6.672-16.134 0-6.285 2.607-11.995 6.672-16.134C44.824 2.53 50.538 0 56.769 0c6.231 0 11.944 2.549 16.066 6.726Z"/>
+            <path d="M27.34 6.994c1.016 2.664 1.016 5.845 0 8.566-.959 2.414-2.665 4.445-5.215 5.519 13.018 2.28 12.27 23.99-2.358 23.99H.02V.709h17.984c4.831 0 7.937 2.721 9.336 6.285Z"/>
+            <path d="M0 50.51.038 95.598h16.738 14.57V51.085H16.776v18.798L.748 50.51H0Z"/>
+            <path d="m57.843 73.178 11.829-20.465c-3.182-1.667-6.787-2.606-10.621-2.606-12.673 0-22.949 10.27-22.949 22.937 0 12.666 10.276 22.937 22.949 22.937 12.673 0 22.892-10.194 22.95-22.821H57.843Z"/>
+          </g>
+        </svg>
+      </a>
+      <a class="dock-center dock-home-link" href="/" aria-label="Ir al inicio">
+        <p class="brand-title">Tarifario <span class="brand-badge">BETA</span></p>
+        <p class="dock-tagline">Brutally Clear Branding</p>
+      </a>
+      <div class="dock-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema">
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path d="M12 1.5v3"></path>
+            <path d="M12 19.5v3"></path>
+            <path d="M4.58 4.58l2.12 2.12"></path>
+            <path d="M17.3 17.3l2.12 2.12"></path>
+            <path d="M1.5 12h3"></path>
+            <path d="M19.5 12h3"></path>
+            <path d="M4.58 19.42l2.12-2.12"></path>
+            <path d="M17.3 6.7l2.12-2.12"></path>
+          </svg>
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="stage">
+      <form class="step-stack" id="calculator-form">
+        <section class="step-screen is-active" data-step="0">
+          <article class="scene-card">
+            <div class="scene-content scene-content-wide">
+              <p class="scene-kicker" id="scene-kicker">Paso 1</p>
+              <h1 class="scene-title">¿Qué vas a cotizar?</h1>
+              <p class="scene-copy">Elegí el servicio que mejor representa el encargo.</p>
+              <div class="service-pills" id="type-grid"></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="step-screen" data-step="1">
+          <article class="scene-card">
+            <div class="scene-content">
+              <p class="scene-kicker">Paso 2</p>
+              <h2 class="scene-title">¿Desde qué perfil lo resolvés?</h2>
+              <p class="scene-copy">Definí perfil y contexto del proyecto.</p>
+              <label class="select-field">
+                <span class="field-label">Mercado</span>
+                <select id="market-select" name="market"></select>
+              </label>
+              <div class="pill-row" id="level-pills"></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="step-screen" data-step="2">
+          <article class="scene-card">
+            <div class="scene-content">
+              <p class="scene-kicker">Paso 3</p>
+              <h2 class="scene-title">¿Qué tensión tiene el proyecto?</h2>
+              <p class="scene-copy">Ajustá complejidad y revisiones reales.</p>
+              <div class="slider-card">
+                <div class="slider-head">
+                  <h3>Complejidad</h3>
+                  <span class="value-pill" id="complexity-label">Media</span>
+                </div>
+                <input id="complexity-range" type="range" min="1" max="3" step="1" value="2">
+              </div>
+              <div class="slider-card slider-card-spaced">
+                <div class="slider-head">
+                  <h3>Revisiones</h3>
+                  <span class="value-pill" id="revisions-label">2 rondas</span>
+                </div>
+                <input id="revisions-range" type="range" min="1" max="4" step="1" value="2">
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="step-screen" data-step="3">
+          <article class="scene-card">
+            <div class="scene-content">
+              <p class="scene-kicker">Paso 4</p>
+              <h2 class="scene-title">¿Qué entrega realmente este proyecto?</h2>
+              <p class="scene-copy" id="deliverables-copy">Ajustá output técnico y sumá solo lo que cambia horas.</p>
+              <div class="deliverables-groups">
+                <div>
+                  <p class="group-label">Output</p>
+                  <div class="pill-row deliverables" id="included-deliverables"></div>
+                </div>
+                <div>
+                  <p class="group-label">Extras</p>
+                  <div class="pill-row deliverables" id="deliverables-grid"></div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="step-screen" data-step="4">
+          <article class="scene-card scene-card-result">
+            <div class="scene-content scene-content-result">
+              <div class="result-top">
+                <div>
+                  <p class="scene-kicker">Presupuesto sugerido Bong</p>
+                  <h2 class="scene-title result-step-title" id="result-service-title">Selecciona un servicio</h2>
+                </div>
+                <div class="currency-toggle" id="currency-toggle" aria-label="Cambiar moneda"></div>
+              </div>
+              <h2 class="result-price" id="result-price">USD $0</h2>
+              <p class="result-range" id="result-range">Total estimado: 0 horas</p>
+              <div class="result-meta" id="result-meta"></div>
+              <div class="breakdown" id="breakdown"></div>
+              <div class="result-actions">
+                <button class="btn btn-primary" id="pdf-button" type="button">
+                  <span class="btn-text">Exportar PDF</span>
+                </button>
+                <button class="btn btn-secondary" id="copy-button" type="button">Copiar desglose</button>
+              </div>
+              <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
+            </div>
+          </article>
+        </section>
+      </form>
+    </section>
+  </main>
+
+  <div class="progress-dock">
+    <div class="progress-cluster">
+      <div class="progress-meta">
+        <p class="progress-label" id="current-step-name">Servicio</p>
+        <nav class="timeline" id="timeline" aria-label="Progreso del formulario"></nav>
+      </div>
+      <button class="floating-compass" id="compass-button" type="button" aria-label="Avanzar">
+        <span class="floating-compass-arrow" aria-hidden="true">→</span>
+      </button>
+    </div>
+    <p class="currency-footer is-hidden" id="currency-footer" aria-hidden="true">Dólar blue: cargando...</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
