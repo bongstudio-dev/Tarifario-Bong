@@ -321,15 +321,7 @@ button {
   overflow: hidden;
 }
 
-@media (max-width: 720px) {
-  .app-shell {
-    height: auto;
-    min-height: 100vh;
-    align-items: flex-start;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
+/* Mobile app-shell layout handled in the full mobile block below */
 
 .stage {
   width: min(100%, 620px);
@@ -1388,6 +1380,7 @@ body.app-ready .floating-compass {
   .app-shell {
     height: 100vh;
     height: 100dvh;
+    min-height: 0;
     overflow: hidden;
     display: flex;
     align-items: stretch;
