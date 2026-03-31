@@ -317,7 +317,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 118px 20px 152px;
+  padding: 118px 20px 118px;
   overflow: hidden;
 }
 
@@ -340,6 +340,7 @@ button {
 
 .scene-card {
   min-height: clamp(320px, 42vh, 420px);
+  max-height: calc(100vh - 118px - 118px); /* padding-top + padding-bottom desktop */
   padding: 26px 28px;
   border-radius: 34px;
   border: 1px solid var(--border);
@@ -348,6 +349,7 @@ button {
   display: grid;
   align-content: start;
   gap: 0;
+  overflow: hidden;
   opacity: 0;
   transform: translateY(10px) scale(0.992);
 }
@@ -360,10 +362,17 @@ button {
 .scene-card-result {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  padding-top: 20px;
+  padding-bottom: 16px;
 }
 
 .scene-content-result {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .scene-kicker {
@@ -854,6 +863,21 @@ input[type="range"]:active::-moz-range-thumb {
   padding-top: 12px;
   border-top: 1px solid var(--border);
   max-width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+.breakdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.breakdown::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 10px;
 }
 
 .breakdown-row {
@@ -944,8 +968,8 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 .feedback {
-  min-height: 1.4em;
-  margin-top: 10px;
+  min-height: 1.2em;
+  margin-top: 6px;
   font-size: 0.74rem;
 }
 
@@ -954,7 +978,7 @@ input[type="range"]:active::-moz-range-thumb {
   left: 50%;
   transform: translateX(-50%);
   width: min(var(--dock-max-width), calc(100vw - 160px));
-  bottom: 42px;
+  bottom: 24px;
   z-index: 28;
   display: grid;
   justify-items: center;
@@ -1306,6 +1330,7 @@ body.app-ready .floating-compass {
 
   .scene-card {
     min-height: clamp(340px, 40vh, 440px);
+    max-height: calc(100vh - 112px - 132px); /* padding-top + padding-bottom 900px */
     padding: 24px 24px 22px;
     border-radius: 30px;
   }
