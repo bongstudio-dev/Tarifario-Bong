@@ -61,7 +61,7 @@ const state = {
   pricingData: null,
   selectedService: null,
   selectedMarket: "latam",
-  selectedExpertise: "mid",
+  selectedExpertise: "jr",
   selectedComplexity: "mid",
   selectedRevision: "2",
   selectedOutputType: null,
@@ -1251,6 +1251,27 @@ function bindEvents() {
   els.revisionsRange.addEventListener("input", (event) => {
     const index = Number(event.target.value) - 1;
     state.selectedRevision = state.pricingData.revisions[index].id;
+    syncUI();
+  });
+
+  document.addEventListener("click", (event) => {
+    const btn = event.target.closest(".slider-btn");
+    if (!btn) return;
+    
+    const slider = btn.dataset.slider;
+    const dir = Number(btn.dataset.dir);
+    const rangeEl = slider === "complexity" ? els.complexityRange : els.revisionsRange;
+    const currentValue = Number(rangeEl.value);
+    const min = Number(rangeEl.min);
+    const max = Number(rangeEl.max);
+    const newValue = Math.min(max, Math.max(min, currentValue + dir));
+    rangeEl.value = newValue;
+    
+    if (slider === "complexity") {
+      state.selectedComplexity = state.pricingData.complexity[newValue - 1].id;
+    } else {
+      state.selectedRevision = state.pricingData.revisions[newValue - 1].id;
+    }
     syncUI();
   });
 

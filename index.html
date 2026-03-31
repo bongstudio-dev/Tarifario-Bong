@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tarifario de Diseño Gráfico 2026 | Calculadora de Presupuestos — Bong Studio</title>
+  <title>Cotizador de Diseño Gráfico 2026 | Calculadora de Presupuestos — Bong Studio</title>
   <meta
     name="description"
     content="Calculá cuánto cobrar por branding, naming y diseño gráfico en Argentina y LATAM con una herramienta simple de Bong Studio."
@@ -31,7 +31,7 @@
         </svg>
       </a>
       <a class="dock-center dock-home-link" href="/" aria-label="Ir al inicio">
-        <p class="brand-title">Tarifario <span class="brand-badge">BETA</span></p>
+        <p class="brand-title">Cotizador <span class="brand-badge">BETA</span></p>
         <p class="dock-tagline">Brutally Clear Branding</p>
       </a>
       <div class="dock-actions">
@@ -93,14 +93,22 @@
               <div class="slider-card">
                 <div class="slider-head">
                   <h3>Complejidad</h3>
-                  <span class="value-pill" id="complexity-label">Media</span>
+                  <div class="slider-controls">
+                    <span class="value-pill" id="complexity-label">Media</span>
+                    <button class="slider-btn" type="button" data-slider="complexity" data-dir="-1" aria-label="Bajar complejidad">−</button>
+                    <button class="slider-btn" type="button" data-slider="complexity" data-dir="1" aria-label="Subir complejidad">+</button>
+                  </div>
                 </div>
                 <input id="complexity-range" type="range" min="1" max="3" step="1" value="2">
               </div>
               <div class="slider-card slider-card-spaced">
                 <div class="slider-head">
                   <h3>Revisiones</h3>
-                  <span class="value-pill" id="revisions-label">2 rondas</span>
+                  <div class="slider-controls">
+                    <span class="value-pill" id="revisions-label">2 rondas</span>
+                    <button class="slider-btn" type="button" data-slider="revisions" data-dir="-1" aria-label="Menos revisiones">−</button>
+                    <button class="slider-btn" type="button" data-slider="revisions" data-dir="1" aria-label="Más revisiones">+</button>
+                  </div>
                 </div>
                 <input id="revisions-range" type="range" min="1" max="4" step="1" value="2">
               </div>
@@ -142,14 +150,14 @@
               <p class="result-range" id="result-range">Total estimado: 0 horas</p>
               <div class="result-meta" id="result-meta"></div>
               <div class="breakdown" id="breakdown"></div>
-              <div class="result-actions">
-                <button class="btn btn-primary" id="pdf-button" type="button">
-                  <span class="btn-text">Exportar PDF</span>
-                </button>
-                <button class="btn btn-secondary" id="copy-button" type="button">Copiar desglose</button>
-              </div>
-              <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
             </div>
+            <div class="result-actions">
+              <button class="btn btn-primary" id="pdf-button" type="button">
+                <span class="btn-text">Exportar PDF</span>
+              </button>
+              <button class="btn btn-secondary copy-button-mobile-hide" id="copy-button" type="button">Copiar desglose</button>
+            </div>
+            <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
           </article>
         </section>
       </form>

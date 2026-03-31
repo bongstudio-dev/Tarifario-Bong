@@ -313,15 +313,29 @@ button {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 118px 20px 152px;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+    align-items: flex-start;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .stage {
   width: min(100%, 620px);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .step-screen {
@@ -333,7 +347,7 @@ button {
 }
 
 .scene-card {
-  min-height: clamp(340px, 48vh, 470px);
+  min-height: clamp(320px, 42vh, 420px);
   padding: 26px 28px;
   border-radius: 34px;
   border: 1px solid var(--border);
@@ -578,6 +592,39 @@ button {
 .slider-head h3 {
   font-size: 0.84rem;
   font-weight: 600;
+}
+
+.slider-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.slider-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 180ms ease, border-color 180ms ease;
+  flex-shrink: 0;
+}
+
+.slider-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.slider-btn:active {
+  transform: scale(0.92);
 }
 
 .value-pill {
@@ -1260,7 +1307,7 @@ body.app-ready .floating-compass {
   }
 
   .scene-card {
-    min-height: clamp(380px, 46vh, 500px);
+    min-height: clamp(340px, 40vh, 440px);
     padding: 24px 24px 22px;
     border-radius: 30px;
   }
@@ -1290,6 +1337,13 @@ body.app-ready .floating-compass {
   [data-theme="dark"],
   [data-theme="light"] {
     --frame-inset: 12px;
+  }
+
+  body {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
   }
 
   .site-header {
@@ -1331,28 +1385,96 @@ body.app-ready .floating-compass {
   }
 
   .app-shell {
-    display: block;
-    padding: 102px 14px 128px;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 90px 0 84px !important;
+    box-sizing: border-box;
+  }
+
+  .stage {
+    width: calc(100vw - (var(--frame-inset) * 2));
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .step-stack {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step-screen.is-active {
+    height: 100%;
   }
 
   .scene-card {
-    min-height: calc(100vh - 212px);
-    padding: 18px 18px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 18px;
     border-radius: 24px;
+    box-sizing: border-box;
+  }
+
+  .scene-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .scene-content::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scene-content::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
+  }
+
+  .scene-content-result {
+    flex: 1;
+    min-height: 0;
   }
 
   .scene-title {
     max-width: 12ch;
   }
 
+  .copy-button-mobile-hide {
+    display: none;
+  }
+
   .scene-copy,
-  .scene-content,
   .scene-content-wide {
     width: 100%;
   }
 
   .result-actions {
     flex-direction: column;
+    flex-shrink: 0;
+    margin-top: 0;
+    padding-top: 12px;
+  }
+
+  .feedback {
+    flex-shrink: 0;
+    min-height: 0;
+    margin-top: 4px;
+    margin-bottom: 0;
   }
 
   .progress-dock {
