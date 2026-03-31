@@ -171,6 +171,8 @@ function syncCompassMode() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem("bong-theme", theme);
+  const themeColor = theme === "dark" ? "#004831" : "#f4f1ea";
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.content = themeColor);
 }
 
 function toggleThemeWithTransition(event) {

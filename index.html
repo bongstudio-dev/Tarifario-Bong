@@ -8,6 +8,8 @@
     name="description"
     content="Calculá cuánto cobrar por branding, naming y diseño gráfico en Argentina y LATAM con una herramienta simple de Bong Studio."
   >
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#004831" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="apple-touch-icon" href="./favicon.svg">
   <link rel="preconnect" href="https://api.fontshare.com">
@@ -171,7 +173,9 @@
         <nav class="timeline" id="timeline" aria-label="Progreso del formulario"></nav>
       </div>
       <button class="floating-compass" id="compass-button" type="button" aria-label="Avanzar">
-        <span class="floating-compass-arrow" aria-hidden="true">→</span>
+        <svg class="floating-compass-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M3 10H17M17 10L11 4M17 10L11 16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </button>
     </div>
     <p class="currency-footer is-hidden" id="currency-footer" aria-hidden="true">Dólar blue: cargando...</p>

@@ -1099,6 +1099,9 @@ input[type="range"]:active::-moz-range-thumb {
   border-radius: 50%;
   background: var(--accent);
   color: var(--accent-contrast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 180ms var(--ease-out-soft), opacity 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
   opacity: 0;
   transform: scale(0.94);
@@ -1133,9 +1136,10 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 .floating-compass-arrow {
-  font-size: 1.7rem;
-  line-height: 1;
-  display: inline-block;
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
   transform: translateX(var(--compass-shift-x)) rotate(var(--compass-render-rotation));
   transition: transform 420ms var(--ease-out-snappy);
 }
@@ -1532,7 +1536,8 @@ body.app-ready .floating-compass {
   }
 
   .floating-compass-arrow {
-    font-size: 1.56rem;
+    width: 20px;
+    height: 20px;
   }
 }
 
