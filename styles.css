@@ -1343,7 +1343,8 @@ body.app-ready .floating-compass {
     overflow: hidden;
     position: fixed;
     width: 100%;
-    height: 100%;
+    height: 100vh;
+    height: 100dvh;
   }
 
   .site-header {
@@ -1386,11 +1387,12 @@ body.app-ready .floating-compass {
 
   .app-shell {
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     align-items: stretch;
     justify-content: center;
-    padding: 90px 0 84px !important;
+    padding: 90px 0 90px !important;
     box-sizing: border-box;
   }
 
