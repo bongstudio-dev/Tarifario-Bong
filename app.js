@@ -190,6 +190,28 @@ function toggleThemeWithTransition(event) {
   }, 360);
 }
 
+function setMobileInsets() {
+  if (window.innerWidth > 720) return;
+  const header = document.querySelector('.site-header');
+  const dock   = document.querySelector('.progress-dock');
+  if (!header || !dock) return;
+
+  const GAP           = 14; // gap visual deseado (px) arriba y abajo
+  const headerBottom  = header.offsetHeight; // altura real del header desde el top
+  const dockCssBottom = parseInt(getComputedStyle(dock).bottom) || 14;
+  const dockHeight    = dock.offsetHeight;   // offsetHeight ignora transforms
+  const dockFromBottom = dockCssBottom + dockHeight;
+
+  document.documentElement.style.setProperty('--mobile-pad-top',    (headerBottom  + GAP) + 'px');
+  document.documentElement.style.setProperty('--mobile-pad-bottom', (dockFromBottom + GAP) + 'px');
+}
+
+let _resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(setMobileInsets, 100);
+});
+
 function initTheme() {
   const storedTheme = localStorage.getItem("bong-theme");
   const preferredDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -1314,6 +1336,7 @@ async function init() {
     syncUI();
     requestAnimationFrame(() => {
       document.body.classList.add("app-ready");
+      setMobileInsets();
     });
   } catch (error) {
     els.copyFeedback.textContent = "No se pudieron cargar los datos de precios.";
