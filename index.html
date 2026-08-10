@@ -17,11 +17,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Subir ?v=9 en cada publicacion, aca Y en los imports de app.js: sin eso
+  <!-- Subir ?v=10 en cada publicacion, aca Y en los imports de app.js: sin eso
        el navegador sigue sirviendo los archivos viejos y la recalibracion no
        llega al usuario. Para bumpear todo junto:
-         sed -i '' 's/?v=9[0-9]*/?v=9N/g' index.html app.js  -->
-  <link rel="stylesheet" href="./styles.css?v=9">
+         sed -i '' 's/?v=10[0-9]*/?v=10N/g' index.html app.js  -->
+  <link rel="stylesheet" href="./styles.css?v=10">
 </head>
 <body>
   <header class="site-header">
@@ -200,7 +200,7 @@
             >
               <img
                 class="masterclass-art"
-                src="./assets/img/masterclass.png?v=9"
+                src="./assets/img/masterclass.png?v=10"
                 alt=""
                 width="256"
                 height="256"
@@ -238,6 +238,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js?v=9"></script>
+  <script type="module" src="./app.js?v=10"></script>
 </body>
 </html>

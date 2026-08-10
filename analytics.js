@@ -5,7 +5,7 @@
 // script externo ni se envia nada: la herramienta funciona igual.
 //
 // Los eventos mandan configuracion de cotizacion, nunca datos de la persona.
-const MEASUREMENT_ID = "";
+const MEASUREMENT_ID = "G-ZVFKHRY8WJ";
 
 let enabled = false;
 

@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=9";
+} from "./currency.js?v=10";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=9";
-import { initAnalytics, track } from "./analytics.js?v=9";
+} from "./pdf-fonts.js?v=10";
+import { initAnalytics, track } from "./analytics.js?v=10";
 
 const CATEGORY_ICONS = {
   Branding: `
