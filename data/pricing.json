@@ -154,6 +154,28 @@
   ],
   "services": [
     {
+      "id": "branding_std",
+      "name": "Branding completo",
+      "category": "Branding",
+      "caption": "Proyecto integral con estrategia y sistema.",
+      "H_a": 9, "H_b": 39, "H_c": 16,
+      "default_output_type": "static",
+      "allowed_output_types": ["static", "motion"],
+      "included_addons": ["logo", "palette", "typography", "brandboard"],
+      "optional_addons": ["manual_extend", "stationery", "social_pack_5", "naming_sprint"]
+    },
+    {
+      "id": "identidad_visual",
+      "name": "Identidad visual",
+      "category": "Identidad",
+      "caption": "Sistema visual con estrategia y piezas base.",
+      "H_a": 4, "H_b": 29, "H_c": 11,
+      "default_output_type": "static",
+      "allowed_output_types": ["static", "motion"],
+      "included_addons": ["logo", "palette", "typography"],
+      "optional_addons": ["manual_extend", "stationery", "social_pack_5"]
+    },
+    {
       "id": "rrss_post",
       "name": "Pieza RRSS",
       "category": "Piezas",
@@ -251,28 +273,6 @@
       "allowed_output_types": ["static"],
       "included_addons": ["manual_extend"],
       "optional_addons": ["stationery", "brandboard", "social_pack_5", "social_pack_10", "mockup_presentation", "moodboard", "naming_sprint"]
-    },
-    {
-      "id": "identidad_visual",
-      "name": "Identidad visual",
-      "category": "Identidad",
-      "caption": "Sistema visual con estrategia y piezas base.",
-      "H_a": 4, "H_b": 29, "H_c": 11,
-      "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
-      "included_addons": ["logo", "palette", "typography"],
-      "optional_addons": ["manual_extend", "stationery", "social_pack_5"]
-    },
-    {
-      "id": "branding_std",
-      "name": "Branding completo",
-      "category": "Branding",
-      "caption": "Proyecto integral con estrategia y sistema.",
-      "H_a": 9, "H_b": 39, "H_c": 16,
-      "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
-      "included_addons": ["logo", "palette", "typography", "brandboard"],
-      "optional_addons": ["manual_extend", "stationery", "social_pack_5", "naming_sprint"]
     }
   ]
 }
