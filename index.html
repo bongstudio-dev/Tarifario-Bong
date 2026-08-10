@@ -47,41 +47,51 @@
        archivos viejos y el cambio no llega al usuario. Para bumpear todo junto
        corre el comando que esta en el README, no lo escribo aca porque el
        propio sed se lo comeria. -->
-  <link rel="stylesheet" href="./styles.css?v=11">
+  <link rel="stylesheet" href="./styles.css?v=15">
 
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebApplication",
-        "@id": "https://cotizador.bongstudio.ar/#app",
-        "name": "Cotizador de Diseño Gráfico",
-        "url": "https://cotizador.bongstudio.ar/",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web",
-        "inLanguage": "es-AR",
-        "description": "Calculadora de presupuestos para branding, identidad visual y diseño gráfico. Calcula el precio por tipo de cliente y perfil profesional, y lo contrasta contra datos de mercado de Argentina y LATAM.",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "ARS" },
-        "publisher": { "@id": "https://bongstudio.ar/#org" },
-        "featureList": [
-          "Presupuesto por servicio, tipo de cliente y perfil",
-          "Referencia de mercado y presupuesto de horas",
-          "Exportacion a PDF",
-          "Precios en pesos, dolares y euros"
-        ]
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://cotizador.bongstudio.ar/#app",
+      "name": "Cotizador de Diseño Gráfico",
+      "url": "https://cotizador.bongstudio.ar/",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "es-AR",
+      "description": "Calculadora de presupuestos para branding, identidad visual y diseño gráfico. Calcula el precio por tipo de cliente y perfil profesional, y lo contrasta contra datos de mercado de Argentina y LATAM.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "ARS"
       },
-      {
-        "@type": "Organization",
-        "@id": "https://bongstudio.ar/#org",
-        "name": "Bong Studio",
-        "url": "https://bongstudio.ar",
-        "slogan": "Brutally Clear Branding",
-        "logo": "https://cotizador.bongstudio.ar/favicon.svg",
-        "areaServed": ["AR", "LATAM"]
-      }
-    ]
-  }
+      "publisher": {
+        "@id": "https://bongstudio.ar/#org"
+      },
+      "featureList": [
+        "Presupuesto por servicio, tipo de cliente y perfil",
+        "Referencia de mercado y presupuesto de horas",
+        "Exportacion a PDF",
+        "Precios en pesos, dolares y euros"
+      ],
+      "mainEntityOfPage": "https://cotizador.bongstudio.ar/"
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://bongstudio.ar/#org",
+      "name": "Bong Studio",
+      "url": "https://bongstudio.ar",
+      "slogan": "Brutally Clear Branding",
+      "logo": "https://cotizador.bongstudio.ar/favicon.svg",
+      "areaServed": [
+        "AR",
+        "LATAM"
+      ]
+    }
+  ]
+}
   </script>
 </head>
 <body>
@@ -129,7 +139,7 @@
           <article class="scene-card">
             <div class="scene-content scene-content-wide">
               <p class="scene-kicker" id="scene-kicker">Paso 1</p>
-              <h1 class="scene-title">¿Qué vas a cotizar?</h1>
+              <h2 class="scene-title">¿Qué vas a cotizar?</h2>
               <p class="scene-copy">Elegí el servicio que mejor representa el encargo.</p>
               <div class="service-pills" id="type-grid"></div>
             </div>
@@ -261,7 +271,7 @@
             >
               <img
                 class="masterclass-art"
-                src="./assets/img/masterclass.png?v=11"
+                src="./assets/img/masterclass.png?v=15"
                 alt=""
                 width="256"
                 height="256"
@@ -283,6 +293,13 @@
     </section>
   </main>
 
+  <a class="scroll-cue" href="/cuanto-cobrar-por-diseno/">
+    <span>Cuánto cobrar por diseño: guía y referencias</span>
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M10 4v12M10 16l-5-5M10 16l5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+
   <div class="progress-dock">
     <div class="progress-cluster">
       <div class="progress-meta">
@@ -299,6 +316,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js?v=11"></script>
+  <script type="module" src="./app.js?v=15"></script>
 </body>
 </html>

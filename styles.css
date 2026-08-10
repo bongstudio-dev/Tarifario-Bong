@@ -1139,6 +1139,224 @@ input[type="range"]:active::-moz-range-thumb {
 
 /* Vive abajo del CTA a proposito: aparece cuando la persona ya resolvio lo que
    vino a hacer, sin competir con Exportar PDF ni interrumpir el flujo. */
+/* La herramienta ocupa el viewport entero, asi que sin este aviso nadie se
+   entera de que abajo hay contenido. Va fijo y por arriba del dock: con
+   posicion normal quedaba justo debajo y el click aterrizaba en el dock. */
+.scroll-cue {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  z-index: 29;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: color 200ms ease, border-color 200ms ease;
+}
+
+.scroll-cue:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.scroll-cue svg {
+  width: 13px;
+  height: 13px;
+  color: var(--accent);
+}
+
+/* La guia vive en /cuanto-cobrar-por-diseno/. No puede ir dentro del cotizador
+   porque en mobile el body esta en position:fixed y la pagina no scrollea. */
+.guide-page {
+  position: static;
+  height: auto;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.guide-header {
+  padding: 26px 20px 0;
+}
+
+.guide-back,
+.guide-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 11px 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: border-color 200ms ease, color 200ms ease, background 200ms ease;
+}
+
+.guide-back {
+  display: flex;
+  width: fit-content;
+}
+
+.guide-back:hover,
+.guide-cta:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.guide-back svg,
+.guide-cta svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+.guide-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0 20px 90px;
+}
+
+.guide-cta {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.68rem;
+  padding: 15px 26px;
+}
+
+.guide-cta svg {
+  color: var(--accent-contrast);
+}
+
+.guide-cta:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--accent-contrast);
+}
+
+.guide {
+  position: relative;
+  padding: 30px 20px 60px;
+}
+
+.guide-inner {
+  max-width: 660px;
+  margin: 0 auto;
+}
+
+.guide h1 {
+  margin: 0 0 18px;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+.guide h2 {
+  margin: 52px 0 14px;
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.guide h3 {
+  margin: 34px 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.guide p {
+  margin: 0 0 14px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.62;
+}
+
+.guide-lead {
+  font-size: 1.06rem !important;
+  line-height: 1.55 !important;
+}
+
+.guide strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.guide a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.guide-table-wrap {
+  margin: 20px 0 8px;
+  overflow-x: auto;
+}
+
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.guide-table th,
+.guide-table td {
+  padding: 11px 14px 11px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.guide-table th {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.guide-table td {
+  color: var(--text-secondary);
+}
+
+.guide-table td:first-child {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.guide-table td:nth-child(2) {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.guide-note {
+  margin-top: 26px !important;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted) !important;
+  font-size: 0.82rem !important;
+}
+
 .masterclass-badge {
   display: flex;
   align-items: center;
