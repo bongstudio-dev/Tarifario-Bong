@@ -8,6 +8,31 @@
     name="description"
     content="Calculá cuánto cobrar por branding, naming y diseño gráfico en Argentina y LATAM con una herramienta simple de Bong Studio."
   >
+  <link rel="canonical" href="https://cotizador.bongstudio.ar/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Bong Studio">
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:url" content="https://cotizador.bongstudio.ar/">
+  <meta property="og:title" content="Cotizador de Diseño Gráfico 2026 | Calculadora de Presupuestos">
+  <meta
+    property="og:description"
+    content="Calculá cuánto cobrar por branding, identidad y diseño gráfico en Argentina y LATAM. Precio por tipo de cliente y perfil, contrastado con datos de mercado."
+  >
+  <meta property="og:image" content="https://cotizador.bongstudio.ar/assets/img/og-cotizador.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Cotizador de Bong Studio">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cotizador de Diseño Gráfico 2026 | Calculadora de Presupuestos">
+  <meta
+    name="twitter:description"
+    content="Calculá cuánto cobrar por branding, identidad y diseño gráfico en Argentina y LATAM."
+  >
+  <meta name="twitter:image" content="https://cotizador.bongstudio.ar/assets/img/og-cotizador.png">
+
   <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#004831" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
@@ -17,11 +42,47 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Subir ?v=10 en cada publicacion, aca Y en los imports de app.js: sin eso
-       el navegador sigue sirviendo los archivos viejos y la recalibracion no
-       llega al usuario. Para bumpear todo junto:
-         sed -i '' 's/?v=10[0-9]*/?v=10N/g' index.html app.js  -->
-  <link rel="stylesheet" href="./styles.css?v=10">
+  <!-- Los sufijos de version de abajo hay que subirlos en cada publicacion,
+       aca Y en los imports de app.js: sin eso el navegador sigue sirviendo los
+       archivos viejos y el cambio no llega al usuario. Para bumpear todo junto
+       corre el comando que esta en el README, no lo escribo aca porque el
+       propio sed se lo comeria. -->
+  <link rel="stylesheet" href="./styles.css?v=11">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://cotizador.bongstudio.ar/#app",
+        "name": "Cotizador de Diseño Gráfico",
+        "url": "https://cotizador.bongstudio.ar/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "es-AR",
+        "description": "Calculadora de presupuestos para branding, identidad visual y diseño gráfico. Calcula el precio por tipo de cliente y perfil profesional, y lo contrasta contra datos de mercado de Argentina y LATAM.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "ARS" },
+        "publisher": { "@id": "https://bongstudio.ar/#org" },
+        "featureList": [
+          "Presupuesto por servicio, tipo de cliente y perfil",
+          "Referencia de mercado y presupuesto de horas",
+          "Exportacion a PDF",
+          "Precios en pesos, dolares y euros"
+        ]
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://bongstudio.ar/#org",
+        "name": "Bong Studio",
+        "url": "https://bongstudio.ar",
+        "slogan": "Brutally Clear Branding",
+        "logo": "https://cotizador.bongstudio.ar/favicon.svg",
+        "areaServed": ["AR", "LATAM"]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <header class="site-header">
@@ -200,7 +261,7 @@
             >
               <img
                 class="masterclass-art"
-                src="./assets/img/masterclass.png?v=10"
+                src="./assets/img/masterclass.png?v=11"
                 alt=""
                 width="256"
                 height="256"
@@ -238,6 +299,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js?v=10"></script>
+  <script type="module" src="./app.js?v=11"></script>
 </body>
 </html>
