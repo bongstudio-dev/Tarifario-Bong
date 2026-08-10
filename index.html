@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tarifario de Diseño Gráfico 2026 | Calculadora de Presupuestos — Bong Studio</title>
+  <title>Cotizador de Diseño Gráfico 2026 | Calculadora de Presupuestos — Bong Studio</title>
   <meta
     name="description"
     content="Calculá cuánto cobrar por branding, naming y diseño gráfico en Argentina y LATAM con una herramienta simple de Bong Studio."
   >
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#004831" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="apple-touch-icon" href="./favicon.svg">
   <link rel="preconnect" href="https://api.fontshare.com">
@@ -15,7 +17,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
+  <!-- Subir ?v= en cada publicacion: sin eso el navegador sigue usando el CSS
+       y el JS viejos y la recalibracion no llega al usuario. -->
+  <link rel="stylesheet" href="./styles.css?v=6">
 </head>
 <body>
   <header class="site-header">
@@ -31,7 +35,7 @@
         </svg>
       </a>
       <a class="dock-center dock-home-link" href="/" aria-label="Ir al inicio">
-        <p class="brand-title">Tarifario <span class="brand-badge">BETA</span></p>
+        <p class="brand-title">Cotizador <span class="brand-badge">BETA</span></p>
         <p class="dock-tagline">Brutally Clear Branding</p>
       </a>
       <div class="dock-actions">
@@ -93,14 +97,22 @@
               <div class="slider-card">
                 <div class="slider-head">
                   <h3>Complejidad</h3>
-                  <span class="value-pill" id="complexity-label">Media</span>
+                  <div class="slider-controls">
+                    <span class="value-pill" id="complexity-label">Media</span>
+                    <button class="slider-btn" type="button" data-slider="complexity" data-dir="-1" aria-label="Bajar complejidad">−</button>
+                    <button class="slider-btn" type="button" data-slider="complexity" data-dir="1" aria-label="Subir complejidad">+</button>
+                  </div>
                 </div>
                 <input id="complexity-range" type="range" min="1" max="3" step="1" value="2">
               </div>
               <div class="slider-card slider-card-spaced">
                 <div class="slider-head">
                   <h3>Revisiones</h3>
-                  <span class="value-pill" id="revisions-label">2 rondas</span>
+                  <div class="slider-controls">
+                    <span class="value-pill" id="revisions-label">2 rondas</span>
+                    <button class="slider-btn" type="button" data-slider="revisions" data-dir="-1" aria-label="Menos revisiones">−</button>
+                    <button class="slider-btn" type="button" data-slider="revisions" data-dir="1" aria-label="Más revisiones">+</button>
+                  </div>
                 </div>
                 <input id="revisions-range" type="range" min="1" max="4" step="1" value="2">
               </div>
@@ -123,6 +135,10 @@
                   <p class="group-label">Extras</p>
                   <div class="pill-row deliverables" id="deliverables-grid"></div>
                 </div>
+                <div id="brand-tier-group" hidden>
+                  <p class="group-label">Tipo de cliente</p>
+                  <div class="pill-row" id="brand-tier-pills"></div>
+                </div>
               </div>
             </div>
           </article>
@@ -138,18 +154,66 @@
                 </div>
                 <div class="currency-toggle" id="currency-toggle" aria-label="Cambiar moneda"></div>
               </div>
-              <h2 class="result-price" id="result-price">USD $0</h2>
-              <p class="result-range" id="result-range">Total estimado: 0 horas</p>
+              <h2 class="result-price" id="result-price">
+                <span id="result-price-value">USD $0</span>
+              </h2>
+              <p class="result-range" id="result-range">Objetivo de tiempo: 0 h</p>
               <div class="result-meta" id="result-meta"></div>
-              <div class="breakdown" id="breakdown"></div>
-              <div class="result-actions">
-                <button class="btn btn-primary" id="pdf-button" type="button">
-                  <span class="btn-text">Exportar PDF</span>
-                </button>
-                <button class="btn btn-secondary" id="copy-button" type="button">Copiar desglose</button>
+              <div class="result-scroll">
+                <div class="breakdown" id="breakdown"></div>
+                <div class="benchmark" id="benchmark-section" hidden>
+                  <div class="benchmark-header">
+                    <span class="benchmark-title">Presupuesto de tiempo</span>
+                    <span class="benchmark-rate" id="bench-rate"></span>
+                  </div>
+                  <div class="benchmark-bar-container">
+                    <div class="benchmark-track"></div>
+                    <div class="benchmark-range" id="bench-range"></div>
+                    <div class="benchmark-tracks" id="bench-tracks"></div>
+                    <div class="benchmark-marker" id="bench-marker"></div>
+                  </div>
+                  <div class="benchmark-labels">
+                    <span class="benchmark-label" id="bench-label-min"></span>
+                    <span class="benchmark-label benchmark-label-abs" id="bench-label-med"></span>
+                    <span class="benchmark-label" id="bench-label-max"></span>
+                  </div>
+                  <div class="benchmark-legend" id="bench-legend"></div>
+                  <div class="benchmark-insight" id="bench-insight"></div>
+                  <p class="benchmark-footnote" id="bench-footnote"></p>
+                </div>
               </div>
-              <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
             </div>
+            <div class="result-actions">
+              <button class="btn btn-primary" id="pdf-button" type="button">
+                <span class="btn-text">Exportar PDF</span>
+              </button>
+              <button class="btn btn-secondary copy-button-mobile-hide" id="copy-button" type="button">Copiar desglose</button>
+            </div>
+            <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
+            <a
+              class="masterclass-badge"
+              href="https://bongstudio.ar/masterclass"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                class="masterclass-art"
+                src="./assets/img/masterclass.png?v=6"
+                alt=""
+                width="256"
+                height="256"
+                loading="lazy"
+                decoding="async"
+              >
+              <span class="masterclass-text">
+                <span class="masterclass-tag">Nuevo</span>
+                <strong>Bong Studio por Dentro</strong>
+                <span class="masterclass-sub">Masterclass grabada · ya disponible</span>
+              </span>
+              <svg class="masterclass-arrow" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M4 10h12M16 10l-5-5M16 10l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
           </article>
         </section>
       </form>
@@ -163,13 +227,15 @@
         <nav class="timeline" id="timeline" aria-label="Progreso del formulario"></nav>
       </div>
       <button class="floating-compass" id="compass-button" type="button" aria-label="Avanzar">
-        <span class="floating-compass-arrow" aria-hidden="true">→</span>
+        <svg class="floating-compass-arrow" width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M3 10H17M17 10L11 4M17 10L11 16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </button>
     </div>
     <p class="currency-footer is-hidden" id="currency-footer" aria-hidden="true">Dólar blue: cargando...</p>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=6"></script>
 </body>
 </html>

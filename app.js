@@ -59,13 +59,15 @@ const DEFAULT_CURRENCY_BY_MARKET = {
 
 const state = {
   pricingData: null,
+  benchmarkData: null,
   selectedService: null,
   selectedMarket: "latam",
-  selectedExpertise: "mid",
+  selectedExpertise: "jr",
   selectedComplexity: "mid",
   selectedRevision: "2",
   selectedOutputType: null,
   selectedAddons: new Set(),
+  selectedBrandTier: "emprendimiento",
   serviceOrder: [],
   displayCurrency: "ars",
   currencyMotionDirection: 1,
@@ -171,6 +173,8 @@ function syncCompassMode() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem("bong-theme", theme);
+  const themeColor = theme === "dark" ? "#004831" : "#f4f1ea";
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.content = themeColor);
 }
 
 function toggleThemeWithTransition(event) {
@@ -187,6 +191,28 @@ function toggleThemeWithTransition(event) {
     document.body.classList.remove("is-theme-transitioning");
   }, 360);
 }
+
+function setMobileInsets() {
+  if (window.innerWidth > 720) return;
+  const header = document.querySelector('.site-header');
+  const dock   = document.querySelector('.progress-dock');
+  if (!header || !dock) return;
+
+  const GAP           = 14; // gap visual deseado (px) arriba y abajo
+  const headerBottom  = header.offsetHeight; // altura real del header desde el top
+  const dockCssBottom = parseInt(getComputedStyle(dock).bottom) || 14;
+  const dockHeight    = dock.offsetHeight;   // offsetHeight ignora transforms
+  const dockFromBottom = dockCssBottom + dockHeight;
+
+  document.documentElement.style.setProperty('--mobile-pad-top',    (headerBottom  + GAP) + 'px');
+  document.documentElement.style.setProperty('--mobile-pad-bottom', (dockFromBottom + GAP) + 'px');
+}
+
+let _resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(setMobileInsets, 100);
+});
 
 function initTheme() {
   const storedTheme = localStorage.getItem("bong-theme");
@@ -206,7 +232,19 @@ function cacheDom() {
   els.complexityLabel = document.querySelector("#complexity-label");
   els.revisionsLabel = document.querySelector("#revisions-label");
   els.resultPrice = document.querySelector("#result-price");
+  els.resultPriceValue = document.querySelector("#result-price-value");
   els.resultServiceTitle = document.querySelector("#result-service-title");
+  els.benchmarkSection = document.querySelector("#benchmark-section");
+  els.benchRate = document.querySelector("#bench-rate");
+  els.benchRange = document.querySelector("#bench-range");
+  els.benchTracks = document.querySelector("#bench-tracks");
+  els.benchLegend = document.querySelector("#bench-legend");
+  els.benchMarker = document.querySelector("#bench-marker");
+  els.benchLabelMin = document.querySelector("#bench-label-min");
+  els.benchLabelMed = document.querySelector("#bench-label-med");
+  els.benchLabelMax = document.querySelector("#bench-label-max");
+  els.benchInsight = document.querySelector("#bench-insight");
+  els.benchFootnote = document.querySelector("#bench-footnote");
   els.resultRange = document.querySelector("#result-range");
   els.resultMeta = document.querySelector("#result-meta");
   els.breakdown = document.querySelector("#breakdown");
@@ -221,10 +259,14 @@ function cacheDom() {
   els.currentStepName = document.querySelector("#current-step-name");
   els.compassButton = document.querySelector("#compass-button");
   els.stepScreens = Array.from(document.querySelectorAll(".step-screen"));
+  els.brandTierGroup = document.querySelector("#brand-tier-group");
+  els.brandTierPills = document.querySelector("#brand-tier-pills");
 }
 
+// Sin no-store el navegador sirve la tabla de precios cacheada: al publicar una
+// recalibracion, quien ya uso el cotizador sigue cotizando con precios viejos.
 async function loadPricingData() {
-  const response = await fetch("./data/pricing.json");
+  const response = await fetch("./data/pricing.json", { cache: "no-store" });
   if (!response.ok) {
     throw new Error("No se pudo cargar pricing.json");
   }
@@ -232,6 +274,21 @@ async function loadPricingData() {
   state.pricingData = await response.json();
   state.selectedService = null;
   state.selectedOutputType = null;
+}
+
+async function loadBenchmarkData() {
+  try {
+    const response = await fetch("./data/benchmark.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("No se pudo cargar benchmark.json");
+    }
+    state.benchmarkData = await response.json();
+  } catch (error) {
+    // El benchmark es una capa de lectura, no de calculo: si falla, la
+    // cotizacion sigue funcionando y la seccion simplemente no se muestra.
+    state.benchmarkData = null;
+    console.warn("Referencia de mercado no disponible:", error);
+  }
 }
 
 function formatMoney(value, currency) {
@@ -269,6 +326,10 @@ function getMarketById(id) {
 
 function getAddonById(id) {
   return state.pricingData.addons.find((item) => item.id === id);
+}
+
+function getBrandTierById(id) {
+  return state.pricingData.brand_tiers.find((item) => item.id === id);
 }
 
 function getDefaultCurrencyForMarket(marketId) {
@@ -309,7 +370,8 @@ function ensureOutputType() {
     state.selectedOutputType = null;
     return;
   }
-  if (!state.selectedOutputType) {
+  const allowed = service.allowed_output_types || [service.default_output_type];
+  if (!state.selectedOutputType || !allowed.includes(state.selectedOutputType)) {
     state.selectedOutputType = service.default_output_type;
   }
 }
@@ -334,12 +396,24 @@ function getAllSelectedLineItems() {
   ];
 }
 
+// El tipo de cliente se parte en dos: scope real (mas paginas de manual, mas
+// aplicaciones = mas horas) y posicionamiento (lo que vale esa hora). Meterlo
+// todo como precio dejaria el PDF diciendo 72h para un proyecto de USD 9.000.
+function getBrandTierCoefs() {
+  const tier = getBrandTierById(state.selectedBrandTier);
+  return {
+    hours: tier?.hours_coef ?? 1.0,
+    rate: tier?.rate_coef ?? 1.0
+  };
+}
+
 function getBasePhaseHours() {
+  const tierHours = getBrandTierCoefs().hours;
   return getAllSelectedLineItems().reduce(
     (acc, item) => {
-      acc.a += item.H_a;
-      acc.b += item.H_b;
-      acc.c += item.H_c;
+      acc.a += item.H_a * tierHours;
+      acc.b += item.H_b * tierHours;
+      acc.c += item.H_c * tierHours;
       return acc;
     },
     { a: 0, b: 0, c: 0 }
@@ -356,6 +430,72 @@ function getRevisionHours(baseHours) {
   };
 }
 
+function getReadyTracks(category) {
+  return state.benchmarkData.tracks
+    .filter((track) => track.status === "ready")
+    .map((track) => ({
+      id: track.id,
+      label: track.label,
+      weight: track.weight,
+      band: track.by_category[category] || track.defaults
+    }));
+}
+
+// La muestra de mercado es mid-pesada (edad promedio 28, mitad con 2 a 6 anos
+// de experiencia), asi que la banda se lee como referencia de perfil Mid y se
+// corre por perfil con la misma escalera de la tabla ancla. Sin esta correccion
+// un estudio se mide contra la tarifa de un freelance promedio y el presupuesto
+// de horas que sale es absurdo.
+function getProfileRateCoef() {
+  const current = getExpertiseById(state.selectedExpertise);
+  const reference = getExpertiseById("mid");
+  if (!current || !reference || reference.coef <= 0) {
+    return 1;
+  }
+  return current.coef / reference.coef;
+}
+
+// El precio manda: sale de la tabla ancla. Lo que devuelve esto es el
+// presupuesto de HORAS que hace que ese precio quede a tarifa de mercado.
+// No es "esto tarda tanto" sino "para estar en mercado resolvelo en tanto".
+// Mas horas trabajadas = tarifa mas baja, por eso el maximo sale del p25.
+function evaluateBenchmark({ category, priceUsd, positioningCoef }) {
+  const data = state.benchmarkData;
+  if (!data || !category || priceUsd <= 0 || positioningCoef <= 0) {
+    return null;
+  }
+
+  const tracks = getReadyTracks(category);
+  if (tracks.length === 0) {
+    return null;
+  }
+
+  // Los pesos se renormalizan sobre las pistas con datos: si una queda
+  // pendiente, las otras se reparten su peso en vez de hundir la mezcla.
+  const totalWeight = tracks.reduce((sum, track) => sum + track.weight, 0);
+  const blend = (key) =>
+    tracks.reduce((sum, track) => sum + track.band[key] * track.weight, 0) / totalWeight;
+
+  const profileCoef = getProfileRateCoef();
+  const band = {
+    p25: blend("p25") * profileCoef,
+    median: blend("median") * profileCoef,
+    p75: blend("p75") * profileCoef,
+    p90: blend("p90") * profileCoef
+  };
+
+  // El precio se compara sin mercado destino ni prima de posicionamiento:
+  // esas dos no son trabajo y descolocarian el presupuesto de horas.
+  const comparablePrice = priceUsd / positioningCoef;
+  const budget = {
+    min: comparablePrice / band.p90,
+    target: comparablePrice / band.median,
+    max: comparablePrice / band.p25
+  };
+
+  return { band, tracks, budget, profileCoef, positioningCoef };
+}
+
 function calculateQuote() {
   const { X_a, X_b, X_c, Y } = state.pricingData.config;
   const expertise = getExpertiseById(state.selectedExpertise);
@@ -369,7 +509,13 @@ function calculateQuote() {
     b: baseHours.b + revisionHours.design,
     c: baseHours.c + revisionHours.production
   };
-  const multiplier = expertise.coef * complexity.coef * outputType.coef * market.coef * Y;
+  const tierCoefs = getBrandTierCoefs();
+  const multiplier = expertise.coef * complexity.coef * outputType.coef * market.coef * Y * tierCoefs.rate;
+  // Estas horas no se muestran: son el mecanismo que reparte el precio entre
+  // servicios y fases. Las horas que ve el usuario son el presupuesto que sale
+  // del benchmark, mas abajo.
+  const shapeHours = phaseHours.a + phaseHours.b + phaseHours.c;
+
   const phaseValuesUsd = {
     a: phaseHours.a * X_a * multiplier,
     b: phaseHours.b * X_b * multiplier,
@@ -378,13 +524,29 @@ function calculateQuote() {
   const suggestedUsd = phaseValuesUsd.a + phaseValuesUsd.b + phaseValuesUsd.c;
   const suggestedArs = usdToArs(suggestedUsd);
 
+  const benchmark = evaluateBenchmark({
+    category: getCurrentService()?.category,
+    priceUsd: suggestedUsd,
+    positioningCoef: market.coef * tierCoefs.rate
+  });
+
+  // Todo lo que se muestra en horas se reescala al objetivo, asi el desglose
+  // suma exactamente el presupuesto y conserva la proporcion entre fases.
+  const totalHours = benchmark ? benchmark.budget.target : shapeHours;
+  const hoursScale = shapeHours > 0 ? totalHours / shapeHours : 1;
+  const budgetPhaseHours = {
+    a: phaseHours.a * hoursScale,
+    b: phaseHours.b * hoursScale,
+    c: phaseHours.c * hoursScale
+  };
+
   const lineItems = getAllSelectedLineItems().map((item) => {
-    const hours = item.H_a + item.H_b + item.H_c;
-    const baseValue = item.H_a * X_a + item.H_b * X_b + item.H_c * X_c;
+    const itemHours = (item.H_a + item.H_b + item.H_c) * tierCoefs.hours;
+    const baseValue = (item.H_a * X_a + item.H_b * X_b + item.H_c * X_c) * tierCoefs.hours;
     const usd = baseValue * multiplier;
     return {
       label: item.label,
-      hours,
+      hours: itemHours * hoursScale,
       usd,
       ars: usdToArs(usd)
     };
@@ -395,7 +557,7 @@ function calculateQuote() {
   if (revisionValueUsd > 0) {
     lineItems.push({
       label: getRevisionById(state.selectedRevision).label,
-      hours: revisionHours.design + revisionHours.production,
+      hours: (revisionHours.design + revisionHours.production) * hoursScale,
       usd: revisionValueUsd,
       ars: usdToArs(revisionValueUsd)
     });
@@ -404,14 +566,15 @@ function calculateQuote() {
   return {
     suggestedUsd,
     suggestedArs,
-    totalHours: phaseHours.a + phaseHours.b + phaseHours.c,
-    phaseHours,
+    totalHours,
+    phaseHours: budgetPhaseHours,
     breakdown: {
-      estrategia: { usd: phaseValuesUsd.a, ars: usdToArs(phaseValuesUsd.a), hours: phaseHours.a },
-      diseno: { usd: phaseValuesUsd.b, ars: usdToArs(phaseValuesUsd.b), hours: phaseHours.b },
-      produccion: { usd: phaseValuesUsd.c, ars: usdToArs(phaseValuesUsd.c), hours: phaseHours.c }
+      estrategia: { usd: phaseValuesUsd.a, ars: usdToArs(phaseValuesUsd.a), hours: budgetPhaseHours.a },
+      diseno: { usd: phaseValuesUsd.b, ars: usdToArs(phaseValuesUsd.b), hours: budgetPhaseHours.b },
+      produccion: { usd: phaseValuesUsd.c, ars: usdToArs(phaseValuesUsd.c), hours: budgetPhaseHours.c }
     },
-    lineItems
+    lineItems,
+    benchmark
   };
 }
 
@@ -704,16 +867,26 @@ function renderDeliverables() {
     return;
   }
 
-  state.pricingData.output_types.forEach((outputType) => {
-    const pill = createPill(outputType, () => {
-      state.selectedOutputType = outputType.id;
-      syncUI();
-    });
-    pill.classList.toggle("active", state.selectedOutputType === outputType.id);
-    els.includedDeliverables.appendChild(pill);
-  });
+  const allowedOutputIds = service.allowed_output_types || [service.default_output_type];
+  const isOutputLocked = allowedOutputIds.length === 1;
 
-  getOptionalAddons().forEach((deliverable) => {
+  state.pricingData.output_types
+    .filter((outputType) => allowedOutputIds.includes(outputType.id))
+    .forEach((outputType) => {
+      const pill = isOutputLocked
+        ? createPill({ ...outputType, included: true })
+        : createPill(outputType, () => {
+            state.selectedOutputType = outputType.id;
+            syncUI();
+          });
+      pill.classList.toggle("active", state.selectedOutputType === outputType.id);
+      els.includedDeliverables.appendChild(pill);
+    });
+
+  const optionalAddons = getOptionalAddons();
+  els.deliverablesGrid.parentElement.hidden = optionalAddons.length === 0;
+
+  optionalAddons.forEach((deliverable) => {
     const pill = createPill({ id: deliverable.id, label: deliverable.label }, () => {
       if (state.selectedAddons.has(deliverable.id)) {
         state.selectedAddons.delete(deliverable.id);
@@ -727,6 +900,22 @@ function renderDeliverables() {
   });
 
   els.deliverablesCopy.textContent = `${service.name}: elegi el formato de salida y sumá solo los extras que cambian horas reales.`;
+
+  // El tipo de cliente define scope y posicionamiento, no el perfil de quien
+  // ejecuta: aplica a los cuatro perfiles, no solo a Estudio.
+  els.brandTierGroup.hidden = false;
+  els.brandTierPills.innerHTML = "";
+  state.pricingData.brand_tiers.forEach((tier) => {
+    const pill = createPill(tier, () => {
+      state.selectedBrandTier = tier.id;
+      syncUI();
+    });
+    pill.classList.toggle("active", state.selectedBrandTier === tier.id);
+    if (tier.caption) {
+      pill.title = tier.caption;
+    }
+    els.brandTierPills.appendChild(pill);
+  });
 }
 
 function animateValue(element, nextValue) {
@@ -766,6 +955,7 @@ function renderMeta() {
   const chips = [
     `Mercado: ${getMarketById(state.selectedMarket).label}`,
     `Perfil: ${getExpertiseById(state.selectedExpertise).label}`,
+    `Cliente: ${getBrandTierById(state.selectedBrandTier).label}`,
     `Complejidad: ${getComplexityById(state.selectedComplexity).label}`,
     `Output: ${getOutputTypeById(state.selectedOutputType).label}`
   ];
@@ -789,6 +979,87 @@ function renderBreakdown(quote) {
   `);
 
   els.breakdown.innerHTML = [...phaseRows, ...lineRows].join("");
+}
+
+function formatHours(value) {
+  return value >= 100 ? `${Math.round(value)} h` : `${value.toFixed(value < 10 ? 1 : 0)} h`;
+}
+
+function renderBenchmark(quote) {
+  const benchmark = quote.benchmark;
+  if (!benchmark) {
+    els.benchmarkSection.hidden = true;
+    return;
+  }
+
+  const { band, tracks, budget, positioningCoef } = benchmark;
+  const data = state.benchmarkData;
+  els.benchmarkSection.hidden = false;
+
+  // El dominio arranca abajo del minimo y deja aire despues del maximo para
+  // que la ventana no quede pegada contra los bordes.
+  const barMin = budget.min * 0.55;
+  const barMax = budget.max * 1.12;
+  const toPercent = (value) =>
+    Math.min(Math.max(((value - barMin) / (barMax - barMin)) * 100, 2), 98);
+  const rangeStart = toPercent(budget.min);
+  const targetAt = toPercent(budget.target);
+
+  els.benchRange.style.left = `${rangeStart}%`;
+  els.benchRange.style.width = `${Math.max(toPercent(budget.max) - rangeStart, 1)}%`;
+  els.benchMarker.style.left = `${targetAt}%`;
+
+  els.benchLabelMin.style.left = `${rangeStart}%`;
+  els.benchLabelMed.style.left = `${targetAt}%`;
+  els.benchLabelMax.style.left = `${toPercent(budget.max)}%`;
+
+  els.benchmarkSection.dataset.state = "en-rango";
+  els.benchMarker.className = "benchmark-marker is-en-rango";
+  els.benchRate.textContent = formatHours(budget.target);
+  els.benchLabelMin.textContent = `${Math.round(budget.min)}`;
+  els.benchLabelMed.textContent = `Objetivo ${Math.round(budget.target)}`;
+  els.benchLabelMax.textContent = `${Math.round(budget.max)}`;
+
+  // Una marca por pista: cada referencia da su propio objetivo de horas, y ver
+  // la diferencia es lo que separa un mapa de un veredicto.
+  const comparablePrice = quote.suggestedUsd / positioningCoef;
+  const trackTargets = tracks.map((track) => ({
+    label: track.label,
+    hours: comparablePrice / (track.band.median * benchmark.profileCoef)
+  }));
+
+  els.benchTracks.innerHTML = trackTargets
+    .map(
+      (track) =>
+        `<span class="benchmark-track-tick" style="left:${toPercent(track.hours)}%" title="${track.label}: ${formatHours(track.hours)}"></span>`
+    )
+    .join("");
+
+  els.benchLegend.innerHTML = trackTargets
+    .map(
+      (track) =>
+        `<span class="benchmark-legend-item">${track.label} <strong>${Math.round(track.hours)}h</strong></span>`
+    )
+    .join("");
+
+  const price = formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency);
+  const insight =
+    `Cobrás <strong>${price}</strong>. Para que ese precio quede a tarifa de mercado, ` +
+    `resolvelo entre <strong>${formatHours(budget.min)}</strong> y <strong>${formatHours(budget.max)}</strong>. ` +
+    `Si te pasás de ${formatHours(budget.max)} estás trabajando por debajo del mercado.`;
+
+  els.benchInsight.className = "benchmark-insight is-en-rango";
+  els.benchInsight.innerHTML = `<p class="insight-text">${insight}</p>`;
+
+  const pending = data.tracks.filter((track) => track.status !== "ready");
+  const footnote = [
+    `Ventana p25–p90 ponderada · ${tracks.map((track) => track.label).join(" + ")}`,
+    `referencia perfil ${getExpertiseById(state.selectedExpertise).label} (x${benchmark.profileCoef.toFixed(2)} sobre banda Mid)`
+  ];
+  if (pending.length > 0) {
+    footnote.push(`sin datos: ${pending.map((track) => track.label).join(", ")}`);
+  }
+  els.benchFootnote.textContent = footnote.join(" · ");
 }
 
 function renderCurrencyToggle() {
@@ -866,11 +1137,12 @@ function renderResult() {
 
   if (!hasSelectedService()) {
     els.resultServiceTitle.textContent = "Selecciona un servicio";
-    els.resultPrice.textContent = "ARS 0";
-    els.resultPrice.dataset.rawValue = "0";
+    els.resultPriceValue.textContent = "ARS 0";
+    els.resultPriceValue.dataset.rawValue = "0";
     els.resultRange.textContent = "Elegí un servicio para calcular el presupuesto.";
     els.breakdown.innerHTML = "";
     els.resultMeta.innerHTML = "";
+    els.benchmarkSection.hidden = true;
     renderCurrencyToggle();
     els.copyButton.disabled = true;
     els.pdfButton.disabled = true;
@@ -879,10 +1151,11 @@ function renderResult() {
 
   const quote = calculateQuote();
   els.resultServiceTitle.textContent = getCurrentService().name;
-  animateValue(els.resultPrice, convertUsd(quote.suggestedUsd, state.displayCurrency));
-  els.resultRange.textContent = `Total estimado: ${quote.totalHours.toFixed(1)} horas · ${getRevisionById(state.selectedRevision).label}`;
+  animateValue(els.resultPriceValue, convertUsd(quote.suggestedUsd, state.displayCurrency));
+  els.resultRange.textContent = `Objetivo de tiempo: ${formatHours(quote.totalHours)} · ${getRevisionById(state.selectedRevision).label}`;
   renderMeta();
   renderBreakdown(quote);
+  renderBenchmark(quote);
   renderCurrencyToggle();
   els.copyButton.disabled = false;
   els.pdfButton.disabled = false;
@@ -911,7 +1184,7 @@ function syncUI() {
   els.revisionsRange.value = String(state.pricingData.revisions.findIndex((item) => item.id === state.selectedRevision) + 1);
   els.complexityLabel.textContent = getComplexityById(state.selectedComplexity).label;
   els.revisionsLabel.textContent = getRevisionById(state.selectedRevision).label;
-  els.resultPrice.dataset.rawValue = "";
+  els.resultPriceValue.dataset.rawValue = "";
 
   document.querySelectorAll(".type-card").forEach((card) => {
     card.classList.toggle("active", card.dataset.type === state.selectedService);
@@ -947,11 +1220,15 @@ function getQuoteText() {
     `PRESUPUESTO - ${service.name}`,
     `Mercado: ${getMarketById(state.selectedMarket).label}`,
     `Perfil: ${getExpertiseById(state.selectedExpertise).label}`,
+    `Cliente: ${getBrandTierById(state.selectedBrandTier).label}`,
     `Complejidad: ${getComplexityById(state.selectedComplexity).label}`,
     `Output: ${getOutputTypeById(state.selectedOutputType).label}`,
     "",
     `Precio sugerido: ${formatMoney(quote.suggestedUsd, "usd")} / ${formatMoney(quote.suggestedArs, "ars")}`,
-    `Horas totales: ${quote.totalHours.toFixed(1)}h`,
+    `Objetivo de horas: ${quote.totalHours.toFixed(1)}h`,
+    ...(quote.benchmark
+      ? [`Ventana de mercado: ${formatHours(quote.benchmark.budget.min)} a ${formatHours(quote.benchmark.budget.max)}`]
+      : []),
     "",
     "Fases:",
     `- Estrategia: ${quote.breakdown.estrategia.hours.toFixed(1)}h / ${formatMoney(quote.breakdown.estrategia.usd, "usd")}`,
@@ -1025,10 +1302,20 @@ async function getBongLogoPngDataUrl() {
   const url = URL.createObjectURL(blob);
 
   try {
+    // Con timeout: si el navegador no dispara ni onload ni onerror sobre el
+    // blob del SVG, el await queda colgado para siempre y el PDF nunca sale
+    // ni avisa. Mejor exportar sin logo que no exportar.
     const img = await new Promise((resolve, reject) => {
       const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
+      const timer = window.setTimeout(() => reject(new Error("logo timeout")), 3000);
+      image.onload = () => {
+        window.clearTimeout(timer);
+        resolve(image);
+      };
+      image.onerror = (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      };
       image.src = url;
     });
 
@@ -1069,20 +1356,22 @@ async function downloadPdf() {
   const visibleLineItems = quote.lineItems.slice(0, 6);
   const methodologyLines = [
     "PRECIOS DE REFERENCIA BASADOS EN",
-    "EXPERIENCIA REAL. NO REFLEJAN",
-    "NECESARIAMENTE VARIABLES DE MERCADO Y",
-    "DEBEN USARSE COMO APROXIMACION PARA EL",
-    "CALCULO Y ANALISIS PROPIO."
+    "EXPERIENCIA REAL Y CONTRASTADOS CON",
+    "DATOS DE MERCADO 2025. DEBEN USARSE",
+    "COMO APROXIMACION PARA EL CALCULO",
+    "Y ANALISIS PROPIO."
   ];
+  const benchmarkPdfLines = quote.benchmark ? 1 : 0;
   const estimatedContentBottom =
     150 + // start of metadata block
-    4 * 7 + // rows
+    5 * 7 + // rows
     10 + // spacer after rows divider
     8 + // fases title
     3 * 7 + // fases rows
     10 + // spacer after fases divider
     8 + // items title
-    visibleLineItems.length * 6.5;
+    visibleLineItems.length * 6.5 +
+    benchmarkPdfLines * 6;
   const footerBlockHeight = 34;
   const calculatedHeight = Math.ceil(estimatedContentBottom + footerBlockHeight + 16);
   const pdfHeight = Math.max(250, calculatedHeight);
@@ -1142,6 +1431,7 @@ async function downloadPdf() {
 
   const rows = [
     ["Mercado", getMarketById(state.selectedMarket).label],
+    ["Cliente", getBrandTierById(state.selectedBrandTier).label],
     ["Complejidad", getComplexityById(state.selectedComplexity).label],
     ["Output", getOutputTypeById(state.selectedOutputType).label],
     ["Revisiones", getRevisionById(state.selectedRevision).label]
@@ -1221,6 +1511,15 @@ async function downloadPdf() {
   y += 6;
   doc.text(`PERFIL ${getExpertiseById(state.selectedExpertise).label.toUpperCase()}`, pad, y);
 
+  if (quote.benchmark) {
+    y += 6;
+    doc.text(
+      `VENTANA ${Math.round(quote.benchmark.budget.min)}-${Math.round(quote.benchmark.budget.max)} H`,
+      pad,
+      y
+    );
+  }
+
   const footerStartY = y + 12;
   drawTicketLine(doc, footerStartY - 5, pad, right);
   doc.setFont("Satoshi", "normal");
@@ -1254,8 +1553,36 @@ function bindEvents() {
     syncUI();
   });
 
+  document.addEventListener("click", (event) => {
+    const btn = event.target.closest(".slider-btn");
+    if (!btn) return;
+    
+    const slider = btn.dataset.slider;
+    const dir = Number(btn.dataset.dir);
+    const rangeEl = slider === "complexity" ? els.complexityRange : els.revisionsRange;
+    const currentValue = Number(rangeEl.value);
+    const min = Number(rangeEl.min);
+    const max = Number(rangeEl.max);
+    const newValue = Math.min(max, Math.max(min, currentValue + dir));
+    rangeEl.value = newValue;
+    
+    if (slider === "complexity") {
+      state.selectedComplexity = state.pricingData.complexity[newValue - 1].id;
+    } else {
+      state.selectedRevision = state.pricingData.revisions[newValue - 1].id;
+    }
+    syncUI();
+  });
+
   els.copyButton.addEventListener("click", copyBreakdown);
-  els.pdfButton.addEventListener("click", downloadPdf);
+  // downloadPdf es async: sin este catch, cualquier falla queda como rejection
+  // sin manejar y el usuario ve el boton sin respuesta.
+  els.pdfButton.addEventListener("click", () => {
+    downloadPdf().catch((error) => {
+      els.copyFeedback.textContent = "No se pudo generar el PDF.";
+      console.error(error);
+    });
+  });
   els.themeToggle.addEventListener("click", toggleThemeWithTransition);
   window.addEventListener("pointermove", updateCompassPointer);
   window.addEventListener("touchstart", updateCompassPointer, { passive: true });
@@ -1283,6 +1610,7 @@ async function init() {
   try {
     await initCurrency();
     await loadPricingData();
+    await loadBenchmarkData();
     els.currencyFooter.textContent = getDolarBlueLabel();
     buildStaticUI();
     bindEvents();
@@ -1291,6 +1619,7 @@ async function init() {
     syncUI();
     requestAnimationFrame(() => {
       document.body.classList.add("app-ready");
+      setMobileInsets();
     });
   } catch (error) {
     els.copyFeedback.textContent = "No se pudieron cargar los datos de precios.";

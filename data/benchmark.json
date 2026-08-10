@@ -1,0 +1,108 @@
+{
+  "version": "2.0",
+  "label": "Referencia de mercado Bong",
+  "year": 2025,
+  "currency": "usd",
+  "basis": "Tarifa horaria normalizada: precio / horas, sin coeficiente de mercado ni prima de posicionamiento por tipo de cliente. Las horas del tipo de cliente ya estan dentro de las horas, no se normalizan.",
+  "role": "lectura",
+  "role_note": "El benchmark no corrige el precio. Desde la version 3.0 de pricing.json el modelo esta anclado a la tabla de referencia de Bong, asi que ajustar el precio aca lo sacaria de esa ancla. Esta seccion ubica, no decide.",
+  "confidence_legend": {
+    "observed": "Valor reportado directamente por la fuente.",
+    "derived": "Extrapolado desde la forma de la distribucion observada.",
+    "mapped": "La fuente no separa esta categoria; se usa el bucket equivalente.",
+    "fallback": "La fuente no cubre esta categoria; se usa su distribucion global.",
+    "modeled": "Calculado desde el propio modelo de precios, no es dato externo."
+  },
+  "tracks": [
+    {
+      "id": "freelance",
+      "label": "Freelance",
+      "weight": 0.35,
+      "status": "ready",
+      "source": "Relevamiento de freelancers de diseno, Argentina",
+      "sample_size": 372,
+      "collected_at": "2025-09",
+      "note": "Muestra no probabilistica, autodeclarada. Son personas individuales, no equipos.",
+      "shape_note": "p25 y p75 observados (rango frecuente 15-30 sobre mediana 20). p90 extrapolado con lognormal sigma 0.5; control cruzado: deja adentro la mediana de la disciplina mejor paga de la muestra (32.5).",
+      "defaults": {
+        "p25": 15,
+        "median": 20,
+        "p75": 30,
+        "p90": 38,
+        "confidence": { "p25": "observed", "median": "observed", "p75": "observed", "p90": "derived" }
+      },
+      "by_category": {
+        "Branding": {
+          "p25": 17.6,
+          "median": 23.43,
+          "p75": 35.1,
+          "p90": 44.5,
+          "confidence": { "p25": "derived", "median": "observed", "p75": "derived", "p90": "derived" }
+        },
+        "Identidad": {
+          "p25": 17.6,
+          "median": 23.43,
+          "p75": 35.1,
+          "p90": 44.5,
+          "confidence": { "p25": "derived", "median": "mapped", "p75": "derived", "p90": "derived" },
+          "note": "La fuente no separa identidad de branding: es el mismo bucket de disciplina."
+        },
+        "Piezas": {
+          "p25": 15,
+          "median": 20,
+          "p75": 30,
+          "p90": 38,
+          "confidence": { "p25": "fallback", "median": "fallback", "p75": "fallback", "p90": "fallback" }
+        }
+      }
+    },
+    {
+      "id": "estudios",
+      "label": "Estudios",
+      "weight": 0.35,
+      "status": "pending",
+      "note": "Falta el dato. data/tarifario-raw.json tiene precios por proyecto de estudios en ARS de 2025-12, pero convertirlos hoy exige una cotizacion de esa fecha y ademas son precios de proyecto, no tarifas horarias.",
+      "partial_finding": "Los ratios cliente A/B/C de esa fuente dan 1.00 / 1.92 / 2.84, casi identicos a los tiers de la tabla ancla (1.00 / 2.03 / 3.26). La forma valida; el nivel absoluto no.",
+      "needs": "Tarifas horarias de estudios en USD, o la cotizacion ARS/USD de 2025-12 mas una estimacion de horas por proyecto."
+    },
+    {
+      "id": "bong",
+      "label": "Criterio Bong",
+      "weight": 0.3,
+      "status": "ready",
+      "source": "Derivado de la tabla ancla de pricing.json",
+      "note": "No es dato externo: es la dispersion de tarifas que produce el propio modelo al variar perfil, complejidad, output y revisiones. Sirve para ver el spread propio contra el del mercado, no para validarse.",
+      "generated_by": "scripts/build-bong-track.mjs",
+      "defaults": {
+        "p25": 12.9,
+        "median": 20.2,
+        "p75": 31.4,
+        "p90": 43.6,
+        "confidence": { "p25": "modeled", "median": "modeled", "p75": "modeled", "p90": "modeled" }
+      },
+      "by_category": {
+        "Branding": {
+          "p25": 15,
+          "median": 22.8,
+          "p75": 34.7,
+          "p90": 49.5,
+          "confidence": { "p25": "modeled", "median": "modeled", "p75": "modeled", "p90": "modeled" }
+        },
+        "Identidad": {
+          "p25": 13,
+          "median": 21,
+          "p75": 31.5,
+          "p90": 45.2,
+          "confidence": { "p25": "modeled", "median": "modeled", "p75": "modeled", "p90": "modeled" }
+        },
+        "Piezas": {
+          "p25": 12.5,
+          "median": 19.5,
+          "p75": 30.5,
+          "p90": 43.2,
+          "confidence": { "p25": "modeled", "median": "modeled", "p75": "modeled", "p90": "modeled" }
+        }
+      }
+    }
+  ]
+}
