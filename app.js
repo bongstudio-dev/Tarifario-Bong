@@ -7,13 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js";
+} from "./currency.js?v=9";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js";
+} from "./pdf-fonts.js?v=9";
+import { initAnalytics, track } from "./analytics.js?v=9";
 
 const CATEGORY_ICONS = {
   Branding: `
@@ -72,7 +73,9 @@ const state = {
   displayCurrency: "ars",
   currencyMotionDirection: 1,
   currentStep: 0,
-  hasTouchedService: false
+  hasTouchedService: false,
+  trackedStep: null,
+  trackedQuote: false
 };
 
 const els = {};
@@ -251,6 +254,7 @@ function cacheDom() {
   els.copyButton = document.querySelector("#copy-button");
   els.pdfButton = document.querySelector("#pdf-button");
   els.copyFeedback = document.querySelector("#copy-feedback");
+  els.masterclassBadge = document.querySelector(".masterclass-badge");
   els.themeToggle = document.querySelector("#theme-toggle");
   els.currencyToggle = document.querySelector("#currency-toggle");
   els.currencyFooter = document.querySelector("#currency-footer");
@@ -340,14 +344,46 @@ function getCurrentService() {
   return state.selectedService ? getServiceById(state.selectedService) : null;
 }
 
+// Configuracion de la cotizacion, sin ningun dato de la persona. Se usa en los
+// eventos de alta intencion (llegar al resultado, exportar, copiar).
+function getQuoteDimensions() {
+  const service = getCurrentService();
+  if (!service) {
+    return {};
+  }
+
+  const quote = calculateQuote();
+  return {
+    servicio: service.id,
+    categoria: service.category,
+    tipo_cliente: state.selectedBrandTier,
+    perfil: state.selectedExpertise,
+    mercado: state.selectedMarket,
+    complejidad: state.selectedComplexity,
+    output: state.selectedOutputType,
+    revisiones: state.selectedRevision,
+    extras: state.selectedAddons.size,
+    precio_usd: Math.round(quote.suggestedUsd),
+    horas_objetivo: Math.round(quote.totalHours)
+  };
+}
+
 function selectService(service) {
   els.compassButton?.style.setProperty("--compass-rotation-from", getCompassRotation());
+  const changed = state.selectedService !== service.id;
   state.selectedService = service.id;
   state.selectedOutputType = service.default_output_type;
   state.hasTouchedService = true;
   syncAddonSelection();
   syncUI();
   animateCompassReady();
+
+  if (changed) {
+    // Cambiar de servicio reinicia la cotizacion, asi que el resultado
+    // siguiente vuelve a contar como uno nuevo.
+    state.trackedQuote = false;
+    track("elegir_servicio", { servicio: service.id, categoria: service.category });
+  }
 }
 
 function syncAddonSelection() {
@@ -1175,6 +1211,27 @@ function renderFlow() {
     node.classList.toggle("is-complete", index < state.currentStep);
   });
   syncCompassMode();
+  trackStepChange();
+}
+
+// renderFlow corre en cada syncUI, o sea con cada movimiento de slider. Solo
+// se registra cuando el paso cambia de verdad, si no el embudo queda inflado.
+function trackStepChange() {
+  if (state.trackedStep === state.currentStep) {
+    return;
+  }
+
+  state.trackedStep = state.currentStep;
+  track("ver_paso", {
+    paso: state.currentStep + 1,
+    nombre: STEP_META[state.currentStep].title
+  });
+
+  const isResultStep = state.currentStep === STEP_META.length - 1;
+  if (isResultStep && !state.trackedQuote && hasSelectedService()) {
+    state.trackedQuote = true;
+    track("ver_cotizacion", getQuoteDimensions());
+  }
 }
 
 function syncUI() {
@@ -1250,6 +1307,7 @@ async function copyBreakdown() {
 
   try {
     await navigator.clipboard.writeText(getQuoteText());
+    track("copiar_desglose", getQuoteDimensions());
     els.copyFeedback.textContent = "✓ Copiado";
     window.setTimeout(() => {
       els.copyFeedback.textContent = "";
@@ -1578,9 +1636,21 @@ function bindEvents() {
   // downloadPdf es async: sin este catch, cualquier falla queda como rejection
   // sin manejar y el usuario ve el boton sin respuesta.
   els.pdfButton.addEventListener("click", () => {
-    downloadPdf().catch((error) => {
-      els.copyFeedback.textContent = "No se pudo generar el PDF.";
-      console.error(error);
+    // Se registra despues de resolver, asi un PDF que fallo no cuenta como
+    // exportado.
+    downloadPdf()
+      .then(() => track("exportar_pdf", getQuoteDimensions()))
+      .catch((error) => {
+        els.copyFeedback.textContent = "No se pudo generar el PDF.";
+        console.error(error);
+      });
+  });
+  // El link abre en pestana nueva, asi que el evento llega a irse sin
+  // necesidad de sendBeacon ni de demorar la navegacion.
+  els.masterclassBadge?.addEventListener("click", () => {
+    track("click_masterclass", {
+      paso: state.currentStep + 1,
+      servicio: state.selectedService || "ninguno"
     });
   });
   els.themeToggle.addEventListener("click", toggleThemeWithTransition);
@@ -1611,6 +1681,7 @@ async function init() {
     await initCurrency();
     await loadPricingData();
     await loadBenchmarkData();
+    initAnalytics();
     els.currencyFooter.textContent = getDolarBlueLabel();
     buildStaticUI();
     bindEvents();
