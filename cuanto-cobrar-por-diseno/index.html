@@ -34,7 +34,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=15">
+  <link rel="stylesheet" href="/styles.css?v=16">
+
+  <!-- Antes del primer pintado: el tema lo elige la persona en el cotizador y si
+       lo leemos tarde la guia arranca en oscuro y pega un flash. `reveal-ready`
+       habilita la aparicion al scrollear; sin JS nunca se agrega y el contenido
+       queda visible igual. -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("bong-theme");
+        if (stored === "light" || stored === "dark") {
+          document.documentElement.dataset.theme = stored;
+        }
+      } catch (error) {
+        /* Safari en privado tira al leer localStorage: sigue en oscuro. */
+      }
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("reveal-ready");
+      }
+    })();
+  </script>
 
   <script type="application/ld+json">
 {
@@ -152,6 +172,22 @@
       </svg>
       <span>Volver al cotizador</span>
     </a>
+    <button class="dock-btn theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema">
+      <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="5"></circle>
+        <path d="M12 1.5v3"></path>
+        <path d="M12 19.5v3"></path>
+        <path d="M4.58 4.58l2.12 2.12"></path>
+        <path d="M17.3 17.3l2.12 2.12"></path>
+        <path d="M1.5 12h3"></path>
+        <path d="M19.5 12h3"></path>
+        <path d="M4.58 19.42l2.12-2.12"></path>
+        <path d="M17.3 6.7l2.12-2.12"></path>
+      </svg>
+      <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path>
+      </svg>
+    </button>
   </header>
 
   <article class="guide">
@@ -206,75 +242,176 @@
 
       <h2>Preguntas frecuentes</h2>
 
-      <h3>¿Cuánto cobrar por un logo?</h3>
-      <p>
-        Entre USD 200 y USD 2.600 según quién lo haga y para quién. Un diseñador con perfil
-        mid trabajando para un emprendimiento está alrededor de USD 333; el mismo logo para
-        una empresa, hecho por un estudio, llega a USD 2.609. Si te piden solo el logo sin
-        sistema alrededor, ese es el número: la identidad completa es otro servicio y cuesta
-        entre dos y tres veces más.
-      </p>
+      <div class="faq" id="faq">
+        <details class="faq-item" id="faq-logo" open>
+          <summary class="faq-question">
+            <h3>¿Cuánto cobrar por un logo?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                Entre USD 200 y USD 2.600 según quién lo haga y para quién. Un diseñador con perfil
+                mid trabajando para un emprendimiento está alrededor de USD 333; el mismo logo para
+                una empresa, hecho por un estudio, llega a USD 2.609. Si te piden solo el logo sin
+                sistema alrededor, ese es el número: la identidad completa es otro servicio y cuesta
+                entre dos y tres veces más.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿Cuánto cobrar por una identidad visual completa?</h3>
-      <p>
-        De USD 490 a USD 6.500. Incluye logo, paleta, tipografía y el sistema que los une.
-        La diferencia grande contra cotizar solo el logo no está en el dibujo sino en las
-        decisiones: qué pasa cuando la marca tiene que funcionar en un envase, en una historia
-        de Instagram y en una factura.
-      </p>
+        <details class="faq-item" id="faq-identidad">
+          <summary class="faq-question">
+            <h3>¿Cuánto cobrar por una identidad visual completa?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                De USD 490 a USD 6.500. Incluye logo, paleta, tipografía y el sistema que los une.
+                La diferencia grande contra cotizar solo el logo no está en el dibujo sino en las
+                decisiones: qué pasa cuando la marca tiene que funcionar en un envase, en una historia
+                de Instagram y en una factura.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿Cuánto cobrar por un branding completo?</h3>
-      <p>
-        De USD 740 a USD 9.800. Suma estrategia, sistema de marca y aplicaciones. Es el
-        proyecto de referencia con el que está calibrado todo el resto del cotizador.
-      </p>
+        <details class="faq-item" id="faq-branding">
+          <summary class="faq-question">
+            <h3>¿Cuánto cobrar por un branding completo?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                De USD 740 a USD 9.800. Suma estrategia, sistema de marca y aplicaciones. Es el
+                proyecto de referencia con el que está calibrado todo el resto del cotizador.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿Cuánto cobra por hora un diseñador freelance en Argentina?</h3>
-      <p>
-        La mediana de mercado está en USD 20 por hora, y la mitad de los casos cae entre USD 15
-        y USD 30. En branding la mediana sube a USD 23,43. Un estudio se ubica arriba de esa
-        banda por definición: la referencia son personas trabajando solas, no equipos.
-      </p>
+        <details class="faq-item" id="faq-tarifa-hora">
+          <summary class="faq-question">
+            <h3>¿Cuánto cobra por hora un diseñador freelance en Argentina?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                La mediana de mercado está en USD 20 por hora, y la mitad de los casos cae entre USD 15
+                y USD 30. En branding la mediana sube a USD 23,43. Un estudio se ubica arriba de esa
+                banda por definición: la referencia son personas trabajando solas, no equipos.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿Conviene cobrar por hora o por proyecto?</h3>
-      <p>
-        Por proyecto, casi siempre. Cobrar por hora te castiga por ser rápido y convierte cada
-        mejora de tu proceso en menos plata. Por eso el cotizador te da un precio cerrado y
-        después te dice cuántas horas te conviene ponerle para que ese precio quede a tarifa
-        de mercado. Las horas son tu presupuesto de tiempo, no la factura del cliente.
-      </p>
+        <details class="faq-item" id="faq-hora-o-proyecto">
+          <summary class="faq-question">
+            <h3>¿Conviene cobrar por hora o por proyecto?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                Por proyecto, casi siempre. Cobrar por hora te castiga por ser rápido y convierte cada
+                mejora de tu proceso en menos plata. Por eso el cotizador te da un precio cerrado y
+                después te dice cuántas horas te conviene ponerle para que ese precio quede a tarifa
+                de mercado. Las horas son tu presupuesto de tiempo, no la factura del cliente.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿Por qué la herramienta muestra horas si el precio ya está definido?</h3>
-      <p>
-        Porque es la única variable que controlás. El precio te lo da tu posicionamiento y el
-        tipo de cliente; la tarifa de mercado no la manejás. Lo que sí decidís es cuánto tiempo
-        le ponés. Si el cotizador te dice que un proyecto de USD 3.000 entra en una ventana de
-        27 a 76 horas y vos vas por la hora 120, no estás cobrando poco: estás trabajando de
-        más.
-      </p>
+        <details class="faq-item" id="faq-por-que-horas">
+          <summary class="faq-question">
+            <h3>¿Por qué la herramienta muestra horas si el precio ya está definido?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                Porque es la única variable que controlás. El precio te lo da tu posicionamiento y el
+                tipo de cliente; la tarifa de mercado no la manejás. Lo que sí decidís es cuánto tiempo
+                le ponés. Si el cotizador te dice que un proyecto de USD 3.000 entra en una ventana de
+                27 a 76 horas y vos vas por la hora 120, no estás cobrando poco: estás trabajando de
+                más.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿Cuántas rondas de revisión conviene incluir?</h3>
-      <p>
-        Dos. Es el default del cotizador porque es lo que cubre una corrección real más un
-        ajuste fino. Cada ronda extra suma horas al proyecto y el precio las refleja. Dejarlas
-        abiertas es la forma más común de que un presupuesto sano termine en pérdida.
-      </p>
+        <details class="faq-item" id="faq-revisiones">
+          <summary class="faq-question">
+            <h3>¿Cuántas rondas de revisión conviene incluir?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                Dos. Es el default del cotizador porque es lo que cubre una corrección real más un
+                ajuste fino. Cada ronda extra suma horas al proyecto y el precio las refleja. Dejarlas
+                abiertas es la forma más común de que un presupuesto sano termine en pérdida.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿De dónde salen los datos de mercado?</h3>
-      <p>
-        De una mezcla ponderada de tres fuentes: un relevamiento de 372 freelancers de diseño
-        en Argentina, precios de estudios, y nuestra propia observación cotizando. Cada valor
-        de la referencia está marcado según si es un dato observado o una extrapolación, y esa
-        distinción es pública en el repositorio de la herramienta.
-      </p>
+        <details class="faq-item" id="faq-datos">
+          <summary class="faq-question">
+            <h3>¿De dónde salen los datos de mercado?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                De una mezcla ponderada de tres fuentes: un relevamiento de freelancers de diseño
+                en Argentina, precios de estudios, y nuestra propia observación cotizando. Cada valor
+                de la referencia está marcado según si es un dato observado o una extrapolación, y esa
+                distinción es pública en el repositorio de la herramienta.
+              </p>
+            </div>
+          </div>
+        </details>
 
-      <h3>¿Los precios sirven fuera de Argentina?</h3>
-      <p>
-        El cotizador tiene tres mercados: LATAM, Estados Unidos y Europa. Los números de esta
-        página son LATAM. Cotizar para afuera aplica un coeficiente sobre esa base, pero la
-        referencia de mercado se compara siempre contra la tarifa sin ese ajuste, así que
-        elegir un mercado más caro no te saca de rango artificialmente.
-      </p>
+        <details class="faq-item" id="faq-mercados">
+          <summary class="faq-question">
+            <h3>¿Los precios sirven fuera de Argentina?</h3>
+            <svg class="faq-chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5"/>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>
+                El cotizador tiene tres mercados: LATAM, Estados Unidos y Europa. Los números de esta
+                página son LATAM. Cotizar para afuera aplica un coeficiente sobre esa base, pero la
+                referencia de mercado se compara siempre contra la tarifa sin ese ajuste, así que
+                elegir un mercado más caro no te saca de rango artificialmente.
+              </p>
+            </div>
+          </div>
+        </details>
+      </div>
 
       <h2>Sobre esta herramienta</h2>
       <p>
@@ -300,5 +437,7 @@
       </svg>
     </a>
   </footer>
+
+  <script src="/guide.js?v=16" defer></script>
 </body>
 </html>

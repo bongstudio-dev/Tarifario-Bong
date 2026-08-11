@@ -62,7 +62,9 @@ registrarlos como dimensiones personalizadas en Admin.
 ## Imagen de preview
 
 `assets/img/og-cotizador.png` (1200×630) es la que se ve al compartir el link.
-Para regenerarla después de editar `scripts/og-template.html`:
+Hoy es una pieza hecha a mano, no la que genera el script: `build-og-image.mjs`
+sigue ahí pero **la pisa** si se corre, así que no lo corras salvo que quieras
+volver a la versión generada desde `scripts/og-template.html`.
 
 ```bash
 node scripts/build-og-image.mjs

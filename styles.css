@@ -202,6 +202,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 6px;
 }
 
 .brand-title,
@@ -260,7 +261,9 @@ button {
   color: var(--text-muted);
 }
 
-.theme-toggle {
+/* Los dos botones del dock comparten forma y peso a proposito: cambiar el tema y
+   abrir la guia son acciones del mismo nivel, ninguna manda sobre la otra. */
+.dock-btn {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--dock-text);
@@ -270,17 +273,82 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+  text-decoration: none;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease,
+    scale 180ms var(--ease-out-soft);
 }
 
-[data-theme="dark"] .theme-toggle {
+[data-theme="dark"] .dock-btn {
   color: var(--text);
 }
 
-.theme-toggle:hover {
+.dock-btn:hover {
   color: var(--accent);
   background: var(--surface);
   border-color: var(--border);
+}
+
+/* El apretado va en `scale` y no en `transform` porque la animacion de entrada
+   se queda pegada al transform con fill both y le ganaria al :active. */
+.dock-btn:active {
+  scale: 0.93;
+}
+
+.dock-btn-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* El texto va oculto pero presente: el boton es un link interno a la guia y sin
+   texto ancla no le sirve a nadie, ni a un lector de pantalla ni a Google. */
+.dock-btn-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Solo el link lleva position:relative para colgar el tooltip. El theme-toggle
+   no puede: sus dos iconos son absolutos y se apoyan en la posicion estatica. */
+.dock-link {
+  position: relative;
+}
+
+.dock-link::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--dock-surface);
+  color: var(--dock-text);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 180ms var(--ease-out-soft);
+}
+
+.dock-link:hover::after,
+.dock-link:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .theme-icon {
@@ -1137,45 +1205,6 @@ input[type="range"]:active::-moz-range-thumb {
   padding-top: 14px;
 }
 
-/* Vive abajo del CTA a proposito: aparece cuando la persona ya resolvio lo que
-   vino a hacer, sin competir con Exportar PDF ni interrumpir el flujo. */
-/* La herramienta ocupa el viewport entero, asi que sin este aviso nadie se
-   entera de que abajo hay contenido. Va fijo y por arriba del dock: con
-   posicion normal quedaba justo debajo y el click aterrizaba en el dock. */
-.scroll-cue {
-  position: fixed;
-  left: 50%;
-  bottom: 96px;
-  transform: translateX(-50%);
-  z-index: 29;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: fit-content;
-  padding: 10px 18px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  transition: color 200ms ease, border-color 200ms ease;
-}
-
-.scroll-cue:hover {
-  border-color: var(--accent);
-  color: var(--text);
-}
-
-.scroll-cue svg {
-  width: 13px;
-  height: 13px;
-  color: var(--accent);
-}
-
 /* La guia vive en /cuanto-cobrar-por-diseno/. No puede ir dentro del cotizador
    porque en mobile el body esta en position:fixed y la pagina no scrollea. */
 .guide-page {
@@ -1186,8 +1215,20 @@ input[type="range"]:active::-moz-range-thumb {
   overflow-y: visible;
 }
 
+/* Mismo ancho que el texto de la guia (660 + 20 de padding a cada lado) para
+   que el boton de volver y el de tema queden alineados con el contenido. */
 .guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 700px;
+  margin: 0 auto;
   padding: 26px 20px 0;
+}
+
+.guide-header .guide-back {
+  margin: 0;
 }
 
 .guide-back,
@@ -1355,6 +1396,112 @@ input[type="range"]:active::-moz-range-thumb {
   border-top: 1px solid var(--border);
   color: var(--text-muted) !important;
   font-size: 0.82rem !important;
+}
+
+/* Las diez preguntas abiertas hacian una pagina interminable. Plegadas se leen
+   como un indice: se ve todo lo que hay y se abre solo lo que interesa. */
+.faq {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 0;
+  color: var(--text);
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  cursor: pointer;
+  list-style: none;
+  transition: color 180ms ease;
+}
+
+.faq-question::-webkit-details-marker {
+  display: none;
+}
+
+/* El h3 sigue adentro del summary por el outline de la pagina y por el FAQPage
+   del schema; el estilo lo pone el summary. */
+.faq-question h3 {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+.faq-question:hover,
+.faq-item[open] .faq-question {
+  color: var(--accent);
+}
+
+.faq-question:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.faq-chevron {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--accent);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 320ms var(--ease-out-soft);
+}
+
+.faq-item[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+/* La altura la maneja guide.js: <details> no anima solo. */
+.faq-answer {
+  overflow: hidden;
+  transition: height 320ms var(--ease-out-soft), opacity 260ms ease;
+}
+
+.faq-item[open] .faq-answer-inner {
+  animation: content-rise 380ms var(--ease-out-soft) 60ms both;
+}
+
+.faq-answer-inner {
+  padding-bottom: 4px;
+}
+
+.faq-answer p {
+  margin: 0 0 14px;
+}
+
+/* Estado inicial de la aparicion al scrollear. La clase la pone un script en el
+   head, asi que sin JS (o con reduced motion) el contenido nunca queda oculto. */
+.reveal-ready .guide-inner > *,
+.reveal-ready .faq-item {
+  opacity: 0;
+}
+
+.reveal-ready .is-revealed {
+  animation: guide-rise 620ms var(--ease-out-soft) both;
+}
+
+.guide-header,
+.guide-footer {
+  animation: guide-rise 620ms var(--ease-out-soft) both;
+}
+
+.guide-footer {
+  animation-delay: 120ms;
 }
 
 .masterclass-badge {
@@ -1718,6 +1865,20 @@ body.app-ready .floating-compass {
   animation: compass-in 520ms var(--ease-out-snappy) 180ms both;
 }
 
+/* Entran despues del dock y uno atras del otro, asi se leen como dos acciones
+   sueltas y no como un bloque. */
+body.app-ready .dock-actions > * {
+  animation: compass-in 420ms var(--ease-out-snappy) both;
+}
+
+body.app-ready .dock-actions > *:nth-child(1) {
+  animation-delay: 300ms;
+}
+
+body.app-ready .dock-actions > *:nth-child(2) {
+  animation-delay: 370ms;
+}
+
 .step-screen.is-active .scene-card {
   animation: scene-in 420ms var(--ease-out-soft) both;
 }
@@ -1807,6 +1968,17 @@ body.app-ready .floating-compass {
   }
 }
 
+@keyframes guide-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes theme-fill-rise {
   from {
     transform: scaleY(0);
@@ -1889,7 +2061,7 @@ body.app-ready .floating-compass {
 
   .top-dock {
     width: 100%;
-    grid-template-columns: 48px 1fr 40px;
+    grid-template-columns: 48px 1fr auto;
     gap: 8px;
     padding: 8px 10px;
   }
@@ -1916,9 +2088,13 @@ body.app-ready .floating-compass {
     font-size: 0.58rem;
   }
 
-  .theme-toggle {
+  .dock-btn {
     width: 36px;
     height: 36px;
+  }
+
+  .dock-actions {
+    gap: 4px;
   }
 
   .app-shell {
@@ -2043,6 +2219,11 @@ body.app-ready .floating-compass {
     opacity: 0;
     transform: translateX(-50%) translateY(4px);
   }
+
+  .dock-link:hover::after {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2055,10 +2236,21 @@ body.app-ready .floating-compass {
   .timeline-step::before,
   .floating-compass-arrow,
   .currency-toggle::before,
+  .dock-actions > *,
+  .guide-header,
+  .guide-footer,
+  .faq-answer,
+  .faq-answer-inner,
+  .faq-chevron,
   input[type="range"]::-webkit-slider-thumb,
   input[type="range"]::-moz-range-thumb {
     animation: none !important;
     transition: none !important;
+  }
+
+  .guide-inner > *,
+  .faq-item {
+    opacity: 1 !important;
   }
 }
 

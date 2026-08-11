@@ -11,7 +11,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const files = ["index.html", "app.js"].map((name) => path.join(root, name));
+const files = [
+  "index.html",
+  "app.js",
+  "cuanto-cobrar-por-diseno/index.html"
+].map((name) => path.join(root, name));
 const pattern = /(\?v=)(\d+)/g;
 
 const current = Math.max(

@@ -47,7 +47,7 @@
        archivos viejos y el cambio no llega al usuario. Para bumpear todo junto
        corre el comando que esta en el README, no lo escribo aca porque el
        propio sed se lo comeria. -->
-  <link rel="stylesheet" href="./styles.css?v=15">
+  <link rel="stylesheet" href="./styles.css?v=16">
 
   <script type="application/ld+json">
 {
@@ -112,7 +112,15 @@
         <p class="dock-tagline">Brutally Clear Branding</p>
       </a>
       <div class="dock-actions">
-        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema">
+        <a class="dock-btn dock-link" href="/cuanto-cobrar-por-diseno/" data-tip="Guía y FAQ">
+          <svg class="dock-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M9.3 9.2a2.8 2.8 0 0 1 5.4.9c0 1.9-2.7 2.3-2.7 4.1"></path>
+            <path d="M12 17.6h.01"></path>
+          </svg>
+          <span class="dock-btn-label">Cuánto cobrar por diseño: guía y preguntas frecuentes</span>
+        </a>
+        <button class="dock-btn theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema">
           <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="5"></circle>
             <path d="M12 1.5v3"></path>
@@ -271,7 +279,7 @@
             >
               <img
                 class="masterclass-art"
-                src="./assets/img/masterclass.png?v=15"
+                src="./assets/img/masterclass.png?v=16"
                 alt=""
                 width="256"
                 height="256"
@@ -293,13 +301,6 @@
     </section>
   </main>
 
-  <a class="scroll-cue" href="/cuanto-cobrar-por-diseno/">
-    <span>Cuánto cobrar por diseño: guía y referencias</span>
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M10 4v12M10 16l-5-5M10 16l5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </a>
-
   <div class="progress-dock">
     <div class="progress-cluster">
       <div class="progress-meta">
@@ -316,6 +317,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js?v=15"></script>
+  <script type="module" src="./app.js?v=16"></script>
 </body>
 </html>
