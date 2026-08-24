@@ -16,27 +16,6 @@ import {
 } from "./pdf-fonts.js?v=16";
 import { initAnalytics, track } from "./analytics.js?v=16";
 
-const CATEGORY_ICONS = {
-  Branding: `
-    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      <circle cx="8" cy="8" r="4.5"></circle>
-      <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    </svg>
-  `,
-  Identidad: `
-    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      <path d="M8 2.5 13.5 8 8 13.5 2.5 8Z"></path>
-      <path d="M8 5.25 10.75 8 8 10.75 5.25 8Z" fill="currentColor" stroke="none"></path>
-    </svg>
-  `,
-  Piezas: `
-    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      <path d="M3 3h10v10H3Z"></path>
-      <path d="M5.5 5.5h5v5h-5Z" fill="currentColor" stroke="none"></path>
-    </svg>
-  `
-};
-
 const STEP_META = [
   { title: "Servicio" },
   { title: "Perfil y contexto" },
@@ -82,7 +61,14 @@ const els = {};
 const serviceCardsById = new Map();
 const serviceSlotPositions = [];
 const serviceSlotNodes = [];
-const SERVICE_CARD_GAP = 10;
+const SERVICE_CARD_GAP = 4;
+// El anillo de seleccion se dibuja 4px por fuera de la pastilla (2 de offset
+// + 2 de grosor). Sin este margen la columna de la izquierda lo comia contra
+// el borde de la card, que ademas es un contenedor con scroll.
+const SERVICE_CARD_INSET = 5;
+// Cuantos verdes tiene la rampa de --tag-1..--tag-4. El tono se asigna por
+// posicion, asi que dos pastillas seguidas nunca caen en el mismo escalon.
+const SERVICE_TONES = 4;
 const SERVICE_CARD_DRAG_THRESHOLD = 8;
 let serviceDragState = null;
 
@@ -619,10 +605,10 @@ function createServiceCard(service) {
   button.type = "button";
   button.className = "type-card";
   button.dataset.type = service.id;
-  button.innerHTML = `
-    <span class="type-card-mark" aria-hidden="true">${CATEGORY_ICONS[service.category] || CATEGORY_ICONS.Branding}</span>
-    <span class="type-card-title">${service.name}</span>
-  `;
+  // Antes iba un icono por categoria. Lo sacamos: los 22px que ocupaba eran
+  // justo los que partian en dos lineas a las etiquetas largas en mobile, y
+  // la categoria ya no manda en el color.
+  button.innerHTML = `<span class="type-card-title">${service.name}</span>`;
   button.addEventListener("pointerdown", (event) => startServiceCardInteraction(event, button));
   button.addEventListener("click", () => {
     if (button.dataset.suppressClick === "true") {
@@ -651,7 +637,8 @@ function computeServiceCardLayout(order = state.serviceOrder) {
     return;
   }
 
-  const inset = 0;
+  const inset = SERVICE_CARD_INSET;
+  const limit = gridWidth - inset;
   let cursorX = inset;
   let cursorY = 0;
   let rowHeight = 0;
@@ -668,7 +655,7 @@ function computeServiceCardLayout(order = state.serviceOrder) {
     const width = card.offsetWidth;
     const height = card.offsetHeight;
 
-    if (cursorX > inset && cursorX + width > gridWidth) {
+    if (cursorX > inset && cursorX + width > limit) {
       cursorX = inset;
       cursorY += rowHeight + SERVICE_CARD_GAP;
       rowHeight = 0;
@@ -703,12 +690,16 @@ function computeServiceCardLayout(order = state.serviceOrder) {
 }
 
 function renderServiceCards(exceptId = null) {
-  serviceSlotPositions.forEach((slot) => {
-    if (slot.id === exceptId) {
-      return;
-    }
+  serviceSlotPositions.forEach((slot, index) => {
     const card = serviceCardsById.get(slot.id);
     if (!card) {
+      return;
+    }
+    // El tono va con la posicion, no con la pastilla: al arrastrar una a otro
+    // lugar toma el verde que le toca ahi, y la fila nunca queda con dos
+    // iguales pegadas.
+    card.dataset.tone = String(index % SERVICE_TONES);
+    if (slot.id === exceptId) {
       return;
     }
     card.style.left = `${slot.left}px`;
