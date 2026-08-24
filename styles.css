@@ -63,18 +63,23 @@
   --tag-3: #1a9060;
   --tag-4: #20c683;
   --tag-fg: #ffffff;
-  --tag-ring: rgba(255, 255, 255, 0.92);
 
-  /* Space Mono en caja alta y el padding al minimo: la pastilla apenas mas
-     alta que la caja alta de la letra. Medido de los frames: cuerpo 15.3px
-     en una pastilla de 19.7px, o sea 0.15em arriba y abajo, y 4px de gap.
-     Ese margen chico es el gesto — si crece, deja de leerse como etiqueta. */
-  --t-tag: clamp(0.9375rem, 0.8rem + 0.42vw, 1.125rem);
+  /* Space Mono en caja alta. Los valores salen de pill-tuner.html, que escupe
+     este mismo bloque — si hay que moverlos, se mueven ahi y se pegan aca.
+
+     El padding va en px y no en em a proposito: asi el cuerpo puede crecer sin
+     que la pastilla crezca con el, que es el ajuste que importa.
+
+     Ojo que la escala va al reves de lo habitual: 16.5px en mobile y 14 en
+     desktop. En el telefono entran dos o tres por fila y hay que poder pegarles
+     con el dedo; en desktop la card se topa en 620 y a 18px las pastillas
+     quedaban enormes. De ahi la pendiente negativa del clamp. */
+  --t-tag: clamp(14px, 17.6px - 0.28vw, 16.5px);
   --lh-tag: 1;
   --tr-tag: -0.04em;
-  --tag-pad-y: 0.15em;
-  --tag-pad-x: 0.55em;
-  --tag-gap: 4px;
+  --tag-pad-y: 5.5px;
+  --tag-pad-x: 13px;
+  --tag-gap: 10px;
 }
 
 [data-theme="light"] {
@@ -102,11 +107,6 @@
   --timeline-track: rgba(0, 89, 57, 0.16);
   --timeline-dot: #e1ebe6;
   --timeline-dot-border: rgba(0, 0, 0, 0.08);
-
-  /* La rampa de etiquetas es la misma en los dos temas — los cuatro verdes
-     se ven igual de bien sobre crema. Lo unico que cambia es el anillo de
-     seleccion, que sobre crema tiene que ser oscuro. */
-  --tag-ring: #113a33;
 }
 
 *,
@@ -535,10 +535,11 @@ button {
 .type-card {
   position: absolute;
   z-index: 1;
+  --tag-bg: var(--tag-1);
   padding: var(--tag-pad-y) var(--tag-pad-x);
   border-radius: 999px;
   border: 0;
-  background: var(--tag-1);
+  background: var(--tag-bg);
   color: var(--tag-fg);
   font-family: var(--font-mono);
   font-size: var(--t-tag);
@@ -562,19 +563,19 @@ button {
 }
 
 .type-card[data-tone="1"] {
-  background: var(--tag-2);
+  --tag-bg: var(--tag-2);
 }
 
 .type-card[data-tone="2"] {
-  background: var(--tag-3);
+  --tag-bg: var(--tag-3);
 }
 
 .type-card[data-tone="3"] {
-  background: var(--tag-4);
+  --tag-bg: var(--tag-4);
 }
 
 .type-card:hover {
-  outline-color: color-mix(in srgb, var(--tag-ring) 40%, transparent);
+  outline-color: color-mix(in srgb, var(--tag-bg) 45%, transparent);
 }
 
 .type-card.is-dragging {
@@ -583,12 +584,14 @@ button {
   transition: outline-color 180ms ease;
 }
 
-/* La elegida no cambia de color ni apaga a las demas: alcanza con el anillo.
-   El hueco de outline-offset es transparente de verdad, que es lo que se
-   necesita sobre una card translucida con blur. */
+/* La elegida no cambia de color ni apaga a las demas: alcanza con el anillo,
+   y el anillo es del mismo verde que la pastilla. Lo que marca la seleccion no
+   es el color sino el hueco: outline-offset deja pasar el fondo, y esa linea
+   de aire es la que separa la pastilla del anillo. Por eso funciona igual en
+   los cuatro escalones y en los dos temas, sin un color aparte que elegir. */
 .type-card.active,
 .type-card.active:hover {
-  outline-color: var(--tag-ring);
+  outline-color: var(--tag-bg);
 }
 
 .type-card-title {
@@ -2309,7 +2312,7 @@ body.app-ready .dock-actions > *:nth-child(2) {
   :root,
   [data-theme="dark"],
   [data-theme="light"] {
-    --t-tag: 0.875rem;
+    --t-tag: 14px;
   }
 }
 

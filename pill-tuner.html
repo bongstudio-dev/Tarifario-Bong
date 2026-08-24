@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pill Tuner</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --panel: rgba(255, 255, 255, 0.5);
+      --text: #162821;
+      --muted: #60756a;
+      --border: rgba(0, 0, 0, 0.08);
+      --accent: #0d9b5c;
+      --warn: #96610d;
+      --font-sans: "Satoshi", sans-serif;
+      --font-mono: "Space Mono", monospace;
+
+      /* Los cuatro verdes de la rampa. Mismos que styles.css. */
+      --tag-1: #0c6347;
+      --tag-2: #0f7a53;
+      --tag-3: #1a9060;
+      --tag-4: #20c683;
+      --tag-fg: #ffffff;
+
+      /* Lo que mueve el panel. Arranca en lo que hay hoy en styles.css. */
+      --t-tag: 16.5px;
+      --lh-tag: 1;
+      --tr-tag: -0.04em;
+      --tag-pad-y: 5.5px;
+      --tag-pad-x: 13px;
+      --tag-gap: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f4f1ea 0%, #ece8df 100%);
+      color: var(--text);
+      font-family: var(--font-sans);
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) 1fr;
+    }
+
+    .panel {
+      padding: 28px 22px;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+
+    .panel h1,
+    .panel p {
+      margin: 0;
+    }
+
+    .panel h1 {
+      font-size: 1.1rem;
+      letter-spacing: -0.04em;
+    }
+
+    .panel-copy {
+      margin-top: 8px;
+      color: var(--muted);
+      max-width: 34ch;
+      line-height: 1.4;
+      font-size: 0.92rem;
+    }
+
+    .controls {
+      margin-top: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .group-title {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .control label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .value {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(22, 40, 33, 0.12);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    .toggle-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toggle-row button[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    .output {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 190px;
+      border: 0;
+      resize: vertical;
+      background: transparent;
+      color: var(--text);
+      font: 12px/1.45 var(--font-mono);
+      outline: none;
+    }
+
+    /* --------------------------------------------------------------------
+       Vista previa
+       -------------------------------------------------------------------- */
+
+    .preview {
+      padding: 36px;
+      display: grid;
+      align-content: start;
+      justify-items: center;
+      gap: 18px;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+
+    .readouts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .readout {
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.55);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .readout strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .readout.is-warn {
+      border-color: rgba(150, 97, 13, 0.4);
+      background: rgba(150, 97, 13, 0.1);
+      color: var(--warn);
+    }
+
+    .readout.is-warn strong {
+      color: var(--warn);
+    }
+
+    /* El marco imita al de la app: app-shell con frame-inset de 18px y la
+       scene-card con su padding, para que el ancho util sea el de verdad. */
+    .device {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .frame {
+      background: linear-gradient(180deg, #004831 0%, #004831 100%);
+      border-radius: 30px;
+      padding: 18px;
+      transition: width 120ms ease;
+    }
+
+    .card {
+      border-radius: 24px;
+      border: 1px solid rgba(149, 181, 169, 0.22);
+      background: rgba(24, 47, 37, 0.88);
+      padding: 18px;
+    }
+
+    .card-kicker {
+      margin: 0 0 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #20c683;
+    }
+
+    .card-title {
+      margin: 0 0 6px;
+      color: #fff;
+      font-size: 1.45rem;
+      line-height: 0.98;
+      letter-spacing: -0.07em;
+    }
+
+    .card-copy {
+      margin: 0;
+      color: #95b5a9;
+      font-size: 0.88rem;
+      line-height: 1.38;
+    }
+
+    /* Tema claro de la app. */
+    .frame.is-light {
+      background: linear-gradient(180deg, #f4f1ea 0%, #ece8df 100%);
+    }
+
+    .frame.is-light .card {
+      border-color: rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.32);
+    }
+
+    .frame.is-light .card-kicker {
+      color: #0d9b5c;
+    }
+
+    .frame.is-light .card-title {
+      color: #162821;
+    }
+
+    .frame.is-light .card-copy {
+      color: #476459;
+    }
+
+    /* La fila. flex-wrap corta igual que el algoritmo goloso de
+       computeServiceCardLayout(), asi que el conteo de filas es el real.
+       El inset de 5px es el aire que la app deja para que el anillo de
+       seleccion no se corte contra el contenedor con scroll. */
+    .pills {
+      margin-top: 22px;
+      /* 5px de inset a los lados + los 3 que en la app se lleva la barra de
+         scroll fina, para que el corte de linea sea el mismo. */
+      padding: 0 5px;
+      margin-right: 3px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--tag-gap);
+    }
+
+    .pill {
+      --tag-bg: var(--tag-1);
+      padding: var(--tag-pad-y) var(--tag-pad-x);
+      border: 0;
+      border-radius: 999px;
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      font-family: var(--font-mono);
+      font-size: var(--t-tag);
+      font-weight: 400;
+      line-height: var(--lh-tag);
+      letter-spacing: var(--tr-tag);
+      text-transform: uppercase;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      outline: 2px solid transparent;
+      outline-offset: 1px;
+      cursor: pointer;
+    }
+
+    .pill[data-tone="1"] { --tag-bg: var(--tag-2); }
+    .pill[data-tone="2"] { --tag-bg: var(--tag-3); }
+    .pill[data-tone="3"] { --tag-bg: var(--tag-4); }
+
+    /* El anillo va del mismo verde que la pastilla: lo que marca la seleccion
+       es el hueco de outline-offset, no el color. */
+    .pill.active {
+      outline-color: var(--tag-bg);
+    }
+
+    /* Regla para leer el ancho util contra la fila. */
+    .ruler {
+      margin-top: 14px;
+      height: 1px;
+      background: repeating-linear-gradient(90deg, rgba(149, 181, 169, 0.5) 0 6px, transparent 6px 12px);
+    }
+
+    .frame.is-light .ruler {
+      background: repeating-linear-gradient(90deg, rgba(0, 89, 57, 0.35) 0 6px, transparent 6px 12px);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+
+      .panel,
+      .preview {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="panel">
+    <h1>Pill Tuner</h1>
+    <p class="panel-copy">
+      Las pastillas del paso 1. El padding va en px fijos: el cuerpo puede crecer sin que
+      la pastilla crezca con él, que es el ajuste que importa. Cuando te cierre, copiás el
+      bloque y lo pegás en <code>styles.css</code>, arriba de todo en <code>:root</code>.
+    </p>
+
+    <div class="controls">
+      <p class="group-title">Contexto</p>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="viewport">Ancho de pantalla</label>
+          <span class="value" id="viewport-value">390px</span>
+        </div>
+        <input type="range" id="viewport" min="320" max="1440" step="1" value="390">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label>Tema</label>
+          <span class="value" id="theme-value">oscuro</span>
+        </div>
+        <div class="toggle-row">
+          <button type="button" data-theme="dark" aria-pressed="true">Oscuro</button>
+          <button type="button" data-theme="light" aria-pressed="false">Claro</button>
+        </div>
+      </div>
+
+      <p class="group-title">Cuerpo</p>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="size-min">Cuerpo en mobile</label>
+          <span class="value" id="size-min-value">16.5px</span>
+        </div>
+        <input type="range" id="size-min" min="10" max="26" step="0.5" value="16.5">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="size-max">Cuerpo en desktop</label>
+          <span class="value" id="size-max-value">14px</span>
+        </div>
+        <input type="range" id="size-max" min="10" max="32" step="0.5" value="14">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="tracking">Tracking</label>
+          <span class="value" id="tracking-value">-0.04em</span>
+        </div>
+        <input type="range" id="tracking" min="-0.09" max="0.02" step="0.005" value="-0.04">
+      </div>
+
+      <p class="group-title">Padding fijo</p>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="pad-y">Padding vertical</label>
+          <span class="value" id="pad-y-value">5.5px</span>
+        </div>
+        <input type="range" id="pad-y" min="0" max="16" step="0.5" value="5.5">
+      </div>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="pad-x">Padding horizontal</label>
+          <span class="value" id="pad-x-value">13px</span>
+        </div>
+        <input type="range" id="pad-x" min="0" max="28" step="0.5" value="13">
+      </div>
+
+      <p class="group-title">Spacing</p>
+
+      <div class="control">
+        <div class="control-row">
+          <label for="gap">Separación entre pastillas</label>
+          <span class="value" id="gap-value">10px</span>
+        </div>
+        <input type="range" id="gap" min="0" max="20" step="1" value="10">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="copy-css" type="button">Copiar CSS</button>
+      <button id="reset" type="button">Volver al actual</button>
+      <button id="frames" type="button">Medidas del frame</button>
+    </div>
+
+    <div class="output">
+      <textarea id="output" readonly spellcheck="false"></textarea>
+    </div>
+  </section>
+
+  <section class="preview">
+    <div class="readouts" id="readouts"></div>
+    <div class="device">
+      <div class="frame" id="frame">
+        <div class="card">
+          <p class="card-kicker">Paso 1</p>
+          <h2 class="card-title">¿Qué vas a cotizar?</h2>
+          <p class="card-copy">Elegí el servicio que mejor representa el encargo.</p>
+          <div class="pills" id="pills"></div>
+          <div class="ruler"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Los once servicios, en el orden en que los arma buildStaticUI().
+    const SERVICES = [
+      "Branding completo",
+      "Identidad visual",
+      "Pieza RRSS",
+      "Banner digital",
+      "Plantillas Canva x5",
+      "Post animado",
+      "Papeleria basica",
+      "Presentacion corporativa",
+      "Logo animado",
+      "Logotipo",
+      "Manual de marca"
+    ];
+
+    const TONES = 4;
+    // Los dos extremos del clamp de la app: por debajo y por encima el cuerpo
+    // se planta. Son los mismos breakpoints que usa styles.css.
+    const VW_MIN = 390;
+    const VW_MAX = 1280;
+    // La app deja 5px de aire a cada lado para que el anillo de seleccion no
+    // se corte contra el contenedor con scroll.
+    const INSET = 5;
+
+    const DEFAULTS = {
+      viewport: 390,
+      sizeMin: 16.5,
+      sizeMax: 14,
+      tracking: -0.04,
+      padY: 5.5,
+      padX: 13,
+      gap: 10
+    };
+
+    const state = { ...DEFAULTS, theme: "dark" };
+
+    const els = {
+      frame: document.querySelector("#frame"),
+      pills: document.querySelector("#pills"),
+      readouts: document.querySelector("#readouts"),
+      output: document.querySelector("#output"),
+      themeValue: document.querySelector("#theme-value")
+    };
+
+    const SLIDERS = [
+      ["viewport", "viewport", "px"],
+      ["size-min", "sizeMin", "px"],
+      ["size-max", "sizeMax", "px"],
+      ["tracking", "tracking", "em"],
+      ["pad-y", "padY", "px"],
+      ["pad-x", "padX", "px"],
+      ["gap", "gap", "px"]
+    ];
+
+    // El ancho util de la fila, con la misma cuenta que hace la app: el
+    // app-shell come 18px de frame-inset a cada lado, la scene-card 1px de
+    // borde y 18 de padding. En mobile la scene-content es la que scrollea y
+    // se reserva 3px mas para la barra fina. Arriba de 720 el stage se topa en
+    // 620, la card pasa a 28 de padding y no hay barra.
+    function contentWidth(vw) {
+      if (vw <= 720) {
+        return vw - 18 * 2 - 2 - 18 * 2 - 3;
+      }
+      return Math.min(vw - 20 * 2, 620) - 2 - 28 * 2;
+    }
+
+    // Reproduce el clamp: se planta en los extremos e interpola en el medio.
+    function bodySize(vw) {
+      const { sizeMin, sizeMax } = state;
+      if (vw <= VW_MIN) return sizeMin;
+      if (vw >= VW_MAX) return sizeMax;
+      const t = (vw - VW_MIN) / (VW_MAX - VW_MIN);
+      return sizeMin + (sizeMax - sizeMin) * t;
+    }
+
+    function renderPills() {
+      els.pills.innerHTML = "";
+      SERVICES.forEach((name, index) => {
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.className = "pill";
+        pill.dataset.tone = String(index % TONES);
+        pill.textContent = name;
+        pill.addEventListener("click", () => {
+          els.pills.querySelectorAll(".pill").forEach((p) => p.classList.remove("active"));
+          pill.classList.add("active");
+        });
+        els.pills.appendChild(pill);
+      });
+      els.pills.children[1]?.classList.add("active");
+    }
+
+    function measure() {
+      const pills = [...els.pills.children];
+      if (!pills.length) return null;
+
+      const available = contentWidth(state.viewport) - INSET * 2;
+      const widest = Math.max(...pills.map((p) => p.offsetWidth));
+      const height = pills[0].offsetHeight;
+
+      // Las filas salen de las posiciones reales, no de una simulacion.
+      const tops = new Set(pills.map((p) => Math.round(p.offsetTop)));
+      const rows = tops.size;
+      const total = rows * height + (rows - 1) * state.gap;
+
+      return { available, widest, height, rows, total };
+    }
+
+    function renderReadouts(m) {
+      if (!m) return;
+      const overflow = m.widest > m.available;
+      const tap = m.height + state.gap;
+
+      const items = [
+        ["Alto de pastilla", `${m.height}px`, false],
+        ["Filas", `${m.rows}`, false],
+        ["Alto total", `${m.total}px`, false],
+        ["Cuerpo aplicado", `${bodySize(state.viewport).toFixed(1)}px`, false],
+        ["La más larga", `${m.widest}px de ${m.available}`, overflow],
+        ["Blanco táctil", `${tap}px`, tap < 28]
+      ];
+
+      els.readouts.innerHTML = items
+        .map(([label, value, warn]) =>
+          `<span class="readout${warn ? " is-warn" : ""}">${label} <strong>${value}</strong></span>`)
+        .join("");
+    }
+
+    // Del par mobile/desktop al clamp que entiende el CSS: la recta que pasa
+    // por (390, min) y (1280, max), expresada como intercept + Nvw.
+    function clampExpression() {
+      const { sizeMin, sizeMax } = state;
+      if (sizeMin === sizeMax) return `${sizeMin}px`;
+      const slope = (sizeMax - sizeMin) / (VW_MAX - VW_MIN);
+      const intercept = sizeMin - slope * VW_MIN;
+      const lo = Math.min(sizeMin, sizeMax);
+      const hi = Math.max(sizeMin, sizeMax);
+      // Con el cuerpo mas grande en mobile que en desktop la pendiente da
+      // negativa, y ahi el signo va en el operador: "17.6px - 0.28vw", nunca
+      // "17.6px + -0.28vw".
+      const vw = slope * 100;
+      const sign = vw < 0 ? "-" : "+";
+      const term = `${sign} ${Math.abs(vw).toFixed(2)}vw`;
+      return `clamp(${lo}px, ${intercept.toFixed(2)}px ${term}, ${hi}px)`;
+    }
+
+    function renderOutput() {
+      els.output.value = [
+        "/* Pegar en :root de styles.css, reemplazando el bloque de etiqueta. */",
+        `  --t-tag: ${clampExpression()};`,
+        "  --lh-tag: 1;",
+        `  --tr-tag: ${state.tracking}em;`,
+        `  --tag-pad-y: ${state.padY}px;`,
+        `  --tag-pad-x: ${state.padX}px;`,
+        `  --tag-gap: ${state.gap}px;`
+      ].join("\n");
+    }
+
+    function apply() {
+      const root = document.documentElement.style;
+      root.setProperty("--t-tag", `${bodySize(state.viewport)}px`);
+      root.setProperty("--tr-tag", `${state.tracking}em`);
+      root.setProperty("--tag-pad-y", `${state.padY}px`);
+      root.setProperty("--tag-pad-x", `${state.padX}px`);
+      root.setProperty("--tag-gap", `${state.gap}px`);
+
+      els.frame.style.width = `${state.viewport}px`;
+      els.frame.classList.toggle("is-light", state.theme === "light");
+
+      renderOutput();
+      // Una vuelta de rAF para medir despues del reflow.
+      requestAnimationFrame(() => renderReadouts(measure()));
+    }
+
+    function syncSliders() {
+      SLIDERS.forEach(([id, key, unit]) => {
+        const input = document.querySelector(`#${id}`);
+        const value = document.querySelector(`#${id}-value`);
+        input.value = state[key];
+        value.textContent = `${state[key]}${unit}`;
+      });
+    }
+
+    SLIDERS.forEach(([id, key, unit]) => {
+      const input = document.querySelector(`#${id}`);
+      const value = document.querySelector(`#${id}-value`);
+      input.addEventListener("input", () => {
+        state[key] = parseFloat(input.value);
+        value.textContent = `${state[key]}${unit}`;
+        apply();
+      });
+    });
+
+    document.querySelectorAll("[data-theme]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.theme = button.dataset.theme;
+        document.querySelectorAll("[data-theme]").forEach((b) => {
+          b.setAttribute("aria-pressed", String(b === button));
+        });
+        els.themeValue.textContent = state.theme === "dark" ? "oscuro" : "claro";
+        apply();
+      });
+    });
+
+    document.querySelector("#reset").addEventListener("click", () => {
+      Object.assign(state, DEFAULTS);
+      syncSliders();
+      apply();
+    });
+
+    // Los tres tamanos que importan: el iPhone chico, el de todos los dias y
+    // el desktop donde el stage se topa en 620.
+    const FRAMES = [320, 390, 1280];
+    let frameIndex = 1;
+    document.querySelector("#frames").addEventListener("click", () => {
+      frameIndex = (frameIndex + 1) % FRAMES.length;
+      state.viewport = FRAMES[frameIndex];
+      syncSliders();
+      apply();
+    });
+
+    const copyButton = document.querySelector("#copy-css");
+    copyButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(els.output.value);
+      copyButton.textContent = "Copiado";
+      window.setTimeout(() => {
+        copyButton.textContent = "Copiar CSS";
+      }, 1400);
+    });
+
+    renderPills();
+    syncSliders();
+    apply();
+    // Las fuentes cambian los anchos: volver a medir cuando terminan de cargar.
+    document.fonts?.ready.then(() => apply());
+  </script>
+</body>
+</html>
