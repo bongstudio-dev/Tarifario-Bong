@@ -1,0 +1,522 @@
+<title>Espinazo en vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+
+<style>
+:root{
+  --paper:#F0F2EE; --raise:#E5E9E2; --sunk:#DBE0D8;
+  --ink:#131817; --ink-2:#4C5450; --ink-3:#767E7A;
+  --rule:#CBD1C8; --rule-hard:#A9B2A8;
+  --accent:#0F5C67; --accent-tint:#D9E7E7; --accent-ink:#FFFFFF;
+  --ok:#3C7350; --ok-tint:#DCEADF;
+  --warn:#8C6014; --warn-tint:#F2E6CC;
+  --stop:#963F32; --stop-tint:#F3DEDA;
+  --flash:#FBE9C6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101514; --raise:#171E1D; --sunk:#1D2524;
+    --ink:#E6EAE6; --ink-2:#A3ACA8; --ink-3:#78827E;
+    --rule:#293230; --rule-hard:#3B4643;
+    --accent:#63C2CB; --accent-tint:#15292C; --accent-ink:#08191B;
+    --ok:#71B788; --ok-tint:#17291D;
+    --warn:#D6AB55; --warn-tint:#2C2413;
+    --stop:#E08876; --stop-tint:#2E1B18;
+    --flash:#3D3115;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101514; --raise:#171E1D; --sunk:#1D2524;
+  --ink:#E6EAE6; --ink-2:#A3ACA8; --ink-3:#78827E;
+  --rule:#293230; --rule-hard:#3B4643;
+  --accent:#63C2CB; --accent-tint:#15292C; --accent-ink:#08191B;
+  --ok:#71B788; --ok-tint:#17291D;
+  --warn:#D6AB55; --warn-tint:#2C2413;
+  --stop:#E08876; --stop-tint:#2E1B18;
+  --flash:#3D3115;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"Newsreader",Georgia,serif; font-size:16px; line-height:1.55;
+  margin:0; padding:0 1.25rem 5rem; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:60rem;margin:0 auto}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+/* ---------- intro ---------- */
+header{padding:3.5rem 0 1.75rem}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  margin:0 0 1rem;
+}
+h1{
+  font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  font-weight:700;font-size:clamp(2.2rem,6vw,3.6rem);line-height:1;
+  letter-spacing:-.025em;margin:0 0 1.25rem;text-wrap:balance;
+}
+.lead{font-size:1.12rem;color:var(--ink-2);max-width:56ch;margin:0 0 1rem}
+.lead strong{color:var(--ink);font-weight:600}
+
+.probar{
+  border:1px solid var(--rule-hard);background:var(--accent-tint);
+  padding:1.1rem 1.25rem;margin:1.75rem 0 0;
+}
+.probar h2{
+  font-family:"Bricolage Grotesque",Arial,sans-serif;font-weight:600;
+  font-size:1rem;margin:0 0 .6rem;letter-spacing:-.005em;
+}
+.probar ol{margin:0;padding-left:1.2rem;font-size:.95rem;color:var(--ink-2)}
+.probar li{margin-bottom:.3rem}
+.probar li:last-child{margin-bottom:0}
+.probar b{color:var(--ink);font-weight:600}
+
+/* ---------- barra de control ---------- */
+.control{
+  position:sticky;top:0;z-index:20;background:var(--paper);
+  border-top:1px solid var(--rule);border-bottom:2px solid var(--ink);
+  padding:.9rem 0;margin:2.25rem 0 0;
+  display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;
+}
+.modos{display:flex;border:1px solid var(--rule-hard);background:var(--raise)}
+.modos button{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.72rem;
+  letter-spacing:.04em;padding:.55rem .9rem;border:0;background:transparent;
+  color:var(--ink-2);cursor:pointer;line-height:1.3;text-align:left;
+}
+.modos button + button{border-left:1px solid var(--rule-hard)}
+.modos button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.modos button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.modos small{display:block;font-size:.62rem;opacity:.75;letter-spacing:.02em}
+
+.acciones{display:flex;gap:.5rem;flex-wrap:wrap}
+.btn{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.72rem;
+  letter-spacing:.04em;padding:.55rem .9rem;cursor:pointer;
+  border:1px solid var(--rule-hard);background:var(--raise);color:var(--ink);
+}
+.btn:hover{background:var(--sunk)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn-fix{border-color:var(--accent);color:var(--accent);font-weight:600}
+
+.stats{
+  display:flex;flex-wrap:wrap;gap:.35rem 1.5rem;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.72rem;color:var(--ink-3);
+  padding:.75rem 0;border-bottom:1px solid var(--rule);
+}
+.stats b{color:var(--ink);font-weight:600}
+.stats .destacado{color:var(--warn)}
+
+/* ---------- validador ---------- */
+.validador{margin:1rem 0 1.5rem;border:1px solid var(--rule);background:var(--raise)}
+.validador-cab{
+  padding:.7rem 1rem;font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;gap:1rem;
+}
+.validador.limpio{border-color:var(--ok);background:var(--ok-tint)}
+.validador.limpio .validador-cab{border-bottom-color:var(--ok);color:var(--ok)}
+.validador.roto{border-color:var(--stop);background:var(--stop-tint)}
+.validador.roto .validador-cab{border-bottom-color:var(--stop);color:var(--stop)}
+.validador ul{margin:0;padding:.8rem 1rem .8rem 2.2rem;font-size:.9rem;color:var(--ink-2)}
+.validador li{margin-bottom:.3rem}
+.validador li:last-child{margin-bottom:0}
+.validador .regla{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.78rem;color:var(--stop);
+}
+.validador .vacio{padding:.8rem 1rem;font-size:.9rem;color:var(--ink-2);margin:0}
+
+/* ---------- espinazo ---------- */
+.lista{border:1px solid var(--rule);border-bottom:0}
+.sec{
+  display:flex;gap:.75rem;align-items:baseline;flex-wrap:wrap;
+  padding:1rem;background:var(--sunk);border-bottom:1px solid var(--rule);
+}
+.sec .n{
+  font-family:"Bricolage Grotesque",Arial,sans-serif;font-weight:700;
+  font-size:1.35rem;letter-spacing:-.02em;color:var(--accent);
+}
+.sec .nom{font-family:"Bricolage Grotesque",Arial,sans-serif;font-weight:600;font-size:1.1rem}
+.sec .meta{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.66rem;
+  color:var(--ink-3);letter-spacing:.06em;margin-left:auto;
+}
+.fam{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.64rem;font-weight:600;
+  padding:.15rem .4rem;border:1px solid currentColor;letter-spacing:.06em;
+}
+.fam-A{color:var(--ok)} .fam-B{color:var(--warn)} .fam-C{color:var(--stop)}
+
+.mod{
+  padding:.55rem 1rem;background:var(--raise);border-bottom:1px solid var(--rule);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.7rem;
+  color:var(--ink-3);letter-spacing:.06em;
+}
+
+.pag{
+  display:grid;grid-template-columns:6.5rem minmax(0,1fr) 4.5rem 5rem;
+  gap:.75rem;align-items:center;
+  padding:.5rem 1rem;border-bottom:1px solid var(--rule);
+  transition:background .25s;
+}
+@media (max-width:640px){
+  .pag{grid-template-columns:5.5rem minmax(0,1fr) 4.5rem;}
+  .pag .acts{grid-column:1 / -1;justify-self:start}
+}
+.pag.cambio{background:var(--flash)}
+.pag.nueva{background:var(--accent-tint)}
+.pag .cod{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.76rem;font-weight:500;
+  color:var(--ink-2);font-variant-numeric:tabular-nums;
+}
+.pag.err .cod{color:var(--stop);font-weight:600}
+.pag .tit{font-size:.95rem;min-width:0;overflow-wrap:anywhere}
+.pag .tit .plt{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.64rem;
+  color:var(--ink-3);margin-left:.5rem;
+}
+.pag .fol{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.76rem;
+  color:var(--ink-3);text-align:right;font-variant-numeric:tabular-nums;
+}
+.pag.err .fol{color:var(--stop);font-weight:600}
+.pag .acts{display:flex;gap:.3rem;justify-content:flex-end}
+.mini{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.72rem;
+  width:1.75rem;height:1.75rem;line-height:1;padding:0;cursor:pointer;
+  border:1px solid var(--rule-hard);background:var(--paper);color:var(--ink-2);
+}
+.mini:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.mini:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bloq{
+  grid-column:1 / -1;font-size:.82rem;color:var(--stop);
+  padding:.15rem 0 .3rem;
+}
+.bloq b{font-weight:600}
+
+footer{
+  margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.7rem;
+  color:var(--ink-3);line-height:1.6;
+}
+footer code{background:var(--sunk);padding:.1em .35em;color:var(--ink)}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">E&amp;D Herbs · Manual de Marca</p>
+  <h1>Espinazo en vivo</h1>
+  <p class="lead">Esta es la estructura real del manual de E&amp;D: <strong>10 secciones, 67 páginas</strong>. Los códigos y los números de página que ves acá <strong>no están escritos</strong> — se calculan cada vez.</p>
+  <p class="lead">Abajo hay un interruptor con los dos modos de trabajar. Probá agregar una página en el medio con cada uno y mirá la diferencia.</p>
+
+  <div class="probar">
+    <h2>Probá esto</h2>
+    <ol>
+      <li>Dejá el modo en <b>Derivado</b> y tocá <b>+</b> en cualquier página del medio.</li>
+      <li>Mirá cuántos folios se recorrieron solos, arriba.</li>
+      <li>Ahora pasá a <b>A mano</b> y agregá otra página.</li>
+      <li>Mirá el validador ponerse rojo. Eso es lo que pasó en Profertil.</li>
+      <li>Tocá <b>Recalcular</b> y mirá cómo se arregla.</li>
+    </ol>
+  </div>
+</header>
+
+<div class="control">
+  <div class="modos" role="group" aria-label="Modo de numeración">
+    <button id="m-mano" aria-pressed="false">A mano<small>como Profertil</small></button>
+    <button id="m-auto" aria-pressed="true">Derivado<small>con espinazo</small></button>
+  </div>
+  <div class="acciones">
+    <button class="btn btn-fix" id="fix">Recalcular</button>
+    <button class="btn" id="reset">Volver al original</button>
+  </div>
+</div>
+
+<div class="stats" id="stats"></div>
+<div class="validador" id="validador"></div>
+<div class="lista" id="lista"></div>
+
+<footer>
+  Esto es el mismo cálculo que hace <code>espinazo.py</code> en el repo, corriendo en el navegador.<br>
+  La versión real además emite <code>espinazo.csv</code>, <code>indice.md</code> y <code>figma-fill.json</code> para bajar a Figma.
+</footer>
+
+</div>
+
+<script>
+// ── datos: el espinazo real de E&D, exportado de manuales/eyd.yaml ───────────
+const SPINE = [{"num":0,"nombre":"Introducción","familia":"B","divisoria":false,"modulos":[{"nombre":"Cómo usar este manual","paginas":[{"t":"Para qué sirve y para qué no","p":"T3a_declaracion","e":"pendiente","b":""},{"t":"Cómo está organizado","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Glosario","paginas":[{"t":"Los términos que usamos","p":"T3b_lista","e":"pendiente","b":""}]}]},{"num":1,"nombre":"Nuestra Marca","familia":"C","divisoria":true,"modulos":[{"nombre":"Quiénes somos","paginas":[{"t":"E&D Herbs","p":"T3a_declaracion","e":"pendiente","b":""},{"t":"De dónde viene la marca","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Propósito","paginas":[{"t":"Nuestro propósito","p":"T3a_declaracion","e":"pendiente","b":""}]},{"nombre":"Personalidad y tono","paginas":[{"t":"Cómo suena la marca","p":"T0_base","e":"pendiente","b":""},{"t":"Dimensiones de tono","p":"T3c_servicio","e":"pendiente","b":""},{"t":"Cómo lo decimos, cómo no","p":"T3b_lista","e":"pendiente","b":""}]},{"nombre":"A quién le hablamos","paginas":[{"t":"Consumidor final","p":"T0_base","e":"pendiente","b":""},{"t":"Distribuidor","p":"T0_base","e":"pendiente","b":""}]}]},{"num":2,"nombre":"Logotipo","familia":"A","divisoria":true,"modulos":[{"nombre":"Anatomía","paginas":[{"t":"Las partes del logo","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Versiones","paginas":[{"t":"Versión principal","p":"T0_base","e":"pendiente","b":""},{"t":"Horizontal y vertical","p":"T0_base","e":"pendiente","b":""},{"t":"Monocromo e inversión","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Área de exclusión y tamaños","paginas":[{"t":"Área de exclusión","p":"T0_base","e":"pendiente","b":""},{"t":"Tamaño mínimo","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Usos incorrectos","paginas":[{"t":"Lo que no hay que hacer","p":"T0_base","e":"pendiente","b":""},{"t":"Lo que no hay que hacer","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Convivencia","paginas":[{"t":"El logo con el sistema de ilustración","p":"T0_base","e":"pendiente","b":""}]}]},{"num":3,"nombre":"Color","familia":"A","divisoria":true,"modulos":[{"nombre":"La paleta","paginas":[{"t":"Paleta completa","p":"T5_full_bleed","e":"pendiente","b":""},{"t":"Fichas de color","p":"T3c_servicio","e":"pendiente","b":""}]},{"nombre":"Jerarquía","paginas":[{"t":"El verde como ancla","p":"T3a_declaracion","e":"pendiente","b":""},{"t":"Roles: ancla, apoyo, acento","p":"T3c_servicio","e":"pendiente","b":""}]},{"nombre":"Combinaciones","paginas":[{"t":"Combinaciones válidas","p":"T0_base","e":"pendiente","b":""},{"t":"Color por familia de producto","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Accesibilidad","paginas":[{"t":"Contraste mínimo","p":"T0_base","e":"pendiente","b":""}]}]},{"num":4,"nombre":"Tipografía","familia":"A","divisoria":true,"modulos":[{"nombre":"Avería Serif","paginas":[{"t":"La tipográfica de titulares","p":"T5_full_bleed","e":"pendiente","b":""},{"t":"Pesos y usos","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Familia de cuerpo","paginas":[{"t":"La tipográfica de lectura","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Jerarquías","paginas":[{"t":"Escala tipográfica","p":"T0_base","e":"pendiente","b":""},{"t":"Titulares, bajadas y cuerpo","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Lineamientos","paginas":[{"t":"Alternativas y sustitutos","p":"T0_base","e":"pendiente","b":""}]}]},{"num":5,"nombre":"Ilustración","familia":"B","divisoria":true,"modulos":[{"nombre":"El sistema","paginas":[{"t":"De dónde salen las formas","p":"T3a_declaracion","e":"muestra","b":""},{"t":"Qué resuelve el sistema","p":"T0_base","e":"muestra","b":""}]},{"nombre":"Construcción","paginas":[{"t":"Grilla y trazo","p":"T0_base","e":"muestra","b":""},{"t":"Cómo se dibuja un emblema nuevo","p":"T0_base","e":"pendiente","b":""},{"t":"Qué no hacer","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Biblioteca de emblemas","paginas":[{"t":"Emblemas por hierba","p":"T5_full_bleed","e":"muestra","b":""},{"t":"Emblemas por hierba","p":"T5_full_bleed","e":"muestra","b":""},{"t":"Índice de emblemas","p":"T3b_lista","e":"pendiente","b":""}]},{"nombre":"Uso por producto","paginas":[{"t":"Un emblema por SKU","p":"T0_base","e":"pendiente","b":""},{"t":"Gliceritos: el dibujo original","p":"T0_base","e":"pendiente","b":""}]}]},{"num":6,"nombre":"Composición","familia":"B","divisoria":true,"modulos":[{"nombre":"La grilla","paginas":[{"t":"Grilla de 8 columnas","p":"T5_full_bleed","e":"pendiente","b":""},{"t":"Márgenes y aire","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Jerarquías de texto","paginas":[{"t":"Cómo se arma una pieza","p":"T0_base","e":"pendiente","b":""},{"t":"Titular, bajada, cuerpo, nota","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Retículas por formato","paginas":[{"t":"Impreso y digital","p":"T3c_servicio","e":"pendiente","b":""},{"t":"Formatos verticales","p":"T0_base","e":"pendiente","b":""}]}]},{"num":7,"nombre":"Etiquetas","familia":"C","divisoria":true,"modulos":[{"nombre":"Anatomía de la etiqueta","paginas":[{"t":"Las zonas de la etiqueta","p":"T5_full_bleed","e":"pendiente","b":""},{"t":"Jerarquía de información","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Campos obligatorios","paginas":[{"t":"Requisitos FDA","p":"T3b_lista","e":"bloqueado","b":"Falta la info técnica y de contenido de etiquetas (Dariana, pendiente desde la call del 12/08)"},{"t":"Supplement Facts","p":"T0_base","e":"bloqueado","b":"Falta la info técnica y de contenido de etiquetas (Dariana)"}]},{"nombre":"Ficha por SKU","paginas":[{"t":"Cómo se completa una ficha","p":"T0_base","e":"pendiente","b":""},{"t":"Fichas de producto","p":"T3b_lista","e":"bloqueado","b":"Una fila por SKU: se completa cuando llegue la planilla de etiquetas"}]},{"nombre":"Aplicación por envase","paginas":[{"t":"Tintura y frasco","p":"T5_full_bleed","e":"pendiente","b":""},{"t":"Bolsita","p":"T0_base","e":"pendiente","b":""}]}]},{"num":8,"nombre":"Digital y Redes","familia":"B","divisoria":true,"modulos":[{"nombre":"Formatos por red","paginas":[{"t":"Medidas por plataforma","p":"T3c_servicio","e":"pendiente","b":""},{"t":"Adaptación entre formatos","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Tipos de post","paginas":[{"t":"Cuatro tipos de contenido","p":"T3c_servicio","e":"pendiente","b":""},{"t":"Ejemplos armados","p":"T5_full_bleed","e":"pendiente","b":""}]},{"nombre":"Plantillas editables","paginas":[{"t":"El kit de Canva","p":"T0_base","e":"pendiente","b":""}]},{"nombre":"Web","paginas":[{"t":"Lineamientos del sitio","p":"T0_base","e":"pendiente","b":""},{"t":"Componentes base","p":"T0_base","e":"pendiente","b":""}]}]},{"num":9,"nombre":"Recursos","familia":"B","divisoria":true,"modulos":[{"nombre":"Descargables","paginas":[{"t":"Dónde está cada archivo","p":"T3b_lista","e":"pendiente","b":""}]},{"nombre":"Preguntas frecuentes","paginas":[{"t":"Preguntas frecuentes","p":"T3b_lista","e":"pendiente","b":""}]},{"nombre":"Contacto","paginas":[{"t":"Cómo pedir ayuda","p":"T0_base","e":"pendiente","b":""}]}]}];
+
+// las divisorias no llevan folio: por eso no entran en la numeracion de paginas
+const CON_FOLIO = new Set(["T0_base","T3a_declaracion","T3b_lista","T3c_servicio","T5_full_bleed"]);
+const EMBLEMAS = ["comfrey","gymnema","lavender","lemongrass","milk-thistle","curia","olive","moringa","thyme"];
+
+const dd = n => String(n).padStart(2,"0");
+
+let secciones, siguienteId, modo = "auto", ultimoCambio = null;
+
+function iniciar(){
+  secciones = JSON.parse(JSON.stringify(SPINE));
+  siguienteId = 1;
+  secciones.forEach(s => s.modulos.forEach(m => m.paginas.forEach(p => { p._id = siguienteId++; })));
+  // en modo "a mano" los numeros son texto que quedo escrito: se congelan aca
+  derivar().forEach(f => { if(f.pagina) f.pagina._mano = {cod:f.cod, fol:f.fol}; });
+  ultimoCambio = null;
+}
+
+// ── el calculo: lo mismo que hace espinazo.py ────────────────────────────────
+function derivar(){
+  const filas = [];
+  let folio = 0, usadas = 0;
+
+  secciones.forEach(s => {
+    if(s.divisoria !== false){
+      filas.push({tipo:"sec", sec:s, cod:dd(s.num), emblema:EMBLEMAS[usadas] || "—"});
+      usadas++;
+    } else {
+      filas.push({tipo:"sec", sec:s, cod:dd(s.num), emblema:null});
+    }
+    s.modulos.forEach((m, mi) => {
+      filas.push({tipo:"mod", sec:s, mod:m, cod:`${dd(s.num)}.${dd(mi+1)}`, total:m.paginas.length});
+      m.paginas.forEach((p, pi) => {
+        const llevaFolio = CON_FOLIO.has(p.p);
+        if(llevaFolio) folio++;
+        filas.push({
+          tipo:"pag", sec:s, mod:m, pagina:p,
+          cod:`${dd(s.num)}.${dd(mi+1)}.${dd(pi+1)}`,
+          fol: llevaFolio ? folio : null,
+          nav:`${pi+1}/${m.paginas.length}`
+        });
+      });
+    });
+  });
+  return filas;
+}
+
+// lo que se muestra depende del modo: calculado, o lo que quedo escrito
+function mostrar(f){
+  if(f.tipo !== "pag") return {cod:f.cod, fol:null};
+  if(modo === "auto") return {cod:f.cod, fol:f.fol};
+  const m = f.pagina._mano || {cod:"??", fol:null};
+  return {cod:m.cod, fol:m.fol};
+}
+
+// ── validador: corre sobre los numeros que se estan mostrando ────────────────
+function validar(filas){
+  const problemas = [];
+  const pags = filas.filter(f => f.tipo === "pag");
+
+  const codigos = new Map(), folios = new Map();
+  pags.forEach(f => {
+    const v = mostrar(f);
+    if(!codigos.has(v.cod)) codigos.set(v.cod, []);
+    codigos.get(v.cod).push(f);
+    if(v.fol != null){
+      if(!folios.has(v.fol)) folios.set(v.fol, []);
+      folios.get(v.fol).push(f);
+    }
+  });
+
+  const conflictivos = new Set();
+  codigos.forEach((fs, cod) => {
+    if(fs.length > 1){
+      fs.forEach(f => conflictivos.add(f.pagina._id));
+      problemas.push({regla:"codigo_duplicado", texto:`el código ${cod} está en ${fs.length} páginas: “${fs.map(f=>f.pagina.t).join("”, “")}”`});
+    }
+  });
+  folios.forEach((fs, fol) => {
+    if(fs.length > 1){
+      fs.forEach(f => conflictivos.add(f.pagina._id));
+      problemas.push({regla:"folio_duplicado", texto:`la página ${fol} aparece ${fs.length} veces`});
+    }
+  });
+
+  // huecos de numeracion dentro de cada modulo
+  const porModulo = new Map();
+  pags.forEach(f => {
+    const v = mostrar(f);
+    const partes = v.cod.split(".");
+    if(partes.length !== 3) return;
+    const clave = partes[0] + "." + partes[1];
+    if(!porModulo.has(clave)) porModulo.set(clave, new Set());
+    porModulo.get(clave).add(parseInt(partes[2], 10));
+  });
+  porModulo.forEach((nums, clave) => {
+    const max = Math.max(...nums), faltan = [];
+    for(let i = 1; i <= max; i++) if(!nums.has(i)) faltan.push(dd(i));
+    if(faltan.length) problemas.push({regla:"numeracion_salteada", texto:`en el módulo ${clave} falta la página ${faltan.join(", ")}`});
+  });
+
+  // folios salteados
+  const orden = [...folios.keys()].sort((a,b)=>a-b);
+  if(orden.length){
+    const faltan = [];
+    for(let i = 1; i <= Math.max(...orden); i++) if(!folios.has(i)) faltan.push(i);
+    if(faltan.length) problemas.push({regla:"folio_salteado", texto:`falta(n) la(s) página(s) ${faltan.slice(0,6).join(", ")}${faltan.length>6?"…":""}`});
+  }
+
+  return {problemas, conflictivos};
+}
+
+// ── acciones ────────────────────────────────────────────────────────────────
+function foliosActuales(){
+  const m = new Map();
+  derivar().forEach(f => { if(f.tipo === "pag" && f.fol != null) m.set(f.pagina._id, f.fol); });
+  return m;
+}
+
+function cambiosDeFolio(antes){
+  const despues = foliosActuales(), movidas = [];
+  antes.forEach((fol, pid) => { if(despues.has(pid) && despues.get(pid) !== fol) movidas.push(pid); });
+  return movidas;
+}
+
+function agregar(id){
+  const antes = foliosActuales();
+  let insertada = null;
+
+  secciones.forEach(s => s.modulos.forEach(m => {
+    const i = m.paginas.findIndex(p => p._id === id);
+    if(i === -1) return;
+    const vecina = m.paginas[i];
+    insertada = {t:"Página nueva", p:"T0_base", e:"pendiente", b:"", _id:siguienteId++};
+    // en modo "a mano" la pagina nueva hereda el numero de la de al lado:
+    // es lo que pasa cuando duplicás un frame en Figma y no lo renumerás
+    insertada._mano = {cod:(vecina._mano||{}).cod, fol:(vecina._mano||{}).fol};
+    m.paginas.splice(i + 1, 0, insertada);
+  }));
+  if(!insertada) return;
+
+  if(modo === "auto") sincronizarMano();
+
+  // en modo "a mano" los numeros mostrados estan congelados: no se movio nada
+  // en pantalla, aunque el calculo diga otra cosa
+  const movidas = modo === "auto" ? cambiosDeFolio(antes) : [];
+  ultimoCambio = {accion:"agregar", nueva:insertada._id, movidas:new Set(movidas), cuantas:movidas.length};
+  pintar();
+}
+
+function borrar(id){
+  const antes = foliosActuales();
+  secciones.forEach(s => s.modulos.forEach(m => {
+    const i = m.paginas.findIndex(p => p._id === id);
+    if(i !== -1) m.paginas.splice(i, 1);
+  }));
+  if(modo === "auto") sincronizarMano();
+  const movidas = modo === "auto" ? cambiosDeFolio(antes) : [];
+  ultimoCambio = {accion:"borrar", nueva:null, movidas:new Set(movidas), cuantas:movidas.length};
+  pintar();
+}
+
+function sincronizarMano(){
+  derivar().forEach(f => { if(f.pagina) f.pagina._mano = {cod:f.cod, fol:f.fol}; });
+}
+
+// ── pintado ─────────────────────────────────────────────────────────────────
+const $lista = document.getElementById("lista");
+const $stats = document.getElementById("stats");
+const $val = document.getElementById("validador");
+
+function pintar(){
+  const filas = derivar();
+  const {problemas, conflictivos} = validar(filas);
+
+  // stats
+  const numeradas = filas.filter(f => f.tipo === "pag" && CON_FOLIO.has(f.pagina.p)).length;
+  const frames = filas.filter(f => f.tipo === "pag").length
+               + filas.filter(f => f.tipo === "sec" && f.emblema).length + 1;
+  const bloqueadas = filas.filter(f => f.tipo === "pag" && f.pagina.e === "bloqueado").length;
+  let mov = "";
+  if(ultimoCambio){
+    mov = ultimoCambio.cuantas > 0
+      ? `<span class="destacado">último cambio · <b>${ultimoCambio.cuantas}</b> folios se recorrieron solos</span>`
+      : `<span class="destacado">último cambio · <b>0</b> folios se movieron (los números quedaron como estaban)</span>`;
+  }
+  $stats.innerHTML = `<span><b>${frames}</b> frames</span>
+    <span><b>${numeradas}</b> páginas numeradas</span>
+    <span><b>${bloqueadas}</b> bloqueadas</span>${mov}`;
+
+  // validador
+  if(problemas.length === 0){
+    $val.className = "validador limpio";
+    $val.innerHTML = `<div class="validador-cab"><span>Validación</span><span>0 errores</span></div>
+      <p class="vacio">Todo consistente: sin códigos repetidos, sin huecos de numeración, sin folios duplicados.</p>`;
+  } else {
+    $val.className = "validador roto";
+    $val.innerHTML = `<div class="validador-cab"><span>Validación</span><span>${problemas.length} ${problemas.length===1?"error":"errores"}</span></div>
+      <ul>${problemas.map(p => `<li><span class="regla">${p.regla}</span> — ${p.texto}</li>`).join("")}</ul>`;
+  }
+
+  // lista
+  const html = [];
+  filas.forEach(f => {
+    if(f.tipo === "sec"){
+      const em = f.emblema ? `divisoria · ${f.emblema}` : "sin divisoria";
+      html.push(`<div class="sec"><span class="n mono">${f.cod}</span>
+        <span class="nom">${f.sec.nombre}</span>
+        <span class="fam fam-${f.sec.familia}">familia ${f.sec.familia}</span>
+        <span class="meta">${em}</span></div>`);
+      return;
+    }
+    if(f.tipo === "mod"){
+      html.push(`<div class="mod">${f.cod} · ${f.mod.nombre} · ${f.total} ${f.total===1?"página":"páginas"}</div>`);
+      return;
+    }
+    const v = mostrar(f);
+    const clases = ["pag"];
+    if(ultimoCambio && ultimoCambio.nueva === f.pagina._id) clases.push("nueva");
+    else if(ultimoCambio && ultimoCambio.movidas.has(f.pagina._id)) clases.push("cambio");
+    if(conflictivos.has(f.pagina._id)) clases.push("err");
+
+    const folTxt = v.fol == null ? "—" : "p. " + v.fol;
+    html.push(`<div class="${clases.join(" ")}">
+      <span class="cod">${v.cod ?? "??"}</span>
+      <span class="tit">${f.pagina.t}<span class="plt">${f.pagina.p}</span></span>
+      <span class="fol">${folTxt}</span>
+      <span class="acts">
+        <button class="mini" data-add="${f.pagina._id}" title="Agregar una página acá abajo" aria-label="Agregar una página después de ${f.pagina.t}">+</button>
+        <button class="mini" data-del="${f.pagina._id}" title="Borrar esta página" aria-label="Borrar ${f.pagina.t}">×</button>
+      </span>
+      ${f.pagina.b ? `<span class="bloq"><b>Bloqueada:</b> ${f.pagina.b}</span>` : ""}
+    </div>`);
+  });
+  $lista.innerHTML = html.join("");
+}
+
+// ── eventos ─────────────────────────────────────────────────────────────────
+$lista.addEventListener("click", e => {
+  const add = e.target.closest("[data-add]"), del = e.target.closest("[data-del]");
+  if(add) agregar(parseInt(add.dataset.add, 10));
+  if(del) borrar(parseInt(del.dataset.del, 10));
+});
+
+const $mano = document.getElementById("m-mano"), $auto = document.getElementById("m-auto");
+function setModo(m){
+  modo = m;
+  $mano.setAttribute("aria-pressed", String(m === "mano"));
+  $auto.setAttribute("aria-pressed", String(m === "auto"));
+  document.getElementById("fix").disabled = (m === "auto");
+  pintar();
+}
+$mano.addEventListener("click", () => setModo("mano"));
+$auto.addEventListener("click", () => setModo("auto"));
+
+document.getElementById("fix").addEventListener("click", () => {
+  sincronizarMano();
+  ultimoCambio = null;
+  pintar();
+});
+document.getElementById("reset").addEventListener("click", () => { iniciar(); pintar(); });
+
+iniciar();
+setModo("auto");
+</script>
