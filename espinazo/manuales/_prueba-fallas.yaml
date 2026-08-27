@@ -1,0 +1,66 @@
+# Fixture de prueba: reproduce a proposito los errores reales que aparecieron
+# en el manual de Profertil, para verificar que el validador los agarra.
+# No es un manual: es el test del validador.
+#
+#   python3 espinazo.py manuales/_prueba-fallas.yaml --salida /tmp/prueba
+#
+# Esperado: 6 errores y 3 avisos.
+
+manual:
+  marca: Prueba
+  titulo: Fixture de fallas
+  version: v0
+  pie_marca: Prueba
+  plantilla_default: T0_base
+
+plantillas:
+  T0_base:
+    campos: {titulo: 1, cuerpo: 1, pie_marca: 1, pie_seccion: 1, folio: 1}
+  T9_sin_folio:
+    campos: {titulo: 1, cuerpo: 1}
+  T2_divisoria_unica:
+    campos: {seccion_num: 1, seccion_nombre: 1}
+
+divisorias:
+  # Solo una, pero abajo hay dos secciones que la piden -> divisorias_insuficientes
+  - {plantilla: T2_divisoria_unica, emblema: prueba, color: gris}
+
+secciones:
+
+  - num: 1
+    nombre: Tono de voz
+    familia: C
+    modulos:
+      - nombre: Dimensiones
+        paginas:
+          # Reproduce el salto real de Profertil: .04 -> .06, sin .05
+          - {num: 1, titulo: "Dimensiones"}
+          - {num: 2, titulo: "Cercano y empático"}
+          - {num: 3, titulo: "Inspirador y positivo"}
+          - {num: 4, titulo: "Claro y accesible"}
+          - {num: 6, titulo: "Transparente y auténtico"}
+
+      # Salta del modulo 01 al 03 -> modulo_salteado
+      - num: 3
+        nombre: Ejemplos
+        paginas:
+          # Dos paginas con el mismo numero -> codigo_duplicado
+          - {num: 1, titulo: "Ejemplos"}
+          - {num: 1, titulo: "Más ejemplos"}
+          # Plantilla que no esta en el catalogo -> plantilla_inexistente
+          - {num: 2, titulo: "Otra", plantilla: T7_que_no_existe}
+          # Campo que la plantilla no tiene -> campo_desconocido
+          - {num: 3, titulo: "Otra más", campos: {subtitulo_inventado: "hola"}}
+          # Plantilla sin $folio -> contenido_sin_folio
+          - {num: 4, titulo: "Sin folio", plantilla: T9_sin_folio}
+
+  - num: 2
+    nombre: Etiquetas
+    familia: Z          # familia invalida -> familia_invalida
+    modulos:
+      - nombre: Cumplimiento
+        paginas:
+          # bloqueado sin decir por que -> bloqueante_sin_declarar
+          - {titulo: "Requisitos", estado: bloqueado}
+          # estado que no existe -> estado_invalido
+          - {titulo: "Fichas", estado: casi_listo}

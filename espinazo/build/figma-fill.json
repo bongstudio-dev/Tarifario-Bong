@@ -1,0 +1,1068 @@
+{
+  "manual": "E&D Herbs",
+  "version": "v0.1",
+  "figma_file": "9ra05S5WOcK9ihSZ7Dlprg",
+  "pagina_plantillas": "11:14",
+  "total_paginas": 67,
+  "total_frames": 77,
+  "paginas": [
+    {
+      "orden": 1,
+      "id": "",
+      "codigo": "PORTADA",
+      "archivo": "00_Portada",
+      "plantilla": "T1_portada",
+      "estado": "pendiente",
+      "campos": {
+        "version": "v0.1",
+        "titulo": "E&D Herbs Manual de Marca"
+      }
+    },
+    {
+      "orden": 2,
+      "id": "Introduccion/Como_Usar_Este_Manual/Para_Que_Sirve_Y_Para_Que_No",
+      "codigo": "00.01.01",
+      "archivo": "00.01.01_Introduccion_Como_Usar_Este_Manual_1",
+      "plantilla": "T3a_declaracion",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Para qué sirve y para qué no",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "00 · Introducción",
+        "folio": "1"
+      }
+    },
+    {
+      "orden": 3,
+      "id": "Introduccion/Como_Usar_Este_Manual/Como_Esta_Organizado",
+      "codigo": "00.01.02",
+      "archivo": "00.01.02_Introduccion_Como_Usar_Este_Manual_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cómo está organizado",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "00 · Introducción",
+        "folio": "2"
+      }
+    },
+    {
+      "orden": 4,
+      "id": "Introduccion/Glosario/Los_Terminos_Que_Usamos",
+      "codigo": "00.02.01",
+      "archivo": "00.02.01_Introduccion_Glosario_1",
+      "plantilla": "T3b_lista",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Los términos que usamos",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "00 · Introducción",
+        "folio": "3"
+      }
+    },
+    {
+      "orden": 5,
+      "id": "",
+      "codigo": "01",
+      "archivo": "01_Nuestra_Marca",
+      "plantilla": "T2_divisoria_verde_normal_izq",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "01",
+        "seccion_nombre": "Nuestra Marca"
+      }
+    },
+    {
+      "orden": 6,
+      "id": "Nuestra_Marca/Quienes_Somos/E_D_Herbs",
+      "codigo": "01.01.01",
+      "archivo": "01.01.01_Nuestra_Marca_Quienes_Somos_1",
+      "plantilla": "T3a_declaracion",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "E&D Herbs",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "4"
+      }
+    },
+    {
+      "orden": 7,
+      "id": "Nuestra_Marca/Quienes_Somos/De_Donde_Viene_La_Marca",
+      "codigo": "01.01.02",
+      "archivo": "01.01.02_Nuestra_Marca_Quienes_Somos_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "De dónde viene la marca",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "5"
+      }
+    },
+    {
+      "orden": 8,
+      "id": "Nuestra_Marca/Proposito/Nuestro_Proposito",
+      "codigo": "01.02.01",
+      "archivo": "01.02.01_Nuestra_Marca_Proposito_1",
+      "plantilla": "T3a_declaracion",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Nuestro propósito",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "6"
+      }
+    },
+    {
+      "orden": 9,
+      "id": "Nuestra_Marca/Personalidad_Y_Tono/Como_Suena_La_Marca",
+      "codigo": "01.03.01",
+      "archivo": "01.03.01_Nuestra_Marca_Personalidad_Y_Tono_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cómo suena la marca",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "7"
+      }
+    },
+    {
+      "orden": 10,
+      "id": "Nuestra_Marca/Personalidad_Y_Tono/Dimensiones_De_Tono",
+      "codigo": "01.03.02",
+      "archivo": "01.03.02_Nuestra_Marca_Personalidad_Y_Tono_2",
+      "plantilla": "T3c_servicio",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Dimensiones de tono",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "8"
+      }
+    },
+    {
+      "orden": 11,
+      "id": "Nuestra_Marca/Personalidad_Y_Tono/Como_Lo_Decimos_Como_No",
+      "codigo": "01.03.03",
+      "archivo": "01.03.03_Nuestra_Marca_Personalidad_Y_Tono_3",
+      "plantilla": "T3b_lista",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cómo lo decimos, cómo no",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "9"
+      }
+    },
+    {
+      "orden": 12,
+      "id": "Nuestra_Marca/A_Quien_Le_Hablamos/Consumidor_Final",
+      "codigo": "01.04.01",
+      "archivo": "01.04.01_Nuestra_Marca_A_Quien_Le_Hablamos_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Consumidor final",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "10"
+      }
+    },
+    {
+      "orden": 13,
+      "id": "Nuestra_Marca/A_Quien_Le_Hablamos/Distribuidor",
+      "codigo": "01.04.02",
+      "archivo": "01.04.02_Nuestra_Marca_A_Quien_Le_Hablamos_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Distribuidor",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "01 · Nuestra Marca",
+        "folio": "11"
+      }
+    },
+    {
+      "orden": 14,
+      "id": "",
+      "codigo": "02",
+      "archivo": "02_Logotipo",
+      "plantilla": "T2_divisoria_ocre_normal_izq",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "02",
+        "seccion_nombre": "Logotipo"
+      }
+    },
+    {
+      "orden": 15,
+      "id": "Logotipo/Anatomia/Las_Partes_Del_Logo",
+      "codigo": "02.01.01",
+      "archivo": "02.01.01_Logotipo_Anatomia_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Las partes del logo",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "12"
+      }
+    },
+    {
+      "orden": 16,
+      "id": "Logotipo/Versiones/Version_Principal",
+      "codigo": "02.02.01",
+      "archivo": "02.02.01_Logotipo_Versiones_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Versión principal",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "13"
+      }
+    },
+    {
+      "orden": 17,
+      "id": "Logotipo/Versiones/Horizontal_Y_Vertical",
+      "codigo": "02.02.02",
+      "archivo": "02.02.02_Logotipo_Versiones_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Horizontal y vertical",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "14"
+      }
+    },
+    {
+      "orden": 18,
+      "id": "Logotipo/Versiones/Monocromo_E_Inversion",
+      "codigo": "02.02.03",
+      "archivo": "02.02.03_Logotipo_Versiones_3",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Monocromo e inversión",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "15"
+      }
+    },
+    {
+      "orden": 19,
+      "id": "Logotipo/Area_De_Exclusion_Y_Tamanos/Area_De_Exclusion",
+      "codigo": "02.03.01",
+      "archivo": "02.03.01_Logotipo_Area_De_Exclusion_Y_Tamanos_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Área de exclusión",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "16"
+      }
+    },
+    {
+      "orden": 20,
+      "id": "Logotipo/Area_De_Exclusion_Y_Tamanos/Tamano_Minimo",
+      "codigo": "02.03.02",
+      "archivo": "02.03.02_Logotipo_Area_De_Exclusion_Y_Tamanos_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Tamaño mínimo",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "17"
+      }
+    },
+    {
+      "orden": 21,
+      "id": "Logotipo/Usos_Incorrectos/Lo_Que_No_Hay_Que_Hacer",
+      "codigo": "02.04.01",
+      "archivo": "02.04.01_Logotipo_Usos_Incorrectos_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Lo que no hay que hacer",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "18"
+      }
+    },
+    {
+      "orden": 22,
+      "id": "Logotipo/Usos_Incorrectos/Lo_Que_No_Hay_Que_Hacer",
+      "codigo": "02.04.02",
+      "archivo": "02.04.02_Logotipo_Usos_Incorrectos_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Lo que no hay que hacer",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "19"
+      }
+    },
+    {
+      "orden": 23,
+      "id": "Logotipo/Convivencia/El_Logo_Con_El_Sistema_De_Ilustracion",
+      "codigo": "02.05.01",
+      "archivo": "02.05.01_Logotipo_Convivencia_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "El logo con el sistema de ilustración",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "02 · Logotipo",
+        "folio": "20"
+      }
+    },
+    {
+      "orden": 24,
+      "id": "",
+      "codigo": "03",
+      "archivo": "03_Color",
+      "plantilla": "T2_divisoria_lavanda_normal_izq",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "03",
+        "seccion_nombre": "Color"
+      }
+    },
+    {
+      "orden": 25,
+      "id": "Color/La_Paleta/Paleta_Completa",
+      "codigo": "03.01.01",
+      "archivo": "03.01.01_Color_La_Paleta_1",
+      "plantilla": "T5_full_bleed",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Paleta completa",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "03 · Color",
+        "folio": "21"
+      }
+    },
+    {
+      "orden": 26,
+      "id": "Color/La_Paleta/Fichas_De_Color",
+      "codigo": "03.01.02",
+      "archivo": "03.01.02_Color_La_Paleta_2",
+      "plantilla": "T3c_servicio",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Fichas de color",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "03 · Color",
+        "folio": "22"
+      }
+    },
+    {
+      "orden": 27,
+      "id": "Color/Jerarquia/El_Verde_Como_Ancla",
+      "codigo": "03.02.01",
+      "archivo": "03.02.01_Color_Jerarquia_1",
+      "plantilla": "T3a_declaracion",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "El verde como ancla",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "03 · Color",
+        "folio": "23"
+      }
+    },
+    {
+      "orden": 28,
+      "id": "Color/Jerarquia/Roles_Ancla_Apoyo_Acento",
+      "codigo": "03.02.02",
+      "archivo": "03.02.02_Color_Jerarquia_2",
+      "plantilla": "T3c_servicio",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Roles: ancla, apoyo, acento",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "03 · Color",
+        "folio": "24"
+      }
+    },
+    {
+      "orden": 29,
+      "id": "Color/Combinaciones/Combinaciones_Validas",
+      "codigo": "03.03.01",
+      "archivo": "03.03.01_Color_Combinaciones_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Combinaciones válidas",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "03 · Color",
+        "folio": "25"
+      }
+    },
+    {
+      "orden": 30,
+      "id": "Color/Combinaciones/Color_Por_Familia_De_Producto",
+      "codigo": "03.03.02",
+      "archivo": "03.03.02_Color_Combinaciones_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Color por familia de producto",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "03 · Color",
+        "folio": "26"
+      }
+    },
+    {
+      "orden": 31,
+      "id": "Color/Accesibilidad/Contraste_Minimo",
+      "codigo": "03.04.01",
+      "archivo": "03.04.01_Color_Accesibilidad_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Contraste mínimo",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "03 · Color",
+        "folio": "27"
+      }
+    },
+    {
+      "orden": 32,
+      "id": "",
+      "codigo": "04",
+      "archivo": "04_Tipografia",
+      "plantilla": "T2_divisoria_violeta_normal_izq",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "04",
+        "seccion_nombre": "Tipografía"
+      }
+    },
+    {
+      "orden": 33,
+      "id": "Tipografia/Averia_Serif/La_Tipografica_De_Titulares",
+      "codigo": "04.01.01",
+      "archivo": "04.01.01_Tipografia_Averia_Serif_1",
+      "plantilla": "T5_full_bleed",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "La tipográfica de titulares",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "04 · Tipografía",
+        "folio": "28"
+      }
+    },
+    {
+      "orden": 34,
+      "id": "Tipografia/Averia_Serif/Pesos_Y_Usos",
+      "codigo": "04.01.02",
+      "archivo": "04.01.02_Tipografia_Averia_Serif_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Pesos y usos",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "04 · Tipografía",
+        "folio": "29"
+      }
+    },
+    {
+      "orden": 35,
+      "id": "Tipografia/Familia_De_Cuerpo/La_Tipografica_De_Lectura",
+      "codigo": "04.02.01",
+      "archivo": "04.02.01_Tipografia_Familia_De_Cuerpo_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "La tipográfica de lectura",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "04 · Tipografía",
+        "folio": "30"
+      }
+    },
+    {
+      "orden": 36,
+      "id": "Tipografia/Jerarquias/Escala_Tipografica",
+      "codigo": "04.03.01",
+      "archivo": "04.03.01_Tipografia_Jerarquias_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Escala tipográfica",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "04 · Tipografía",
+        "folio": "31"
+      }
+    },
+    {
+      "orden": 37,
+      "id": "Tipografia/Jerarquias/Titulares_Bajadas_Y_Cuerpo",
+      "codigo": "04.03.02",
+      "archivo": "04.03.02_Tipografia_Jerarquias_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Titulares, bajadas y cuerpo",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "04 · Tipografía",
+        "folio": "32"
+      }
+    },
+    {
+      "orden": 38,
+      "id": "Tipografia/Lineamientos/Alternativas_Y_Sustitutos",
+      "codigo": "04.04.01",
+      "archivo": "04.04.01_Tipografia_Lineamientos_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Alternativas y sustitutos",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "04 · Tipografía",
+        "folio": "33"
+      }
+    },
+    {
+      "orden": 39,
+      "id": "",
+      "codigo": "05",
+      "archivo": "05_Ilustracion",
+      "plantilla": "T2_divisoria_terracota_normal_der",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "05",
+        "seccion_nombre": "Ilustración"
+      }
+    },
+    {
+      "orden": 40,
+      "id": "Ilustracion/El_Sistema/De_Donde_Salen_Las_Formas",
+      "codigo": "05.01.01",
+      "archivo": "05.01.01_Ilustracion_El_Sistema_1",
+      "plantilla": "T3a_declaracion",
+      "estado": "muestra",
+      "campos": {
+        "titulo": "De dónde salen las formas",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "34"
+      }
+    },
+    {
+      "orden": 41,
+      "id": "Ilustracion/El_Sistema/Que_Resuelve_El_Sistema",
+      "codigo": "05.01.02",
+      "archivo": "05.01.02_Ilustracion_El_Sistema_2",
+      "plantilla": "T0_base",
+      "estado": "muestra",
+      "campos": {
+        "titulo": "Qué resuelve el sistema",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "35"
+      }
+    },
+    {
+      "orden": 42,
+      "id": "Ilustracion/Construccion/Grilla_Y_Trazo",
+      "codigo": "05.02.01",
+      "archivo": "05.02.01_Ilustracion_Construccion_1",
+      "plantilla": "T0_base",
+      "estado": "muestra",
+      "campos": {
+        "titulo": "Grilla y trazo",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "36"
+      }
+    },
+    {
+      "orden": 43,
+      "id": "Ilustracion/Construccion/Como_Se_Dibuja_Un_Emblema_Nuevo",
+      "codigo": "05.02.02",
+      "archivo": "05.02.02_Ilustracion_Construccion_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cómo se dibuja un emblema nuevo",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "37"
+      }
+    },
+    {
+      "orden": 44,
+      "id": "Ilustracion/Construccion/Que_No_Hacer",
+      "codigo": "05.02.03",
+      "archivo": "05.02.03_Ilustracion_Construccion_3",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Qué no hacer",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "38"
+      }
+    },
+    {
+      "orden": 45,
+      "id": "Ilustracion/Biblioteca_De_Emblemas/Emblemas_Por_Hierba",
+      "codigo": "05.03.01",
+      "archivo": "05.03.01_Ilustracion_Biblioteca_De_Emblemas_1",
+      "plantilla": "T5_full_bleed",
+      "estado": "muestra",
+      "campos": {
+        "titulo": "Emblemas por hierba",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "39"
+      }
+    },
+    {
+      "orden": 46,
+      "id": "Ilustracion/Biblioteca_De_Emblemas/Emblemas_Por_Hierba",
+      "codigo": "05.03.02",
+      "archivo": "05.03.02_Ilustracion_Biblioteca_De_Emblemas_2",
+      "plantilla": "T5_full_bleed",
+      "estado": "muestra",
+      "campos": {
+        "titulo": "Emblemas por hierba",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "40"
+      }
+    },
+    {
+      "orden": 47,
+      "id": "Ilustracion/Biblioteca_De_Emblemas/Indice_De_Emblemas",
+      "codigo": "05.03.03",
+      "archivo": "05.03.03_Ilustracion_Biblioteca_De_Emblemas_3",
+      "plantilla": "T3b_lista",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Índice de emblemas",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "41"
+      }
+    },
+    {
+      "orden": 48,
+      "id": "Ilustracion/Uso_Por_Producto/Un_Emblema_Por_SKU",
+      "codigo": "05.04.01",
+      "archivo": "05.04.01_Ilustracion_Uso_Por_Producto_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Un emblema por SKU",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "42"
+      }
+    },
+    {
+      "orden": 49,
+      "id": "Ilustracion/Uso_Por_Producto/Gliceritos_El_Dibujo_Original",
+      "codigo": "05.04.02",
+      "archivo": "05.04.02_Ilustracion_Uso_Por_Producto_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Gliceritos: el dibujo original",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "05 · Ilustración",
+        "folio": "43"
+      }
+    },
+    {
+      "orden": 50,
+      "id": "",
+      "codigo": "06",
+      "archivo": "06_Composicion",
+      "plantilla": "T2_divisoria_azul_normal_der",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "06",
+        "seccion_nombre": "Composición"
+      }
+    },
+    {
+      "orden": 51,
+      "id": "Composicion/La_Grilla/Grilla_De_8_Columnas",
+      "codigo": "06.01.01",
+      "archivo": "06.01.01_Composicion_La_Grilla_1",
+      "plantilla": "T5_full_bleed",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Grilla de 8 columnas",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "06 · Composición",
+        "folio": "44"
+      }
+    },
+    {
+      "orden": 52,
+      "id": "Composicion/La_Grilla/Margenes_Y_Aire",
+      "codigo": "06.01.02",
+      "archivo": "06.01.02_Composicion_La_Grilla_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Márgenes y aire",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "06 · Composición",
+        "folio": "45"
+      }
+    },
+    {
+      "orden": 53,
+      "id": "Composicion/Jerarquias_De_Texto/Como_Se_Arma_Una_Pieza",
+      "codigo": "06.02.01",
+      "archivo": "06.02.01_Composicion_Jerarquias_De_Texto_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cómo se arma una pieza",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "06 · Composición",
+        "folio": "46"
+      }
+    },
+    {
+      "orden": 54,
+      "id": "Composicion/Jerarquias_De_Texto/Titular_Bajada_Cuerpo_Nota",
+      "codigo": "06.02.02",
+      "archivo": "06.02.02_Composicion_Jerarquias_De_Texto_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Titular, bajada, cuerpo, nota",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "06 · Composición",
+        "folio": "47"
+      }
+    },
+    {
+      "orden": 55,
+      "id": "Composicion/Reticulas_Por_Formato/Impreso_Y_Digital",
+      "codigo": "06.03.01",
+      "archivo": "06.03.01_Composicion_Reticulas_Por_Formato_1",
+      "plantilla": "T3c_servicio",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Impreso y digital",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "06 · Composición",
+        "folio": "48"
+      }
+    },
+    {
+      "orden": 56,
+      "id": "Composicion/Reticulas_Por_Formato/Formatos_Verticales",
+      "codigo": "06.03.02",
+      "archivo": "06.03.02_Composicion_Reticulas_Por_Formato_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Formatos verticales",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "06 · Composición",
+        "folio": "49"
+      }
+    },
+    {
+      "orden": 57,
+      "id": "",
+      "codigo": "07",
+      "archivo": "07_Etiquetas",
+      "plantilla": "T2_divisoria_verde_inv_der",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "07",
+        "seccion_nombre": "Etiquetas"
+      }
+    },
+    {
+      "orden": 58,
+      "id": "Etiquetas/Anatomia_De_La_Etiqueta/Las_Zonas_De_La_Etiqueta",
+      "codigo": "07.01.01",
+      "archivo": "07.01.01_Etiquetas_Anatomia_De_La_Etiqueta_1",
+      "plantilla": "T5_full_bleed",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Las zonas de la etiqueta",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "50"
+      }
+    },
+    {
+      "orden": 59,
+      "id": "Etiquetas/Anatomia_De_La_Etiqueta/Jerarquia_De_Informacion",
+      "codigo": "07.01.02",
+      "archivo": "07.01.02_Etiquetas_Anatomia_De_La_Etiqueta_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Jerarquía de información",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "51"
+      }
+    },
+    {
+      "orden": 60,
+      "id": "Etiquetas/Campos_Obligatorios/Requisitos_FDA",
+      "codigo": "07.02.01",
+      "archivo": "07.02.01_Etiquetas_Campos_Obligatorios_1",
+      "plantilla": "T3b_lista",
+      "estado": "bloqueado",
+      "campos": {
+        "titulo": "Requisitos FDA",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "52"
+      }
+    },
+    {
+      "orden": 61,
+      "id": "Etiquetas/Campos_Obligatorios/Supplement_Facts",
+      "codigo": "07.02.02",
+      "archivo": "07.02.02_Etiquetas_Campos_Obligatorios_2",
+      "plantilla": "T0_base",
+      "estado": "bloqueado",
+      "campos": {
+        "titulo": "Supplement Facts",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "53"
+      }
+    },
+    {
+      "orden": 62,
+      "id": "Etiquetas/Ficha_Por_SKU/Como_Se_Completa_Una_Ficha",
+      "codigo": "07.03.01",
+      "archivo": "07.03.01_Etiquetas_Ficha_Por_SKU_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cómo se completa una ficha",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "54"
+      }
+    },
+    {
+      "orden": 63,
+      "id": "Etiquetas/Ficha_Por_SKU/Fichas_De_Producto",
+      "codigo": "07.03.02",
+      "archivo": "07.03.02_Etiquetas_Ficha_Por_SKU_2",
+      "plantilla": "T3b_lista",
+      "estado": "bloqueado",
+      "campos": {
+        "titulo": "Fichas de producto",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "55"
+      }
+    },
+    {
+      "orden": 64,
+      "id": "Etiquetas/Aplicacion_Por_Envase/Tintura_Y_Frasco",
+      "codigo": "07.04.01",
+      "archivo": "07.04.01_Etiquetas_Aplicacion_Por_Envase_1",
+      "plantilla": "T5_full_bleed",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Tintura y frasco",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "56"
+      }
+    },
+    {
+      "orden": 65,
+      "id": "Etiquetas/Aplicacion_Por_Envase/Bolsita",
+      "codigo": "07.04.02",
+      "archivo": "07.04.02_Etiquetas_Aplicacion_Por_Envase_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Bolsita",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "07 · Etiquetas",
+        "folio": "57"
+      }
+    },
+    {
+      "orden": 66,
+      "id": "",
+      "codigo": "08",
+      "archivo": "08_Digital_Y_Redes",
+      "plantilla": "T2_divisoria_terracota_inv_der",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "08",
+        "seccion_nombre": "Digital y Redes"
+      }
+    },
+    {
+      "orden": 67,
+      "id": "Digital_Y_Redes/Formatos_Por_Red/Medidas_Por_Plataforma",
+      "codigo": "08.01.01",
+      "archivo": "08.01.01_Digital_Y_Redes_Formatos_Por_Red_1",
+      "plantilla": "T3c_servicio",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Medidas por plataforma",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "08 · Digital y Redes",
+        "folio": "58"
+      }
+    },
+    {
+      "orden": 68,
+      "id": "Digital_Y_Redes/Formatos_Por_Red/Adaptacion_Entre_Formatos",
+      "codigo": "08.01.02",
+      "archivo": "08.01.02_Digital_Y_Redes_Formatos_Por_Red_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Adaptación entre formatos",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "08 · Digital y Redes",
+        "folio": "59"
+      }
+    },
+    {
+      "orden": 69,
+      "id": "Digital_Y_Redes/Tipos_De_Post/Cuatro_Tipos_De_Contenido",
+      "codigo": "08.02.01",
+      "archivo": "08.02.01_Digital_Y_Redes_Tipos_De_Post_1",
+      "plantilla": "T3c_servicio",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cuatro tipos de contenido",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "08 · Digital y Redes",
+        "folio": "60"
+      }
+    },
+    {
+      "orden": 70,
+      "id": "Digital_Y_Redes/Tipos_De_Post/Ejemplos_Armados",
+      "codigo": "08.02.02",
+      "archivo": "08.02.02_Digital_Y_Redes_Tipos_De_Post_2",
+      "plantilla": "T5_full_bleed",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Ejemplos armados",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "08 · Digital y Redes",
+        "folio": "61"
+      }
+    },
+    {
+      "orden": 71,
+      "id": "Digital_Y_Redes/Plantillas_Editables/El_Kit_De_Canva",
+      "codigo": "08.03.01",
+      "archivo": "08.03.01_Digital_Y_Redes_Plantillas_Editables_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "El kit de Canva",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "08 · Digital y Redes",
+        "folio": "62"
+      }
+    },
+    {
+      "orden": 72,
+      "id": "Digital_Y_Redes/Web/Lineamientos_Del_Sitio",
+      "codigo": "08.04.01",
+      "archivo": "08.04.01_Digital_Y_Redes_Web_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Lineamientos del sitio",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "08 · Digital y Redes",
+        "folio": "63"
+      }
+    },
+    {
+      "orden": 73,
+      "id": "Digital_Y_Redes/Web/Componentes_Base",
+      "codigo": "08.04.02",
+      "archivo": "08.04.02_Digital_Y_Redes_Web_2",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Componentes base",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "08 · Digital y Redes",
+        "folio": "64"
+      }
+    },
+    {
+      "orden": 74,
+      "id": "",
+      "codigo": "09",
+      "archivo": "09_Recursos",
+      "plantilla": "T2_divisoria_ocre_inv_der",
+      "estado": "pendiente",
+      "campos": {
+        "seccion_num": "09",
+        "seccion_nombre": "Recursos"
+      }
+    },
+    {
+      "orden": 75,
+      "id": "Recursos/Descargables/Donde_Esta_Cada_Archivo",
+      "codigo": "09.01.01",
+      "archivo": "09.01.01_Recursos_Descargables_1",
+      "plantilla": "T3b_lista",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Dónde está cada archivo",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "09 · Recursos",
+        "folio": "65"
+      }
+    },
+    {
+      "orden": 76,
+      "id": "Recursos/Preguntas_Frecuentes/Preguntas_Frecuentes",
+      "codigo": "09.02.01",
+      "archivo": "09.02.01_Recursos_Preguntas_Frecuentes_1",
+      "plantilla": "T3b_lista",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Preguntas frecuentes",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "09 · Recursos",
+        "folio": "66"
+      }
+    },
+    {
+      "orden": 77,
+      "id": "Recursos/Contacto/Como_Pedir_Ayuda",
+      "codigo": "09.03.01",
+      "archivo": "09.03.01_Recursos_Contacto_1",
+      "plantilla": "T0_base",
+      "estado": "pendiente",
+      "campos": {
+        "titulo": "Cómo pedir ayuda",
+        "pie_marca": "E&D Herbs · Manual de Marca",
+        "pie_seccion": "09 · Recursos",
+        "folio": "67"
+      }
+    }
+  ]
+}

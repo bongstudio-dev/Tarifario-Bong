@@ -1,0 +1,78 @@
+orden,id,codigo,tipo,seccion_num,seccion_nombre,familia,modulo_num,modulo_nombre,pagina_num,titulo,plantilla,estado,bloqueante,folio,nav,archivo
+1,,PORTADA,portada,,,,,,,E&D Herbs Manual de Marca,T1_portada,pendiente,,,,00_Portada
+2,Introduccion/Como_Usar_Este_Manual/Para_Que_Sirve_Y_Para_Que_No,00.01.01,contenido,00,Introducción,B,01,Cómo usar este manual,01,Para qué sirve y para qué no,T3a_declaracion,pendiente,,1,1/2,00.01.01_Introduccion_Como_Usar_Este_Manual_1
+3,Introduccion/Como_Usar_Este_Manual/Como_Esta_Organizado,00.01.02,contenido,00,Introducción,B,01,Cómo usar este manual,02,Cómo está organizado,T0_base,pendiente,,2,2/2,00.01.02_Introduccion_Como_Usar_Este_Manual_2
+4,Introduccion/Glosario/Los_Terminos_Que_Usamos,00.02.01,contenido,00,Introducción,B,02,Glosario,01,Los términos que usamos,T3b_lista,pendiente,,3,1/1,00.02.01_Introduccion_Glosario_1
+5,,01,divisoria,01,Nuestra Marca,C,,,,Nuestra Marca,T2_divisoria_verde_normal_izq,pendiente,,,,01_Nuestra_Marca
+6,Nuestra_Marca/Quienes_Somos/E_D_Herbs,01.01.01,contenido,01,Nuestra Marca,C,01,Quiénes somos,01,E&D Herbs,T3a_declaracion,pendiente,,4,1/2,01.01.01_Nuestra_Marca_Quienes_Somos_1
+7,Nuestra_Marca/Quienes_Somos/De_Donde_Viene_La_Marca,01.01.02,contenido,01,Nuestra Marca,C,01,Quiénes somos,02,De dónde viene la marca,T0_base,pendiente,,5,2/2,01.01.02_Nuestra_Marca_Quienes_Somos_2
+8,Nuestra_Marca/Proposito/Nuestro_Proposito,01.02.01,contenido,01,Nuestra Marca,C,02,Propósito,01,Nuestro propósito,T3a_declaracion,pendiente,,6,1/1,01.02.01_Nuestra_Marca_Proposito_1
+9,Nuestra_Marca/Personalidad_Y_Tono/Como_Suena_La_Marca,01.03.01,contenido,01,Nuestra Marca,C,03,Personalidad y tono,01,Cómo suena la marca,T0_base,pendiente,,7,1/3,01.03.01_Nuestra_Marca_Personalidad_Y_Tono_1
+10,Nuestra_Marca/Personalidad_Y_Tono/Dimensiones_De_Tono,01.03.02,contenido,01,Nuestra Marca,C,03,Personalidad y tono,02,Dimensiones de tono,T3c_servicio,pendiente,,8,2/3,01.03.02_Nuestra_Marca_Personalidad_Y_Tono_2
+11,Nuestra_Marca/Personalidad_Y_Tono/Como_Lo_Decimos_Como_No,01.03.03,contenido,01,Nuestra Marca,C,03,Personalidad y tono,03,"Cómo lo decimos, cómo no",T3b_lista,pendiente,,9,3/3,01.03.03_Nuestra_Marca_Personalidad_Y_Tono_3
+12,Nuestra_Marca/A_Quien_Le_Hablamos/Consumidor_Final,01.04.01,contenido,01,Nuestra Marca,C,04,A quién le hablamos,01,Consumidor final,T0_base,pendiente,,10,1/2,01.04.01_Nuestra_Marca_A_Quien_Le_Hablamos_1
+13,Nuestra_Marca/A_Quien_Le_Hablamos/Distribuidor,01.04.02,contenido,01,Nuestra Marca,C,04,A quién le hablamos,02,Distribuidor,T0_base,pendiente,,11,2/2,01.04.02_Nuestra_Marca_A_Quien_Le_Hablamos_2
+14,,02,divisoria,02,Logotipo,A,,,,Logotipo,T2_divisoria_ocre_normal_izq,pendiente,,,,02_Logotipo
+15,Logotipo/Anatomia/Las_Partes_Del_Logo,02.01.01,contenido,02,Logotipo,A,01,Anatomía,01,Las partes del logo,T0_base,pendiente,,12,1/1,02.01.01_Logotipo_Anatomia_1
+16,Logotipo/Versiones/Version_Principal,02.02.01,contenido,02,Logotipo,A,02,Versiones,01,Versión principal,T0_base,pendiente,,13,1/3,02.02.01_Logotipo_Versiones_1
+17,Logotipo/Versiones/Horizontal_Y_Vertical,02.02.02,contenido,02,Logotipo,A,02,Versiones,02,Horizontal y vertical,T0_base,pendiente,,14,2/3,02.02.02_Logotipo_Versiones_2
+18,Logotipo/Versiones/Monocromo_E_Inversion,02.02.03,contenido,02,Logotipo,A,02,Versiones,03,Monocromo e inversión,T0_base,pendiente,,15,3/3,02.02.03_Logotipo_Versiones_3
+19,Logotipo/Area_De_Exclusion_Y_Tamanos/Area_De_Exclusion,02.03.01,contenido,02,Logotipo,A,03,Área de exclusión y tamaños,01,Área de exclusión,T0_base,pendiente,,16,1/2,02.03.01_Logotipo_Area_De_Exclusion_Y_Tamanos_1
+20,Logotipo/Area_De_Exclusion_Y_Tamanos/Tamano_Minimo,02.03.02,contenido,02,Logotipo,A,03,Área de exclusión y tamaños,02,Tamaño mínimo,T0_base,pendiente,,17,2/2,02.03.02_Logotipo_Area_De_Exclusion_Y_Tamanos_2
+21,Logotipo/Usos_Incorrectos/Lo_Que_No_Hay_Que_Hacer,02.04.01,contenido,02,Logotipo,A,04,Usos incorrectos,01,Lo que no hay que hacer,T0_base,pendiente,,18,1/2,02.04.01_Logotipo_Usos_Incorrectos_1
+22,Logotipo/Usos_Incorrectos/Lo_Que_No_Hay_Que_Hacer,02.04.02,contenido,02,Logotipo,A,04,Usos incorrectos,02,Lo que no hay que hacer,T0_base,pendiente,,19,2/2,02.04.02_Logotipo_Usos_Incorrectos_2
+23,Logotipo/Convivencia/El_Logo_Con_El_Sistema_De_Ilustracion,02.05.01,contenido,02,Logotipo,A,05,Convivencia,01,El logo con el sistema de ilustración,T0_base,pendiente,,20,1/1,02.05.01_Logotipo_Convivencia_1
+24,,03,divisoria,03,Color,A,,,,Color,T2_divisoria_lavanda_normal_izq,pendiente,,,,03_Color
+25,Color/La_Paleta/Paleta_Completa,03.01.01,contenido,03,Color,A,01,La paleta,01,Paleta completa,T5_full_bleed,pendiente,,21,1/2,03.01.01_Color_La_Paleta_1
+26,Color/La_Paleta/Fichas_De_Color,03.01.02,contenido,03,Color,A,01,La paleta,02,Fichas de color,T3c_servicio,pendiente,,22,2/2,03.01.02_Color_La_Paleta_2
+27,Color/Jerarquia/El_Verde_Como_Ancla,03.02.01,contenido,03,Color,A,02,Jerarquía,01,El verde como ancla,T3a_declaracion,pendiente,,23,1/2,03.02.01_Color_Jerarquia_1
+28,Color/Jerarquia/Roles_Ancla_Apoyo_Acento,03.02.02,contenido,03,Color,A,02,Jerarquía,02,"Roles: ancla, apoyo, acento",T3c_servicio,pendiente,,24,2/2,03.02.02_Color_Jerarquia_2
+29,Color/Combinaciones/Combinaciones_Validas,03.03.01,contenido,03,Color,A,03,Combinaciones,01,Combinaciones válidas,T0_base,pendiente,,25,1/2,03.03.01_Color_Combinaciones_1
+30,Color/Combinaciones/Color_Por_Familia_De_Producto,03.03.02,contenido,03,Color,A,03,Combinaciones,02,Color por familia de producto,T0_base,pendiente,,26,2/2,03.03.02_Color_Combinaciones_2
+31,Color/Accesibilidad/Contraste_Minimo,03.04.01,contenido,03,Color,A,04,Accesibilidad,01,Contraste mínimo,T0_base,pendiente,,27,1/1,03.04.01_Color_Accesibilidad_1
+32,,04,divisoria,04,Tipografía,A,,,,Tipografía,T2_divisoria_violeta_normal_izq,pendiente,,,,04_Tipografia
+33,Tipografia/Averia_Serif/La_Tipografica_De_Titulares,04.01.01,contenido,04,Tipografía,A,01,Avería Serif,01,La tipográfica de titulares,T5_full_bleed,pendiente,,28,1/2,04.01.01_Tipografia_Averia_Serif_1
+34,Tipografia/Averia_Serif/Pesos_Y_Usos,04.01.02,contenido,04,Tipografía,A,01,Avería Serif,02,Pesos y usos,T0_base,pendiente,,29,2/2,04.01.02_Tipografia_Averia_Serif_2
+35,Tipografia/Familia_De_Cuerpo/La_Tipografica_De_Lectura,04.02.01,contenido,04,Tipografía,A,02,Familia de cuerpo,01,La tipográfica de lectura,T0_base,pendiente,,30,1/1,04.02.01_Tipografia_Familia_De_Cuerpo_1
+36,Tipografia/Jerarquias/Escala_Tipografica,04.03.01,contenido,04,Tipografía,A,03,Jerarquías,01,Escala tipográfica,T0_base,pendiente,,31,1/2,04.03.01_Tipografia_Jerarquias_1
+37,Tipografia/Jerarquias/Titulares_Bajadas_Y_Cuerpo,04.03.02,contenido,04,Tipografía,A,03,Jerarquías,02,"Titulares, bajadas y cuerpo",T0_base,pendiente,,32,2/2,04.03.02_Tipografia_Jerarquias_2
+38,Tipografia/Lineamientos/Alternativas_Y_Sustitutos,04.04.01,contenido,04,Tipografía,A,04,Lineamientos,01,Alternativas y sustitutos,T0_base,pendiente,,33,1/1,04.04.01_Tipografia_Lineamientos_1
+39,,05,divisoria,05,Ilustración,B,,,,Ilustración,T2_divisoria_terracota_normal_der,pendiente,,,,05_Ilustracion
+40,Ilustracion/El_Sistema/De_Donde_Salen_Las_Formas,05.01.01,contenido,05,Ilustración,B,01,El sistema,01,De dónde salen las formas,T3a_declaracion,muestra,,34,1/2,05.01.01_Ilustracion_El_Sistema_1
+41,Ilustracion/El_Sistema/Que_Resuelve_El_Sistema,05.01.02,contenido,05,Ilustración,B,01,El sistema,02,Qué resuelve el sistema,T0_base,muestra,,35,2/2,05.01.02_Ilustracion_El_Sistema_2
+42,Ilustracion/Construccion/Grilla_Y_Trazo,05.02.01,contenido,05,Ilustración,B,02,Construcción,01,Grilla y trazo,T0_base,muestra,,36,1/3,05.02.01_Ilustracion_Construccion_1
+43,Ilustracion/Construccion/Como_Se_Dibuja_Un_Emblema_Nuevo,05.02.02,contenido,05,Ilustración,B,02,Construcción,02,Cómo se dibuja un emblema nuevo,T0_base,pendiente,,37,2/3,05.02.02_Ilustracion_Construccion_2
+44,Ilustracion/Construccion/Que_No_Hacer,05.02.03,contenido,05,Ilustración,B,02,Construcción,03,Qué no hacer,T0_base,pendiente,,38,3/3,05.02.03_Ilustracion_Construccion_3
+45,Ilustracion/Biblioteca_De_Emblemas/Emblemas_Por_Hierba,05.03.01,contenido,05,Ilustración,B,03,Biblioteca de emblemas,01,Emblemas por hierba,T5_full_bleed,muestra,,39,1/3,05.03.01_Ilustracion_Biblioteca_De_Emblemas_1
+46,Ilustracion/Biblioteca_De_Emblemas/Emblemas_Por_Hierba,05.03.02,contenido,05,Ilustración,B,03,Biblioteca de emblemas,02,Emblemas por hierba,T5_full_bleed,muestra,,40,2/3,05.03.02_Ilustracion_Biblioteca_De_Emblemas_2
+47,Ilustracion/Biblioteca_De_Emblemas/Indice_De_Emblemas,05.03.03,contenido,05,Ilustración,B,03,Biblioteca de emblemas,03,Índice de emblemas,T3b_lista,pendiente,,41,3/3,05.03.03_Ilustracion_Biblioteca_De_Emblemas_3
+48,Ilustracion/Uso_Por_Producto/Un_Emblema_Por_SKU,05.04.01,contenido,05,Ilustración,B,04,Uso por producto,01,Un emblema por SKU,T0_base,pendiente,,42,1/2,05.04.01_Ilustracion_Uso_Por_Producto_1
+49,Ilustracion/Uso_Por_Producto/Gliceritos_El_Dibujo_Original,05.04.02,contenido,05,Ilustración,B,04,Uso por producto,02,Gliceritos: el dibujo original,T0_base,pendiente,,43,2/2,05.04.02_Ilustracion_Uso_Por_Producto_2
+50,,06,divisoria,06,Composición,B,,,,Composición,T2_divisoria_azul_normal_der,pendiente,,,,06_Composicion
+51,Composicion/La_Grilla/Grilla_De_8_Columnas,06.01.01,contenido,06,Composición,B,01,La grilla,01,Grilla de 8 columnas,T5_full_bleed,pendiente,,44,1/2,06.01.01_Composicion_La_Grilla_1
+52,Composicion/La_Grilla/Margenes_Y_Aire,06.01.02,contenido,06,Composición,B,01,La grilla,02,Márgenes y aire,T0_base,pendiente,,45,2/2,06.01.02_Composicion_La_Grilla_2
+53,Composicion/Jerarquias_De_Texto/Como_Se_Arma_Una_Pieza,06.02.01,contenido,06,Composición,B,02,Jerarquías de texto,01,Cómo se arma una pieza,T0_base,pendiente,,46,1/2,06.02.01_Composicion_Jerarquias_De_Texto_1
+54,Composicion/Jerarquias_De_Texto/Titular_Bajada_Cuerpo_Nota,06.02.02,contenido,06,Composición,B,02,Jerarquías de texto,02,"Titular, bajada, cuerpo, nota",T0_base,pendiente,,47,2/2,06.02.02_Composicion_Jerarquias_De_Texto_2
+55,Composicion/Reticulas_Por_Formato/Impreso_Y_Digital,06.03.01,contenido,06,Composición,B,03,Retículas por formato,01,Impreso y digital,T3c_servicio,pendiente,,48,1/2,06.03.01_Composicion_Reticulas_Por_Formato_1
+56,Composicion/Reticulas_Por_Formato/Formatos_Verticales,06.03.02,contenido,06,Composición,B,03,Retículas por formato,02,Formatos verticales,T0_base,pendiente,,49,2/2,06.03.02_Composicion_Reticulas_Por_Formato_2
+57,,07,divisoria,07,Etiquetas,C,,,,Etiquetas,T2_divisoria_verde_inv_der,pendiente,,,,07_Etiquetas
+58,Etiquetas/Anatomia_De_La_Etiqueta/Las_Zonas_De_La_Etiqueta,07.01.01,contenido,07,Etiquetas,C,01,Anatomía de la etiqueta,01,Las zonas de la etiqueta,T5_full_bleed,pendiente,,50,1/2,07.01.01_Etiquetas_Anatomia_De_La_Etiqueta_1
+59,Etiquetas/Anatomia_De_La_Etiqueta/Jerarquia_De_Informacion,07.01.02,contenido,07,Etiquetas,C,01,Anatomía de la etiqueta,02,Jerarquía de información,T0_base,pendiente,,51,2/2,07.01.02_Etiquetas_Anatomia_De_La_Etiqueta_2
+60,Etiquetas/Campos_Obligatorios/Requisitos_FDA,07.02.01,contenido,07,Etiquetas,C,02,Campos obligatorios,01,Requisitos FDA,T3b_lista,bloqueado,"Falta la info técnica y de contenido de etiquetas (Dariana, pendiente desde la call del 12/08)",52,1/2,07.02.01_Etiquetas_Campos_Obligatorios_1
+61,Etiquetas/Campos_Obligatorios/Supplement_Facts,07.02.02,contenido,07,Etiquetas,C,02,Campos obligatorios,02,Supplement Facts,T0_base,bloqueado,Falta la info técnica y de contenido de etiquetas (Dariana),53,2/2,07.02.02_Etiquetas_Campos_Obligatorios_2
+62,Etiquetas/Ficha_Por_SKU/Como_Se_Completa_Una_Ficha,07.03.01,contenido,07,Etiquetas,C,03,Ficha por SKU,01,Cómo se completa una ficha,T0_base,pendiente,,54,1/2,07.03.01_Etiquetas_Ficha_Por_SKU_1
+63,Etiquetas/Ficha_Por_SKU/Fichas_De_Producto,07.03.02,contenido,07,Etiquetas,C,03,Ficha por SKU,02,Fichas de producto,T3b_lista,bloqueado,Una fila por SKU: se completa cuando llegue la planilla de etiquetas,55,2/2,07.03.02_Etiquetas_Ficha_Por_SKU_2
+64,Etiquetas/Aplicacion_Por_Envase/Tintura_Y_Frasco,07.04.01,contenido,07,Etiquetas,C,04,Aplicación por envase,01,Tintura y frasco,T5_full_bleed,pendiente,,56,1/2,07.04.01_Etiquetas_Aplicacion_Por_Envase_1
+65,Etiquetas/Aplicacion_Por_Envase/Bolsita,07.04.02,contenido,07,Etiquetas,C,04,Aplicación por envase,02,Bolsita,T0_base,pendiente,,57,2/2,07.04.02_Etiquetas_Aplicacion_Por_Envase_2
+66,,08,divisoria,08,Digital y Redes,B,,,,Digital y Redes,T2_divisoria_terracota_inv_der,pendiente,,,,08_Digital_Y_Redes
+67,Digital_Y_Redes/Formatos_Por_Red/Medidas_Por_Plataforma,08.01.01,contenido,08,Digital y Redes,B,01,Formatos por red,01,Medidas por plataforma,T3c_servicio,pendiente,,58,1/2,08.01.01_Digital_Y_Redes_Formatos_Por_Red_1
+68,Digital_Y_Redes/Formatos_Por_Red/Adaptacion_Entre_Formatos,08.01.02,contenido,08,Digital y Redes,B,01,Formatos por red,02,Adaptación entre formatos,T0_base,pendiente,,59,2/2,08.01.02_Digital_Y_Redes_Formatos_Por_Red_2
+69,Digital_Y_Redes/Tipos_De_Post/Cuatro_Tipos_De_Contenido,08.02.01,contenido,08,Digital y Redes,B,02,Tipos de post,01,Cuatro tipos de contenido,T3c_servicio,pendiente,,60,1/2,08.02.01_Digital_Y_Redes_Tipos_De_Post_1
+70,Digital_Y_Redes/Tipos_De_Post/Ejemplos_Armados,08.02.02,contenido,08,Digital y Redes,B,02,Tipos de post,02,Ejemplos armados,T5_full_bleed,pendiente,,61,2/2,08.02.02_Digital_Y_Redes_Tipos_De_Post_2
+71,Digital_Y_Redes/Plantillas_Editables/El_Kit_De_Canva,08.03.01,contenido,08,Digital y Redes,B,03,Plantillas editables,01,El kit de Canva,T0_base,pendiente,,62,1/1,08.03.01_Digital_Y_Redes_Plantillas_Editables_1
+72,Digital_Y_Redes/Web/Lineamientos_Del_Sitio,08.04.01,contenido,08,Digital y Redes,B,04,Web,01,Lineamientos del sitio,T0_base,pendiente,,63,1/2,08.04.01_Digital_Y_Redes_Web_1
+73,Digital_Y_Redes/Web/Componentes_Base,08.04.02,contenido,08,Digital y Redes,B,04,Web,02,Componentes base,T0_base,pendiente,,64,2/2,08.04.02_Digital_Y_Redes_Web_2
+74,,09,divisoria,09,Recursos,B,,,,Recursos,T2_divisoria_ocre_inv_der,pendiente,,,,09_Recursos
+75,Recursos/Descargables/Donde_Esta_Cada_Archivo,09.01.01,contenido,09,Recursos,B,01,Descargables,01,Dónde está cada archivo,T3b_lista,pendiente,,65,1/1,09.01.01_Recursos_Descargables_1
+76,Recursos/Preguntas_Frecuentes/Preguntas_Frecuentes,09.02.01,contenido,09,Recursos,B,02,Preguntas frecuentes,01,Preguntas frecuentes,T3b_lista,pendiente,,66,1/1,09.02.01_Recursos_Preguntas_Frecuentes_1
+77,Recursos/Contacto/Como_Pedir_Ayuda,09.03.01,contenido,09,Recursos,B,03,Contacto,01,Cómo pedir ayuda,T0_base,pendiente,,67,1/1,09.03.01_Recursos_Contacto_1

@@ -1,0 +1,282 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# E&D Herbs — Manual de Marca
+# Fuente unica de la estructura. Lo derivado NO se escribe aca:
+#   codigos SS.MM.PP, folios, contadores n/N, nombres de frame,
+#   $seccion_num, $pie_seccion, $pie_marca, $folio
+# todo eso lo calcula espinazo.py.
+#
+# Vos escribis: secciones, modulos, titulos, plantilla, estado, bloqueante.
+# ─────────────────────────────────────────────────────────────────────────────
+
+manual:
+  marca: E&D Herbs
+  titulo: Manual de Marca
+  version: v0.1
+  pie_marca: E&D Herbs · Manual de Marca
+  figma_file: 9ra05S5WOcK9ihSZ7Dlprg
+  pagina_plantillas: "11:14"
+  plantilla_default: T0_base
+  portada:
+    plantilla: T1_portada
+    estado: pendiente
+
+# ── Catalogo de plantillas ───────────────────────────────────────────────────
+# Leido del archivo de Figma, pagina "00 · Plantillas".
+# El numero es cuantas veces se repite ese campo dentro de la plantilla:
+# si repite > 1, el valor en `campos` puede ser una lista y se reparte en orden.
+plantillas:
+  T1_portada:
+    campos: {version: 1, titulo: 1, logo: 1}
+
+  T0_base:
+    campos: {area: 1, titulo: 1, bajada: 1, cuerpo: 1, nota_texto: 1,
+             pie_marca: 1, pie_seccion: 1, folio: 1}
+
+  T3a_declaracion:
+    campos: {area: 1, titulo: 1, bajada: 1, cuerpo: 1, nota_texto: 1,
+             pie_marca: 1, pie_seccion: 1, folio: 1}
+
+  T3b_lista:
+    campos: {area: 1, titulo: 1, bajada: 1, nota_texto: 1,
+             lista_titulo: 3, lista_items: 3,
+             pie_marca: 1, pie_seccion: 1, folio: 1}
+
+  T3c_servicio:
+    campos: {area: 1, titulo: 1, bajada: 1, nota_texto: 1,
+             columna_titulo: 3, columna: 3,
+             pie_marca: 1, pie_seccion: 1, folio: 1}
+
+  T5_full_bleed:
+    campos: {area: 1, titulo: 1, bajada: 1, cuerpo: 1, nota_texto: 1,
+             pie_marca: 1, pie_seccion: 1, folio: 1}
+
+  # Divisorias: sin folio ni pie. Por eso no entran en la numeracion de paginas.
+  T2_divisoria_verde_normal_izq:      {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_ocre_normal_izq:       {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_lavanda_normal_izq:    {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_violeta_normal_izq:    {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_terracota_normal_der:  {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_azul_normal_der:       {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_verde_inv_der:         {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_terracota_inv_der:     {campos: {seccion_num: 1, seccion_nombre: 1}}
+  T2_divisoria_ocre_inv_der:          {campos: {seccion_num: 1, seccion_nombre: 1}}
+
+# ── Pool de divisorias ───────────────────────────────────────────────────────
+# En el orden del canvas de Figma (alterna izq/der y normal/inv).
+# Se asignan a las secciones en orden. Son 9: alcanzan justo para 01–09.
+divisorias:
+  - {plantilla: T2_divisoria_verde_normal_izq,     emblema: comfrey,      color: verde}
+  - {plantilla: T2_divisoria_ocre_normal_izq,      emblema: gymnema,      color: ocre}
+  - {plantilla: T2_divisoria_lavanda_normal_izq,   emblema: lavender,     color: lavanda}
+  - {plantilla: T2_divisoria_violeta_normal_izq,   emblema: lemongrass,   color: violeta}
+  - {plantilla: T2_divisoria_terracota_normal_der, emblema: milk-thistle, color: terracota}
+  - {plantilla: T2_divisoria_azul_normal_der,      emblema: curia,        color: azul}
+  - {plantilla: T2_divisoria_verde_inv_der,        emblema: olive,        color: verde}
+  - {plantilla: T2_divisoria_terracota_inv_der,    emblema: moringa,      color: terracota}
+  - {plantilla: T2_divisoria_ocre_inv_der,         emblema: thyme,        color: ocre}
+
+# ── Secciones ────────────────────────────────────────────────────────────────
+secciones:
+
+  - num: 0
+    nombre: Introducción
+    familia: B
+    divisoria: false        # va pegada a la portada, no lleva divisoria
+    modulos:
+      - nombre: Cómo usar este manual
+        paginas:
+          - {titulo: "Para qué sirve y para qué no", plantilla: T3a_declaracion}
+          - {titulo: "Cómo está organizado", plantilla: T0_base}
+      - nombre: Glosario
+        paginas:
+          - {titulo: "Los términos que usamos", plantilla: T3b_lista}
+
+  - num: 1
+    nombre: Nuestra Marca
+    familia: C
+    modulos:
+      - nombre: Quiénes somos
+        paginas:
+          - {titulo: "E&D Herbs", plantilla: T3a_declaracion}
+          - {titulo: "De dónde viene la marca", plantilla: T0_base}
+      - nombre: Propósito
+        paginas:
+          - {titulo: "Nuestro propósito", plantilla: T3a_declaracion}
+      - nombre: Personalidad y tono
+        paginas:
+          - {titulo: "Cómo suena la marca", plantilla: T0_base}
+          - {titulo: "Dimensiones de tono", plantilla: T3c_servicio}
+          - {titulo: "Cómo lo decimos, cómo no", plantilla: T3b_lista}
+      - nombre: A quién le hablamos
+        paginas:
+          - {titulo: "Consumidor final", plantilla: T0_base}
+          - {titulo: "Distribuidor", plantilla: T0_base}
+
+  - num: 2
+    nombre: Logotipo
+    familia: A
+    modulos:
+      - nombre: Anatomía
+        paginas:
+          - {titulo: "Las partes del logo", plantilla: T0_base}
+      - nombre: Versiones
+        paginas:
+          - {titulo: "Versión principal", plantilla: T0_base}
+          - {titulo: "Horizontal y vertical", plantilla: T0_base}
+          - {titulo: "Monocromo e inversión", plantilla: T0_base}
+      - nombre: Área de exclusión y tamaños
+        paginas:
+          - {titulo: "Área de exclusión", plantilla: T0_base}
+          - {titulo: "Tamaño mínimo", plantilla: T0_base}
+      - nombre: Usos incorrectos
+        paginas:
+          - {titulo: "Lo que no hay que hacer", plantilla: T0_base}
+          - {titulo: "Lo que no hay que hacer", plantilla: T0_base}
+      - nombre: Convivencia
+        paginas:
+          - {titulo: "El logo con el sistema de ilustración", plantilla: T0_base}
+
+  - num: 3
+    nombre: Color
+    familia: A
+    modulos:
+      - nombre: La paleta
+        paginas:
+          - {titulo: "Paleta completa", plantilla: T5_full_bleed}
+          - {titulo: "Fichas de color", plantilla: T3c_servicio}
+      - nombre: Jerarquía
+        paginas:
+          - {titulo: "El verde como ancla", plantilla: T3a_declaracion}
+          - {titulo: "Roles: ancla, apoyo, acento", plantilla: T3c_servicio}
+      - nombre: Combinaciones
+        paginas:
+          - {titulo: "Combinaciones válidas", plantilla: T0_base}
+          - {titulo: "Color por familia de producto", plantilla: T0_base}
+      - nombre: Accesibilidad
+        paginas:
+          - {titulo: "Contraste mínimo", plantilla: T0_base}
+
+  - num: 4
+    nombre: Tipografía
+    familia: A
+    modulos:
+      - nombre: Avería Serif
+        paginas:
+          - {titulo: "La tipográfica de titulares", plantilla: T5_full_bleed}
+          - {titulo: "Pesos y usos", plantilla: T0_base}
+      - nombre: Familia de cuerpo
+        paginas:
+          - {titulo: "La tipográfica de lectura", plantilla: T0_base}
+      - nombre: Jerarquías
+        paginas:
+          - {titulo: "Escala tipográfica", plantilla: T0_base}
+          - {titulo: "Titulares, bajadas y cuerpo", plantilla: T0_base}
+      - nombre: Lineamientos
+        paginas:
+          - {titulo: "Alternativas y sustitutos", plantilla: T0_base}
+
+  - num: 5
+    nombre: Ilustración
+    familia: B
+    modulos:
+      - nombre: El sistema
+        paginas:
+          - {titulo: "De dónde salen las formas", plantilla: T3a_declaracion, estado: muestra}
+          - {titulo: "Qué resuelve el sistema", plantilla: T0_base, estado: muestra}
+      - nombre: Construcción
+        paginas:
+          - {titulo: "Grilla y trazo", plantilla: T0_base, estado: muestra}
+          - {titulo: "Cómo se dibuja un emblema nuevo", plantilla: T0_base, estado: pendiente}
+          - {titulo: "Qué no hacer", plantilla: T0_base, estado: pendiente}
+      - nombre: Biblioteca de emblemas
+        paginas:
+          - {titulo: "Emblemas por hierba", plantilla: T5_full_bleed, estado: muestra}
+          - {titulo: "Emblemas por hierba", plantilla: T5_full_bleed, estado: muestra}
+          - {titulo: "Índice de emblemas", plantilla: T3b_lista, estado: pendiente}
+      - nombre: Uso por producto
+        paginas:
+          - {titulo: "Un emblema por SKU", plantilla: T0_base, estado: pendiente}
+          - {titulo: "Gliceritos: el dibujo original", plantilla: T0_base, estado: pendiente}
+
+  - num: 6
+    nombre: Composición
+    familia: B
+    modulos:
+      - nombre: La grilla
+        paginas:
+          - {titulo: "Grilla de 8 columnas", plantilla: T5_full_bleed}
+          - {titulo: "Márgenes y aire", plantilla: T0_base}
+      - nombre: Jerarquías de texto
+        paginas:
+          - {titulo: "Cómo se arma una pieza", plantilla: T0_base}
+          - {titulo: "Titular, bajada, cuerpo, nota", plantilla: T0_base}
+      - nombre: Retículas por formato
+        paginas:
+          - {titulo: "Impreso y digital", plantilla: T3c_servicio}
+          - {titulo: "Formatos verticales", plantilla: T0_base}
+
+  - num: 7
+    nombre: Etiquetas
+    familia: C
+    modulos:
+      - nombre: Anatomía de la etiqueta
+        paginas:
+          - {titulo: "Las zonas de la etiqueta", plantilla: T5_full_bleed}
+          - {titulo: "Jerarquía de información", plantilla: T0_base}
+      - nombre: Campos obligatorios
+        paginas:
+          - titulo: "Requisitos FDA"
+            plantilla: T3b_lista
+            estado: bloqueado
+            bloqueante: "Falta la info técnica y de contenido de etiquetas (Dariana, pendiente desde la call del 12/08)"
+          - titulo: "Supplement Facts"
+            plantilla: T0_base
+            estado: bloqueado
+            bloqueante: "Falta la info técnica y de contenido de etiquetas (Dariana)"
+      - nombre: Ficha por SKU
+        paginas:
+          - titulo: "Cómo se completa una ficha"
+            plantilla: T0_base
+            estado: pendiente
+          - titulo: "Fichas de producto"
+            plantilla: T3b_lista
+            estado: bloqueado
+            bloqueante: "Una fila por SKU: se completa cuando llegue la planilla de etiquetas"
+      - nombre: Aplicación por envase
+        paginas:
+          - {titulo: "Tintura y frasco", plantilla: T5_full_bleed}
+          - {titulo: "Bolsita", plantilla: T0_base}
+
+  - num: 8
+    nombre: Digital y Redes
+    familia: B
+    modulos:
+      - nombre: Formatos por red
+        paginas:
+          - {titulo: "Medidas por plataforma", plantilla: T3c_servicio}
+          - {titulo: "Adaptación entre formatos", plantilla: T0_base}
+      - nombre: Tipos de post
+        paginas:
+          - {titulo: "Cuatro tipos de contenido", plantilla: T3c_servicio}
+          - {titulo: "Ejemplos armados", plantilla: T5_full_bleed}
+      - nombre: Plantillas editables
+        paginas:
+          - {titulo: "El kit de Canva", plantilla: T0_base}
+      - nombre: Web
+        paginas:
+          - {titulo: "Lineamientos del sitio", plantilla: T0_base}
+          - {titulo: "Componentes base", plantilla: T0_base}
+
+  - num: 9
+    nombre: Recursos
+    familia: B
+    modulos:
+      - nombre: Descargables
+        paginas:
+          - {titulo: "Dónde está cada archivo", plantilla: T3b_lista}
+      - nombre: Preguntas frecuentes
+        paginas:
+          - {titulo: "Preguntas frecuentes", plantilla: T3b_lista}
+      - nombre: Contacto
+        paginas:
+          - {titulo: "Cómo pedir ayuda", plantilla: T0_base}
