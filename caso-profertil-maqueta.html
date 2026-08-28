@@ -231,6 +231,14 @@ a { color: inherit; }
 }
 .win-media { display: block; line-height: 0; }
 .win-lift { transition: transform 420ms var(--ease), border-color 420ms var(--ease); }
+/* Hueco de foto. Cada ventana con data-foto lleva adentro su reconstruccion
+   en SVG; si el archivo existe en assets/img/caso-profertil/, la foto la
+   reemplaza sola al cargar. Si no existe, queda lo que ya se ve. */
+.foto { display: block; width: 100%; height: auto; }
+.galeria { display: grid; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)); gap: 18px; }
+.galeria figure { margin: 0; }
+.ph { aspect-ratio: 4 / 3; display: grid; place-items: center; background: var(--ph, var(--p-azul)); }
+.ph svg { width: 34%; height: 34%; opacity: 0.92; }
 .win-lift:hover { transform: translateY(-4px); border-color: var(--border); }
 .tile { border-radius: var(--radius-tile); overflow: hidden; }
 
@@ -651,7 +659,7 @@ a { color: inherit; }
       </ul>
     </div>
 
-    <div class="win hero-win rise">
+    <div data-foto="hero.jpg" data-alt="Aplicaciones del sistema Profertil conviviendo" class="win hero-win rise">
       <canvas class="hero-canvas" id="heroCanvas" role="img" aria-label="Composición generada con el alfabeto de formas de Profertil"></canvas>
       <p class="cap"><b>Hero</b> — Aplicaciones del sistema conviviendo. En la maqueta, el patrón se genera en vivo con el alfabeto de formas.</p>
     </div>
@@ -688,7 +696,7 @@ a { color: inherit; }
           <p>Junto al equipo de Comunicaciones Integradas encuestamos a más de cuarenta personas de siete áreas. Los equipos terminaban buscando en materiales viejos, preguntándole a Comunicaciones o improvisando desde cero.</p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="encuesta.jpg" data-alt="Gráficos de la encuesta rehechos con el Sistema de Formas" class="win rise">
           <div class="caja caja-azul">
             <p class="label" style="color:rgba(255,255,255,.6)">Diagnóstico</p>
             <div style="display:grid;gap:26px;margin-top:18px">
@@ -738,7 +746,7 @@ a { color: inherit; }
           <p>Del logo extrajimos su forma más elemental: la hoja de la espiga de trigo. De esa hoja se construyó un alfabeto visual completo. <strong>Ninguna forma es arbitraria; todas descienden del mismo origen.</strong></p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="construccion.jpg" data-alt="Secuencia constructiva: logo, hoja, primeras formas, alfabeto" class="win rise">
           <div class="caja" style="background:var(--p-crema)">
             <div class="secuencia">
               <div class="paso"><figure><svg viewBox="0 0 48 48" fill="var(--p-azul)" aria-hidden="true"><use href="#f-espiga"/></svg></figure><figcaption>01 · Logo</figcaption></div>
@@ -754,7 +762,7 @@ a { color: inherit; }
           <p>La hoja ancla el sistema al logo y a la vez es la pieza más elemental posible: se duplica, se yuxtapone, genera formas nuevas sin perder el origen. Buscábamos piezas con peso visual que funcionaran como máscaras y ordenadores del layout: <strong>pregnantes solas, modulares en combinación.</strong></p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="formas-detalle.jpg" data-alt="Detalle técnico de construcción del alfabeto de formas" class="win rise">
           <div class="caja" style="background:var(--p-crema)">
             <div class="formas">
               <div class="forma" style="background:var(--p-azul)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-hoja"/></svg></div>
@@ -778,7 +786,7 @@ a { color: inherit; }
           <p>Profertil ya tenía una paleta amplia, sin jerarquía ni reglas de combinación. Seleccionamos colores, balanceamos tonos y le dimos una estructura de uso: <strong>tres principales, cuatro duplas y cuatro paletas terciarias.</strong> Cada nivel crece desde el anterior, igual que todo el proyecto.</p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="paleta.jpg" data-alt="Paleta de Profertil con especificaciones" class="win rise">
           <div class="caja" style="background:var(--p-crema);display:grid;gap:26px">
             <div class="paleta-nivel">
               <p class="label" style="color:rgba(22,32,43,.5)">01 · Principales</p>
@@ -811,7 +819,7 @@ a { color: inherit; }
         </div>
 
         <div class="duo">
-          <div class="win rise">
+          <div data-foto="tipografia-principal.jpg" data-alt="Muestra de la tipografía principal" class="win rise">
             <div class="caja" style="background:var(--p-azul);color:#fff">
               <div class="specimen">
                 <p class="specimen-set">Principal · geométrica</p>
@@ -821,7 +829,7 @@ a { color: inherit; }
             </div>
             <p class="cap"><b>Tipografía principal</b> — Dialoga con la geometría del sistema.</p>
           </div>
-          <div class="win rise">
+          <div data-foto="tipografia-secundaria.jpg" data-alt="Muestra de la tipografía secundaria" class="win rise">
             <div class="caja" style="background:var(--p-crema);color:#16202b">
               <div class="specimen">
                 <p class="specimen-set" style="opacity:.5">Secundaria · lectura corrida</p>
@@ -837,7 +845,7 @@ a { color: inherit; }
           <p><strong>164 íconos vectoriales en seis categorías</strong> que replican las áreas reales de la compañía. Trazo unificado, grilla de 24&nbsp;px, pensados para funcionar del celular a la cartelería.</p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="iconos.jpg" data-alt="Grilla de íconos por categoría" class="win rise">
           <div class="caja" style="background:var(--p-crema)">
             <div class="icon-grid" id="iconPreview"></div>
           </div>
@@ -864,7 +872,7 @@ a { color: inherit; }
           <p>El manual se diseñó estudiando al usuario: alguien que tiene diez minutos y una presentación que entregar. <strong>125 páginas, diez secciones, navegación por tarea.</strong> El punto de entrada no pregunta qué sección buscás, pregunta qué necesitás hacer.</p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="manual-navegacion.jpg" data-alt="Spread de navegación por tarea del manual" class="win rise">
           <div class="spread">
             <div class="spread-l">
               <div>
@@ -891,7 +899,7 @@ a { color: inherit; }
           <p>Incluye un glosario para no diseñadores, porque la mayoría de quienes aplican una marca todos los días no lo son.</p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="manual-glosario.jpg" data-alt="Spread del glosario del manual" class="win rise">
           <dl class="glosario">
             <div class="glosario-row"><dt>Área de resguardo</dt><dd>El aire mínimo alrededor del logo. Si algo entra ahí, el logo deja de leerse como logo.</dd></div>
             <div class="glosario-row"><dt>Vectorial</dt><dd>Un archivo que se agranda todo lo que quieras sin pixelarse. Es el que hay que mandarle al imprentero.</dd></div>
@@ -904,7 +912,7 @@ a { color: inherit; }
           <p>Profertil trabaja con decenas de proveedores externos. El manual opera como documento de consenso entre todos ellos. <strong>Se versiona como software</strong>, con un changelog que documenta cada cambio, de correcciones chicas a la incorporación de programas nuevos.</p>
         </div>
 
-        <div class="win rise">
+        <div data-foto="manual-changelog.jpg" data-alt="El changelog del manual como pieza gráfica" class="win rise">
           <div class="changelog">
             <div class="changelog-row"><b>v1.4.0</b><span>Se incorpora el programa comunitario de escuelas</span><time>Jul 2026</time></div>
             <div class="changelog-row"><b>v1.3.2</b><span>Corrección del área de resguardo en aplicaciones chicas</span><time>May 2026</time></div>
@@ -971,6 +979,53 @@ a { color: inherit; }
     </div>
   </section>
 
+  <!-- ===================== APLICACIONES ===================== -->
+  <section class="wrap chapter">
+    <div class="chapter-grid">
+      <div class="rail"><p class="label label-accent">Aplicaciones</p><div class="rail-line"></div></div>
+      <div class="col">
+        <h2 class="h2">El sistema puesto a trabajar</h2>
+        <div class="prose">
+          <p>Las piezas donde el sistema deja de ser un manual y pasa a ser la cara de la compañía: de la papelería que usan las siete áreas al stand de feria y a la credencial que se cuelga en planta.</p>
+        </div>
+        <div class="galeria">
+        <figure data-foto="app-agenda.jpg" data-alt="Agenda institucional 2026" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-azul)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-cuarto"/></svg></div>
+          <figcaption class="cap"><b>Agenda 2026</b></figcaption>
+        </figure>
+        <figure data-foto="app-carpeta.jpg" data-alt="Carpeta institucional" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-verde)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-hoja"/></svg></div>
+          <figcaption class="cap"><b>Carpeta</b></figcaption>
+        </figure>
+        <figure data-foto="app-sobre.jpg" data-alt="Sobre DL membretado" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-amarillo)"><svg viewBox="0 0 48 48" fill="var(--p-azul)" aria-hidden="true"><use href="#f-medio"/></svg></div>
+          <figcaption class="cap"><b>Sobre DL</b></figcaption>
+        </figure>
+        <figure data-foto="app-tote.jpg" data-alt="Tote bag del programa comunitario" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-verde-osc)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-espiga"/></svg></div>
+          <figcaption class="cap"><b>Tote bag</b></figcaption>
+        </figure>
+        <figure data-foto="app-stand.jpg" data-alt="Stand de feria" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-naranja)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-arco"/></svg></div>
+          <figcaption class="cap"><b>Stand</b></figcaption>
+        </figure>
+        <figure data-foto="app-credencial.jpg" data-alt="Credencial de planta" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-azul-claro)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-casco"/></svg></div>
+          <figcaption class="cap"><b>Credencial</b></figcaption>
+        </figure>
+        <figure data-foto="app-mail.jpg" data-alt="Pieza de e-mail para newsletter" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-terra)"><svg viewBox="0 0 48 48" fill="var(--p-amarillo)" aria-hidden="true"><use href="#f-onda"/></svg></div>
+          <figcaption class="cap"><b>Newsletter</b></figcaption>
+        </figure>
+        <figure data-foto="app-sitio.jpg" data-alt="El sistema aplicado al sitio" class="win win-lift rise">
+          <div class="ph" style="--ph:var(--p-azul)"><svg viewBox="0 0 48 48" fill="var(--p-azul-claro)" aria-hidden="true"><use href="#f-c"/></svg></div>
+          <figcaption class="cap"><b>Sitio</b></figcaption>
+        </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===================== CIERRE ===================== -->
   <section class="wrap cierre">
     <div class="chapter-grid">
@@ -985,7 +1040,7 @@ a { color: inherit; }
   </section>
 
   <section class="wrap">
-    <p class="nota"><b>Sobre esta maqueta.</b> Es una prueba de layout del caso Profertil sobre el sistema web de Bong: los tokens de color, la tipografía, las pastillas y el dock salen de <code>styles.css</code> del cotizador. Las ventanas de imagen están reconstruidas en SVG y canvas con el alfabeto de formas y la paleta del cliente — en producción van las fotos y los renders finales. Los porcentajes de la encuesta no se muestran porque son datos del cliente, no nuestros.</p>
+    <p class="nota"><b>Sobre esta maqueta.</b> Es una prueba de layout del caso Profertil sobre el sistema web de Bong: los tokens de color, la tipografía, las pastillas y el dock salen de <code>styles.css</code> del cotizador. <b>Las fotos van solas:</b> cada ventana busca su archivo en <code>assets/img/caso-profertil/</code> y, si lo encuentra, reemplaza la reconstrucción en SVG que se ve hoy. El mapa de qué archivo va en cada hueco está en el <code>README.md</code> de esa carpeta. Los porcentajes de la encuesta no se muestran porque son datos del cliente, no nuestros.</p>
   </section>
 
 </main>
@@ -1239,6 +1294,26 @@ a { color: inherit; }
       });
     });
   }
+
+  /* ---------------------------------------------------------------------
+     Fotos del caso. Cada ventana con data-foto trae adentro su version
+     reconstruida en SVG. Si el archivo esta en assets/img/caso-profertil/,
+     la foto lo reemplaza al terminar de cargar; si no esta, no pasa nada y
+     queda lo reconstruido. Asi la maqueta se completa tirando archivos en
+     la carpeta, sin tocar el HTML.
+     --------------------------------------------------------------------- */
+  document.querySelectorAll("[data-foto]").forEach(function (ventana) {
+    var img = new Image();
+    img.addEventListener("load", function () {
+      var placeholder = ventana.firstElementChild;
+      if (!placeholder) return;
+      img.className = "foto";
+      img.alt = ventana.dataset.alt || "";
+      img.loading = "lazy";
+      ventana.replaceChild(img, placeholder);
+    });
+    img.src = "assets/img/caso-profertil/" + ventana.dataset.foto;
+  });
 
   /* --- Arranque --------------------------------------------------------- */
   if (document.fonts && document.fonts.ready) {
