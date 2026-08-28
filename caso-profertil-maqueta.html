@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema Profertil</title>
+<meta name="description" content="Maqueta de caso de estudio de Bong Studio: el sistema de marca de Profertil.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   Maqueta de caso de estudio — sistema web de Bong sobre el caso Profertil.
+   Los tokens de abajo son los de styles.css del cotizador, no una version
+   parecida: si alla se mueve un verde, aca se mueve el mismo verde.
+   Lo unico que se suma es la capa "p-" (la marca del cliente), que no
+   depende del tema: adentro de las ventanas manda Profertil.
+   ========================================================================== */
+
+:root {
+  /* Bong — oscuro, que es el default del sistema */
+  --bg: #004831;
+  --bg-deep: #003a27;
+  --card: rgba(24, 47, 37, 0.88);
+  --surface: rgba(24, 47, 37, 0.78);
+  --surface-strong: rgba(24, 47, 37, 0.92);
+  --text: #ffffff;
+  --text-2: #95b5a9;
+  --text-3: #7fa394;
+  --accent: #20c683;
+  --accent-strong: #169d69;
+  --accent-soft: rgba(32, 198, 131, 0.14);
+  --border: rgba(149, 181, 169, 0.22);
+  --dock: rgba(24, 47, 37, 0.92);
+  --ring: rgba(255, 255, 255, 0.09);
+  --tag-1: #0c6347;
+  --tag-2: #0f7a53;
+  --tag-3: #1a9060;
+  --tag-4: #20c683;
+  --tag-fg: #ffffff;
+
+  /* Profertil — la paleta del cliente, igual en los dos temas */
+  --p-azul: #0b3fa8;
+  --p-azul-claro: #3d8bfd;
+  --p-verde: #5fb52c;
+  --p-verde-osc: #2f7d20;
+  --p-amarillo: #f0c419;
+  --p-naranja: #e2801e;
+  --p-terra: #7c4a15;
+  --p-crema: #f2efe6;
+
+  --radius-win: 34px;
+  --radius-tile: 22px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --font-sans: "Satoshi", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f4f1ea;
+    --bg-deep: #ece8df;
+    --card: rgba(255, 255, 255, 0.46);
+    --surface: rgba(0, 0, 0, 0.035);
+    --surface-strong: rgba(255, 255, 255, 0.55);
+    --text: #162821;
+    --text-2: #476459;
+    --text-3: #789486;
+    --accent: #0d9b5c;
+    --accent-strong: #0b8750;
+    --accent-soft: rgba(13, 155, 92, 0.12);
+    --border: rgba(0, 0, 0, 0.09);
+    --dock: rgba(255, 255, 255, 0.62);
+    --ring: rgba(0, 0, 0, 0.13);
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #f4f1ea;
+  --bg-deep: #ece8df;
+  --card: rgba(255, 255, 255, 0.46);
+  --surface: rgba(0, 0, 0, 0.035);
+  --surface-strong: rgba(255, 255, 255, 0.55);
+  --text: #162821;
+  --text-2: #476459;
+  --text-3: #789486;
+  --accent: #0d9b5c;
+  --accent-strong: #0b8750;
+  --accent-soft: rgba(13, 155, 92, 0.12);
+  --border: rgba(0, 0, 0, 0.09);
+  --dock: rgba(255, 255, 255, 0.62);
+  --ring: rgba(0, 0, 0, 0.13);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  /* El fondo va en dos capas a proposito: el body pinta un color plano, que es
+     lo que se ve si el degrade no llega a pintarse, y el degrade cuelga de un
+     pseudo fijo. Con background-attachment: fixed sobre el body, cualquier
+     render de pagina completa (captura, PDF, un iframe raro) pinta solo el
+     primer viewport y deja el resto en blanco — con texto blanco encima. */
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  pointer-events: none;
+}
+
+::selection { background: var(--accent); color: #04150e; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.wrap { width: min(100% - 36px, 1180px); margin-inline: auto; }
+
+/* --- Etiquetas: Space Mono en caja alta, igual que en el cotizador --------- */
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0;
+}
+.label-accent { color: var(--accent); }
+
+/* --- Barra de progreso ---------------------------------------------------- */
+.progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 2px;
+  z-index: 60;
+  background: var(--accent);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  opacity: 0.85;
+}
+
+/* --- Dock ----------------------------------------------------------------- */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  padding: 22px 18px 0;
+  pointer-events: none;
+}
+.dock {
+  width: min(680px, calc(100vw - 40px));
+  display: grid;
+  grid-template-columns: 46px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--dock);
+  backdrop-filter: blur(16px);
+  pointer-events: auto;
+  transition: background 240ms var(--ease), border-color 240ms var(--ease);
+}
+.dock-brand {
+  width: 46px; height: 46px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; text-decoration: none;
+}
+.dock-brand svg { color: var(--accent); width: 24px; height: 28px; }
+.dock-center { display: grid; gap: 1px; justify-items: center; min-width: 0; }
+.dock-title {
+  margin: 0;
+  font-size: 0.9rem; font-weight: 600; letter-spacing: -0.03em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.dock-title .sep { color: var(--text-3); font-weight: 400; margin: 0 5px; }
+.dock-tagline { font-size: 0.58rem; letter-spacing: 0.1em; }
+.dock-actions { display: flex; gap: 6px; }
+.dock-btn {
+  width: 38px; height: 38px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 180ms ease, background 180ms ease, scale 180ms var(--ease);
+}
+.dock-btn:hover { color: var(--accent); background: var(--surface); }
+.dock-btn:active { scale: 0.93; }
+.dock-btn svg {
+  width: 17px; height: 17px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.icon-sun { display: none; }
+:root[data-theme="light"] .icon-sun { display: block; }
+:root[data-theme="light"] .icon-moon { display: none; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .icon-sun { display: block; }
+  :root:not([data-theme="dark"]) .icon-moon { display: none; }
+}
+
+/* --- Ventanas: el componente de la maqueta -------------------------------- */
+.win {
+  position: relative;
+  border-radius: var(--radius-win);
+  border: 1px solid var(--ring);
+  background: var(--surface);
+  overflow: hidden;
+  isolation: isolate;
+}
+.win-media { display: block; line-height: 0; }
+.win-lift { transition: transform 420ms var(--ease), border-color 420ms var(--ease); }
+.win-lift:hover { transform: translateY(-4px); border-color: var(--border); }
+.tile { border-radius: var(--radius-tile); overflow: hidden; }
+
+/* El squircle de verdad donde el navegador lo soporta. Sin esto queda el
+   redondeo comun, que ya es el piso aceptable. Ojo: no se aplica a las
+   pastillas, un 999px con corner-shape deja de ser pastilla. */
+@supports (corner-shape: squircle) {
+  .win, .tile, .caja { corner-shape: squircle; }
+}
+
+.cap {
+  display: block;
+  padding: 13px 20px 15px;
+  border-top: 1px solid var(--ring);
+  background: var(--card);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.cap b { color: var(--text-2); font-weight: 400; }
+
+/* --- Pastillas ------------------------------------------------------------ */
+.pills { display: flex; flex-wrap: wrap; gap: 9px; padding: 0; margin: 0; list-style: none; }
+.tag {
+  padding: 5.5px 13px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--tag-1);
+  color: var(--tag-fg);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+.tag[data-tone="1"] { background: var(--tag-2); }
+.tag[data-tone="2"] { background: var(--tag-3); }
+.tag[data-tone="3"] { background: var(--tag-4); }
+.tag-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+.tag-ghost:hover { border-color: var(--accent); color: var(--text); }
+.tag-ghost[aria-pressed="true"] {
+  background: var(--accent); border-color: var(--accent); color: #04150e;
+}
+</style>
+<style>
+/* --- Hero ----------------------------------------------------------------- */
+.hero { padding: 148px 0 0; }
+.hero-head { display: grid; gap: 22px; max-width: 900px; }
+.hero-kicker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hero-kicker .rule { flex: 1 1 60px; height: 1px; background: var(--border); min-width: 40px; }
+.display {
+  margin: 0;
+  font-size: clamp(3.6rem, 15vw, 10.5rem);
+  font-weight: 700;
+  line-height: 0.84;
+  letter-spacing: -0.07em;
+  text-wrap: balance;
+}
+.hero-lede {
+  margin: 0;
+  max-width: 46ch;
+  font-size: clamp(1.05rem, 1.9vw, 1.4rem);
+  line-height: 1.45;
+  color: var(--text-2);
+  letter-spacing: -0.015em;
+}
+.hero-win { margin-top: 46px; }
+.hero-canvas { display: block; width: 100%; height: clamp(240px, 42vw, 460px); }
+
+/* --- Ficha ---------------------------------------------------------------- */
+.ficha {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tile);
+  overflow: hidden;
+}
+.ficha div { background: var(--card); padding: 18px 20px 20px; display: grid; gap: 7px; }
+.ficha dd { margin: 0; font-size: 0.95rem; font-weight: 500; letter-spacing: -0.02em; }
+
+/* --- Capitulos ------------------------------------------------------------ */
+.chapter { padding-block: clamp(56px, 7.5vw, 112px); }
+.chapter-grid { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: clamp(24px, 4vw, 64px); }
+.rail { position: sticky; top: 104px; align-self: start; display: grid; gap: 10px; }
+.rail-num {
+  font-family: var(--font-mono);
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: -0.06em;
+}
+.rail-line { height: 1px; background: var(--border); }
+.col { display: grid; gap: clamp(26px, 3.4vw, 44px); min-width: 0; }
+.h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5.2vw, 3.6rem);
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+  max-width: 16ch;
+}
+.h3 {
+  margin: 0 0 10px;
+  font-size: 1.18rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.prose { display: grid; gap: 18px; max-width: 62ch; }
+.prose p { margin: 0; color: var(--text-2); font-size: 1.02rem; line-height: 1.62; }
+.prose strong { color: var(--text); font-weight: 500; }
+
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.stack { display: grid; gap: 18px; }
+
+/* --- Numeros -------------------------------------------------------------- */
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 18px; }
+.cifra { display: grid; gap: 4px; align-content: start; }
+.cifra b {
+  font-size: clamp(2.1rem, 4.4vw, 3.1rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.cifra span { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+
+/* --- Caja neutra sobre fondo Profertil ------------------------------------ */
+.caja { background: var(--p-crema); color: #16202b; padding: clamp(22px, 3vw, 40px); }
+.caja-azul { background: var(--p-azul); color: #fff; }
+
+/* --- Alfabeto de formas --------------------------------------------------- */
+.formas { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.forma { aspect-ratio: 1; border-radius: 18px; display: grid; place-items: center; }
+.forma svg { width: 62%; height: 62%; display: block; }
+@supports (corner-shape: squircle) { .forma { corner-shape: squircle; } }
+
+/* --- Secuencia constructiva ----------------------------------------------- */
+.secuencia { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+.paso { display: grid; gap: 10px; justify-items: center; }
+.paso figure { margin: 0; width: 100%; aspect-ratio: 1; border-radius: 20px; background: #fff; display: grid; place-items: center; }
+.paso figure svg { width: 66%; height: 66%; }
+.paso figcaption { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+@supports (corner-shape: squircle) { .paso figure { corner-shape: squircle; } }
+
+/* --- Paleta --------------------------------------------------------------- */
+.paleta-nivel { display: grid; gap: 10px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw {
+  border: 0; padding: 0; cursor: pointer;
+  width: 76px; height: 76px; border-radius: 16px;
+  display: grid; align-content: end; justify-items: start;
+  padding: 8px;
+  font-family: var(--font-mono); font-size: 0.54rem; letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.9);
+  transition: transform 300ms var(--ease);
+}
+.sw:hover { transform: translateY(-3px); }
+.sw[data-dark="1"] { color: rgba(20,25,15,0.72); }
+@supports (corner-shape: squircle) { .sw { corner-shape: squircle; } }
+.dupla { display: flex; border-radius: 16px; overflow: hidden; height: 76px; width: 152px; }
+.dupla i { flex: 1; }
+@supports (corner-shape: squircle) { .dupla { corner-shape: squircle; } }
+.terciaria { display: flex; border-radius: 16px; overflow: hidden; height: 76px; width: 168px; }
+.terciaria i { flex: 1; }
+@supports (corner-shape: squircle) { .terciaria { corner-shape: squircle; } }
+
+/* --- Tipografia ----------------------------------------------------------- */
+.specimen { display: grid; gap: 14px; }
+.specimen-big { margin: 0; font-size: clamp(2.6rem, 7vw, 5rem); line-height: 0.9; letter-spacing: -0.05em; font-weight: 700; }
+.specimen-set { margin: 0; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; }
+
+/* --- Iconos --------------------------------------------------------------- */
+/* Las columnas van fijas y no en auto-fill: los iconos vienen ordenados por
+   categoria de a tres, y con auto-fill el corte de fila caia en cualquier
+   lado y se perdia el agrupamiento por color. Con 9 columnas entran tres
+   categorias enteras por fila. Lo mismo con las formas y sus 6. */
+.icon-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 10px; }
+.icon-tile {
+  aspect-ratio: 1; border-radius: 18px;
+  display: grid; place-items: center;
+  border: 0; padding: 0; cursor: default;
+  background: var(--p-azul);
+  transition: transform 320ms var(--ease);
+}
+.icon-tile svg { width: 46%; height: 46%; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-tile:hover { transform: translateY(-3px); }
+@supports (corner-shape: squircle) { .icon-tile { corner-shape: squircle; } }
+
+/* --- Herramientas --------------------------------------------------------- */
+.tool { display: grid; gap: 0; }
+.tool-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ring);
+  background: var(--card);
+}
+.tool-bar .label { margin-right: 2px; }
+.tool-body { padding: 0; }
+.gen-canvas { display: block; width: 100%; height: clamp(240px, 34vw, 400px); }
+.range {
+  -webkit-appearance: none; appearance: none;
+  width: 120px; height: 3px; border-radius: 999px;
+  background: var(--border); cursor: pointer;
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 15px; height: 15px; border-radius: 999px;
+  background: var(--accent); border: 0; cursor: grab;
+}
+.range::-moz-range-thumb { width: 15px; height: 15px; border-radius: 999px; background: var(--accent); border: 0; }
+
+.buscador { padding: 18px; display: grid; gap: 16px; }
+.buscador-input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+}
+.buscador-input::placeholder { color: var(--text-3); }
+.buscador-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.buscador-vacio { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); padding: 20px 2px; }
+
+/* --- Manual --------------------------------------------------------------- */
+.spread { display: grid; grid-template-columns: 1fr 1fr; min-height: 260px; }
+.spread > div { padding: clamp(16px, 2.4vw, 30px); }
+.spread-l { background: var(--p-azul); color: #fff; display: grid; align-content: space-between; gap: 20px; }
+.spread-r { background: var(--p-crema); color: #16202b; display: grid; align-content: start; gap: 10px; }
+.nav-tarea { display: grid; gap: 7px; }
+.nav-tarea div {
+  display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  text-decoration: none;
+  padding: 9px 12px; border-radius: 12px;
+  background: rgba(22, 32, 43, 0.05);
+  font-size: 0.86rem; letter-spacing: -0.01em;
+  transition: background 200ms ease;
+}
+.nav-tarea div:hover { background: rgba(22, 32, 43, 0.11); }
+.nav-tarea b { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.06em; opacity: 0.5; font-weight: 400; }
+
+.changelog { display: grid; gap: 0; font-family: var(--font-mono); font-size: 0.74rem; }
+.changelog-row {
+  display: grid; grid-template-columns: 74px 1fr auto; gap: 14px; align-items: baseline;
+  padding: 13px 20px;
+  border-top: 1px solid var(--ring);
+}
+.changelog-row:first-child { border-top: 0; }
+.changelog-row b { color: var(--accent); font-weight: 400; }
+.changelog-row span { color: var(--text-2); font-family: var(--font-sans); font-size: 0.9rem; }
+.changelog-row time { color: var(--text-3); font-size: 0.64rem; letter-spacing: 0.06em; }
+
+.glosario { display: grid; gap: 0; }
+.glosario-row { padding: 15px 20px; border-top: 1px solid var(--ring); display: grid; gap: 4px; }
+.glosario-row:first-child { border-top: 0; }
+.glosario-row dt { font-weight: 600; letter-spacing: -0.02em; font-size: 0.95rem; }
+.glosario-row dd { margin: 0; color: var(--text-2); font-size: 0.88rem; line-height: 1.5; }
+
+/* --- Cierre y pie --------------------------------------------------------- */
+.cierre { padding-block: clamp(72px, 11vw, 160px); }
+.cierre-quote {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.6vw, 2.7rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+  max-width: 24ch;
+  text-wrap: balance;
+}
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 44px 0 60px;
+  display: grid;
+  gap: 24px;
+}
+.footer-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
+.footer-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.footer-brand svg { color: var(--accent); width: 22px; height: 26px; }
+.footer-brand span { font-weight: 600; letter-spacing: -0.03em; }
+.nota {
+  border: 1px dashed var(--border);
+  border-radius: 18px;
+  padding: 16px 20px;
+  color: var(--text-3);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+.nota b { color: var(--text-2); font-weight: 500; }
+.nota code { font-family: var(--font-mono); font-size: 0.78em; color: var(--text-2); }
+
+/* --- Aparicion ------------------------------------------------------------ */
+.rise { opacity: 0; transform: translateY(18px); }
+.rise.is-in { opacity: 1; transform: none; transition: opacity 700ms var(--ease), transform 700ms var(--ease); }
+
+@media (max-width: 940px) {
+  .icon-grid { grid-template-columns: repeat(6, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .icon-grid { grid-template-columns: repeat(4, 1fr); }
+  .formas { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .chapter-grid { grid-template-columns: 1fr; gap: 20px; }
+  .rail { position: static; display: flex; align-items: center; gap: 12px; }
+  .rail-line { flex: 1; }
+  .rail-num { font-size: 1.5rem; }
+  .spread { grid-template-columns: 1fr; }
+  .hero { padding-top: 118px; }
+  .changelog-row { grid-template-columns: 64px 1fr; }
+  .changelog-row time { grid-column: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .rise { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="bong" viewBox="0 0 82 96">
+      <path d="M72.835 6.726C76.9 10.846 79.507 16.575 79.507 22.86s-2.607 11.995-6.672 16.134c-4.122 4.197-9.778 6.726-16.067 6.726-6.289 0-11.944-2.549-16.009-6.726-4.065-4.12-6.672-9.85-6.672-16.134 0-6.285 2.607-11.995 6.672-16.134C44.824 2.53 50.538 0 56.769 0c6.231 0 11.944 2.549 16.066 6.726Z"/>
+      <path d="M27.34 6.994c1.016 2.664 1.016 5.845 0 8.566-.959 2.414-2.665 4.445-5.215 5.519 13.018 2.28 12.27 23.99-2.358 23.99H.02V.709h17.984c4.831 0 7.937 2.721 9.336 6.285Z"/>
+      <path d="M0 50.51.038 95.598h16.738 14.57V51.085H16.776v18.798L.748 50.51H0Z"/>
+      <path d="m57.843 73.178 11.829-20.465c-3.182-1.667-6.787-2.606-10.621-2.606-12.673 0-22.949 10.27-22.949 22.937 0 12.666 10.276 22.937 22.949 22.937 12.673 0 22.892-10.194 22.95-22.821H57.843Z"/>
+    </symbol>
+
+    <!-- Alfabeto de formas: todo desciende de la hoja de la espiga -->
+    <symbol id="f-hoja" viewBox="0 0 48 48"><path d="M4 44A40 40 0 0 1 44 4 40 40 0 0 1 4 44Z"/></symbol>
+    <symbol id="f-cuarto" viewBox="0 0 48 48"><path d="M4 44V4h40A40 40 0 0 1 4 44Z"/></symbol>
+    <symbol id="f-medio" viewBox="0 0 48 48"><path d="M4 34a20 20 0 0 1 40 0Z"/></symbol>
+    <symbol id="f-circulo" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"/></symbol>
+    <symbol id="f-onda" viewBox="0 0 48 48"><path d="M4 44V28q10-13 20 0t20 0v16Z"/></symbol>
+    <symbol id="f-espiga" viewBox="0 0 48 48"><path d="M22 44V16h4v28Z"/><path d="M24 32c0-7 5-12 12-12 0 7-5 12-12 12Z"/><path d="M24 32c0-7-5-12-12-12 0 7 5 12 12 12Z"/><path d="M24 20c0-7 5-12 12-12 0 7-5 12-12 12Z"/><path d="M24 20c0-7-5-12-12-12 0 7 5 12 12 12Z"/></symbol>
+    <symbol id="f-gota" viewBox="0 0 48 48"><path d="M24 5c9 12 13 17 13 22a13 13 0 0 1-26 0c0-5 4-10 13-22Z"/></symbol>
+    <symbol id="f-arco" viewBox="0 0 48 48"><path d="M4 44A40 40 0 0 1 44 4v14A26 26 0 0 0 18 44Z"/></symbol>
+    <symbol id="f-estrella" viewBox="0 0 48 48"><path d="M24 4c2 11 9 18 20 20-11 2-18 9-20 20-2-11-9-18-20-20 11-2 18-9 20-20Z"/></symbol>
+    <symbol id="f-casco" viewBox="0 0 48 48"><path d="M9 33a15 15 0 0 1 30 0Z"/><path d="M4 35h40v6H4Z"/></symbol>
+    <symbol id="f-c" viewBox="0 0 48 48"><path d="M24 4a20 20 0 1 0 0 40V33a9 9 0 1 1 0-18Z"/></symbol>
+    <symbol id="f-ondas" viewBox="0 0 48 48"><path d="M4 38q10-9 20 0t20 0v6H4Z"/><path d="M4 26q10-9 20 0t20 0v6q-10-9-20 0T4 32Z"/><path d="M4 14q10-9 20 0t20 0v6q-10-9-20 0T4 20Z"/></symbol>
+
+    <!-- Iconografia: trazo unificado sobre grilla de 24 -->
+    <symbol id="i-planta" viewBox="0 0 24 24"><path d="M12 21v-8"/><path d="M12 13c0-4 3-7 7-7 0 4-3 7-7 7Z"/><path d="M12 16c0-3-2-5-5-5 0 3 2 5 5 5Z"/></symbol>
+    <symbol id="i-fabrica" viewBox="0 0 24 24"><path d="M3 21V10l6 4V10l6 4V7l6 4v10Z"/><path d="M3 21h18"/></symbol>
+    <symbol id="i-camion" viewBox="0 0 24 24"><path d="M2 7h11v10H2Z"/><path d="M13 10h4l4 4v3h-8Z"/><circle cx="7" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></symbol>
+    <symbol id="i-hoja" viewBox="0 0 24 24"><path d="M20 4c-9 0-15 4-15 10a6 6 0 0 0 11 4c4-3 5-9 4-14Z"/><path d="M6 20c1-5 4-9 9-11"/></symbol>
+    <symbol id="i-gota" viewBox="0 0 24 24"><path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11Z"/></symbol>
+    <symbol id="i-ciclo" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 13-5"/><path d="M19.5 12a7.5 7.5 0 0 1-13 5"/><path d="M17.5 3v4h-4"/><path d="M6.5 21v-4h4"/></symbol>
+    <symbol id="i-escuela" viewBox="0 0 24 24"><path d="M12 3 21 8v13H3V8Z"/><path d="M9 21v-7h6v7"/></symbol>
+    <symbol id="i-personas" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M15.8 20a4.6 4.6 0 0 1 5.2-2.6"/></symbol>
+    <symbol id="i-manos" viewBox="0 0 24 24"><circle cx="12" cy="6.5" r="2.5"/><circle cx="6" cy="17" r="2.5"/><circle cx="18" cy="17" r="2.5"/><path d="M10.4 8.7 7.6 14.6"/><path d="m13.6 8.7 2.8 5.9"/><path d="M8.5 17h7"/></symbol>
+    <symbol id="i-campo" viewBox="0 0 24 24"><path d="M2 20c4.5-2 15.5-2 20 0"/><path d="M4 14.5c3.5-1.5 12.5-1.5 16 0"/><path d="M6 9.5c2.5-1 9.5-1 12 0"/><path d="M12 20V6"/></symbol>
+    <symbol id="i-bolsa" viewBox="0 0 24 24"><path d="M6.5 8h11v13h-11Z"/><path d="M6.5 8 8 4.5h8L17.5 8"/><path d="M10 12h4"/></symbol>
+    <symbol id="i-grafico" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7.5 20v-5"/><path d="M12 20v-9"/><path d="M16.5 20v-3"/></symbol>
+    <symbol id="i-casco" viewBox="0 0 24 24"><path d="M4.5 16a7.5 7.5 0 0 1 15 0Z"/><path d="M3 16h18"/><path d="M9.5 8.7V6h5v2.7"/></symbol>
+    <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.6 7.9-8 9-4.4-1.1-8-4-8-9V6Z"/></symbol>
+    <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M12 4l9 16H3Z"/><path d="M12 10v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-matraz" viewBox="0 0 24 24"><path d="M10 3v6.5L4.5 20h15L14 9.5V3"/><path d="M9 3h6"/><path d="M7.6 15h8.8"/></symbol>
+    <symbol id="i-grilla" viewBox="0 0 24 24"><path d="M4 4h7v7H4Z"/><path d="M13 4h7v7h-7Z"/><path d="M4 13h7v7H4Z"/><path d="M13 13h7v7h-7Z"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4"/><path d="M9 13h6"/><path d="M9 17h4"/></symbol>
+  </defs>
+</svg>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="dock">
+    <a class="dock-brand" href="https://bongstudio.ar" aria-label="Bong Studio"><svg viewBox="0 0 82 96" fill="currentColor" aria-hidden="true"><use href="#bong"/></svg></a>
+    <div class="dock-center">
+      <p class="dock-title">Casos<span class="sep">/</span>Profertil</p>
+      <p class="label dock-tagline">Brutally Clear Branding</p>
+    </div>
+    <div class="dock-actions">
+      <button class="dock-btn" id="theme" type="button" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="wrap hero">
+    <div class="hero-head">
+      <div class="hero-kicker">
+        <p class="label label-accent">Caso de estudio</p>
+        <span class="rule"></span>
+        <p class="label">Sistema de marca · 2026</p>
+      </div>
+      <h1 class="display">Profertil</h1>
+      <p class="hero-lede">Una marca instalada durante veinticinco años a la que le faltaba lo único que no se ve en un logo: un sistema para usarla.</p>
+      <ul class="pills">
+        <li class="tag" data-tone="0">Investigación</li>
+        <li class="tag" data-tone="1">Sistema visual</li>
+        <li class="tag" data-tone="2">Manual</li>
+        <li class="tag" data-tone="3">Herramientas</li>
+      </ul>
+    </div>
+
+    <div class="win hero-win rise">
+      <canvas class="hero-canvas" id="heroCanvas" role="img" aria-label="Composición generada con el alfabeto de formas de Profertil"></canvas>
+      <p class="cap"><b>Hero</b> — Aplicaciones del sistema conviviendo. En la maqueta, el patrón se genera en vivo con el alfabeto de formas.</p>
+    </div>
+
+    <dl class="ficha rise">
+      <div><dt class="label">Cliente</dt><dd>Profertil</dd></div>
+      <div><dt class="label">Sector</dt><dd>Agroindustria</dd></div>
+      <div><dt class="label">Alcance</dt><dd>Sistema, manual y herramientas</dd></div>
+      <div><dt class="label">Estudio</dt><dd>Bong Studio</dd></div>
+    </dl>
+  </section>
+
+  <!-- ===================== INTRO ===================== -->
+  <section class="wrap chapter">
+    <div class="chapter-grid">
+      <div class="rail"><p class="label label-accent">Intro</p><div class="rail-line"></div></div>
+      <div class="col">
+        <h2 class="h2">Sobraba material, faltaba arquitectura</h2>
+        <div class="prose">
+          <p>Profertil es la principal productora de fertilizantes nitrogenados de Argentina. Veinticinco años de operación, decenas de productos, múltiples programas comunitarios y audiencias que van del productor agropecuario a las escuelas de Ingeniero White. <strong>La marca estaba profundamente instalada. Lo que faltaba era un sistema para usarla.</strong></p>
+          <p>Antes de diseñar nada, encuestamos a las siete áreas de la compañía. Los equipos conocían la marca y la valoraban, pero improvisaban cada pieza cotidiana porque no existían herramientas accesibles para aplicarla.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CAP 1 ===================== -->
+  <section class="wrap chapter">
+    <div class="chapter-grid">
+      <div class="rail"><p class="rail-num">01</p><p class="label label-accent">Investigación</p><div class="rail-line"></div></div>
+      <div class="col">
+        <h2 class="h2">Reconocimiento alto, uso operativo bajo</h2>
+        <div class="prose">
+          <p>Junto al equipo de Comunicaciones Integradas encuestamos a más de cuarenta personas de siete áreas. Los equipos terminaban buscando en materiales viejos, preguntándole a Comunicaciones o improvisando desde cero.</p>
+        </div>
+
+        <div class="win rise">
+          <div class="caja caja-azul">
+            <p class="label" style="color:rgba(255,255,255,.6)">Diagnóstico</p>
+            <div style="display:grid;gap:26px;margin-top:18px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:22px">
+                <div>
+                  <p style="margin:0;font-size:clamp(2.4rem,6vw,3.6rem);font-weight:700;letter-spacing:-.06em;line-height:1">40+</p>
+                  <p class="label" style="color:rgba(255,255,255,.6)">Personas encuestadas</p>
+                </div>
+                <div>
+                  <p style="margin:0;font-size:clamp(2.4rem,6vw,3.6rem);font-weight:700;letter-spacing:-.06em;line-height:1">7</p>
+                  <p class="label" style="color:rgba(255,255,255,.6)">Áreas de la compañía</p>
+                </div>
+                <div>
+                  <p style="margin:0;font-size:clamp(2.4rem,6vw,3.6rem);font-weight:700;letter-spacing:-.06em;line-height:1">25</p>
+                  <p class="label" style="color:rgba(255,255,255,.6)">Años de marca instalada</p>
+                </div>
+              </div>
+              <ul class="pills" style="gap:7px">
+                <li class="tag" style="background:var(--p-verde);color:#0c2408">Producción</li>
+                <li class="tag" style="background:var(--p-verde-osc)">Sostenibilidad</li>
+                <li class="tag" style="background:var(--p-amarillo);color:#2a1f04">Comunidad</li>
+                <li class="tag" style="background:var(--p-naranja);color:#2a1604">Comercial</li>
+                <li class="tag" style="background:var(--p-azul-claro);color:#04173d">Seguridad</li>
+                <li class="tag" style="background:var(--p-terra)">Datos</li>
+                <li class="tag" style="background:rgba(255,255,255,.16)">Comunicaciones</li>
+              </ul>
+            </div>
+          </div>
+          <p class="cap"><b>Encuesta</b> — Los gráficos del informe se rehicieron con el Sistema de Formas. Acá van los ejes, no los porcentajes: el detalle es del cliente.</p>
+        </div>
+
+        <div class="prose">
+          <p>Estudiamos organizaciones con desafíos comparables: instituciones que gestionan decenas de submarcas, plataformas educativas públicas con múltiples programas, empresas del agro con comunicación técnica y comunitaria en simultáneo. De ahí entendimos que <strong>los sistemas de diseño modulares son la respuesta natural a la complejidad organizacional.</strong></p>
+          <p>El diagnóstico decidió conservar el logotipo, ya instalado, y parte de la paleta con carga simbólica. El sistema nuevo se construyó con eso como base.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CAP 2 ===================== -->
+  <section class="wrap chapter">
+    <div class="chapter-grid">
+      <div class="rail"><p class="rail-num">02</p><p class="label label-accent">Sistema</p><div class="rail-line"></div></div>
+      <div class="col">
+        <h2 class="h2">Del logo salió una hoja. De la hoja, un alfabeto</h2>
+        <div class="prose">
+          <p>Del logo extrajimos su forma más elemental: la hoja de la espiga de trigo. De esa hoja se construyó un alfabeto visual completo. <strong>Ninguna forma es arbitraria; todas descienden del mismo origen.</strong></p>
+        </div>
+
+        <div class="win rise">
+          <div class="caja" style="background:var(--p-crema)">
+            <div class="secuencia">
+              <div class="paso"><figure><svg viewBox="0 0 48 48" fill="var(--p-azul)" aria-hidden="true"><use href="#f-espiga"/></svg></figure><figcaption>01 · Logo</figcaption></div>
+              <div class="paso"><figure><svg viewBox="0 0 48 48" fill="var(--p-azul)" aria-hidden="true"><use href="#f-hoja"/></svg></figure><figcaption>02 · Hoja</figcaption></div>
+              <div class="paso"><figure><svg viewBox="0 0 96 48" aria-hidden="true"><g fill="var(--p-azul)"><use href="#f-hoja" x="0" y="0" width="48" height="48"/><g transform="translate(96,48) rotate(180)"><use href="#f-hoja" width="48" height="48"/></g></g></svg></figure><figcaption>03 · Yuxtaposición</figcaption></div>
+              <div class="paso"><figure><svg viewBox="0 0 96 96" aria-hidden="true"><g fill="var(--p-azul)"><use href="#f-hoja" x="0" y="0" width="48" height="48"/><use href="#f-cuarto" x="48" y="0" width="48" height="48"/><use href="#f-medio" x="0" y="48" width="48" height="48"/><use href="#f-circulo" x="48" y="48" width="48" height="48"/></g></svg></figure><figcaption>04 · Alfabeto</figcaption></div>
+            </div>
+          </div>
+          <p class="cap"><b>Construcción</b> — Logo → hoja → primeras formas → alfabeto expandido.</p>
+        </div>
+
+        <div class="prose">
+          <p>La hoja ancla el sistema al logo y a la vez es la pieza más elemental posible: se duplica, se yuxtapone, genera formas nuevas sin perder el origen. Buscábamos piezas con peso visual que funcionaran como máscaras y ordenadores del layout: <strong>pregnantes solas, modulares en combinación.</strong></p>
+        </div>
+
+        <div class="win rise">
+          <div class="caja" style="background:var(--p-crema)">
+            <div class="formas">
+              <div class="forma" style="background:var(--p-azul)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-hoja"/></svg></div>
+              <div class="forma" style="background:var(--p-verde)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-cuarto"/></svg></div>
+              <div class="forma" style="background:var(--p-amarillo)"><svg viewBox="0 0 48 48" fill="var(--p-azul)" aria-hidden="true"><use href="#f-medio"/></svg></div>
+              <div class="forma" style="background:var(--p-azul-claro)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-circulo"/></svg></div>
+              <div class="forma" style="background:var(--p-naranja)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-onda"/></svg></div>
+              <div class="forma" style="background:var(--p-verde-osc)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-espiga"/></svg></div>
+              <div class="forma" style="background:var(--p-terra)"><svg viewBox="0 0 48 48" fill="var(--p-amarillo)" aria-hidden="true"><use href="#f-gota"/></svg></div>
+              <div class="forma" style="background:var(--p-azul)"><svg viewBox="0 0 48 48" fill="var(--p-verde)" aria-hidden="true"><use href="#f-arco"/></svg></div>
+              <div class="forma" style="background:var(--p-amarillo)"><svg viewBox="0 0 48 48" fill="var(--p-naranja)" aria-hidden="true"><use href="#f-estrella"/></svg></div>
+              <div class="forma" style="background:var(--p-verde)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-casco"/></svg></div>
+              <div class="forma" style="background:var(--p-azul-claro)"><svg viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><use href="#f-c"/></svg></div>
+              <div class="forma" style="background:var(--p-azul)"><svg viewBox="0 0 48 48" fill="var(--p-azul-claro)" aria-hidden="true"><use href="#f-ondas"/></svg></div>
+            </div>
+          </div>
+          <p class="cap"><b>Detalle técnico</b> — Cada forma funciona como máscara y como ordenador del layout.</p>
+        </div>
+
+        <div class="prose">
+          <p>Profertil ya tenía una paleta amplia, sin jerarquía ni reglas de combinación. Seleccionamos colores, balanceamos tonos y le dimos una estructura de uso: <strong>tres principales, cuatro duplas y cuatro paletas terciarias.</strong> Cada nivel crece desde el anterior, igual que todo el proyecto.</p>
+        </div>
+
+        <div class="win rise">
+          <div class="caja" style="background:var(--p-crema);display:grid;gap:26px">
+            <div class="paleta-nivel">
+              <p class="label" style="color:rgba(22,32,43,.5)">01 · Principales</p>
+              <div class="swatches">
+                <button class="sw" type="button" style="background:var(--p-azul)" data-hex="#0B3FA8">#0B3FA8</button>
+                <button class="sw" type="button" style="background:var(--p-verde)" data-hex="#5FB52C" data-dark="1">#5FB52C</button>
+                <button class="sw" type="button" style="background:var(--p-amarillo)" data-hex="#F0C419" data-dark="1">#F0C419</button>
+              </div>
+            </div>
+            <div class="paleta-nivel">
+              <p class="label" style="color:rgba(22,32,43,.5)">02 · Duplas — principal + complementario</p>
+              <div class="swatches">
+                <span class="dupla"><i style="background:var(--p-azul)"></i><i style="background:var(--p-amarillo)"></i></span>
+                <span class="dupla"><i style="background:var(--p-verde)"></i><i style="background:var(--p-azul-claro)"></i></span>
+                <span class="dupla"><i style="background:var(--p-amarillo)"></i><i style="background:var(--p-naranja)"></i></span>
+                <span class="dupla"><i style="background:var(--p-terra)"></i><i style="background:var(--p-verde)"></i></span>
+              </div>
+            </div>
+            <div class="paleta-nivel">
+              <p class="label" style="color:rgba(22,32,43,.5)">03 · Terciarias — la dupla más un tercero</p>
+              <div class="swatches">
+                <span class="terciaria"><i style="background:var(--p-azul)"></i><i style="background:var(--p-amarillo)"></i><i style="background:var(--p-crema)"></i></span>
+                <span class="terciaria"><i style="background:var(--p-verde)"></i><i style="background:var(--p-azul-claro)"></i><i style="background:var(--p-amarillo)"></i></span>
+                <span class="terciaria"><i style="background:var(--p-amarillo)"></i><i style="background:var(--p-naranja)"></i><i style="background:var(--p-terra)"></i></span>
+                <span class="terciaria"><i style="background:var(--p-terra)"></i><i style="background:var(--p-verde)"></i><i style="background:var(--p-crema)"></i></span>
+              </div>
+            </div>
+          </div>
+          <p class="cap"><b>Paleta</b> — Tres niveles, cada uno construido sobre el anterior: 3 principales, 4 duplas, 4 terciarias.</p>
+        </div>
+
+        <div class="duo">
+          <div class="win rise">
+            <div class="caja" style="background:var(--p-azul);color:#fff">
+              <div class="specimen">
+                <p class="specimen-set">Principal · geométrica</p>
+                <p class="specimen-big">Aa</p>
+                <p style="margin:0;font-size:1.05rem;letter-spacing:-.02em;opacity:.85">Vida para nuestra tierra</p>
+              </div>
+            </div>
+            <p class="cap"><b>Tipografía principal</b> — Dialoga con la geometría del sistema.</p>
+          </div>
+          <div class="win rise">
+            <div class="caja" style="background:var(--p-crema);color:#16202b">
+              <div class="specimen">
+                <p class="specimen-set" style="opacity:.5">Secundaria · lectura corrida</p>
+                <p class="specimen-big" style="font-weight:400">Aa</p>
+                <p style="margin:0;font-size:.92rem;line-height:1.5;opacity:.75">Resuelve el texto largo del manual, los informes técnicos y la comunicación con productores.</p>
+              </div>
+            </div>
+            <p class="cap"><b>Tipografía secundaria</b> — Resuelve la lectura corrida.</p>
+          </div>
+        </div>
+
+        <div class="prose">
+          <p><strong>164 íconos vectoriales en seis categorías</strong> que replican las áreas reales de la compañía. Trazo unificado, grilla de 24&nbsp;px, pensados para funcionar del celular a la cartelería.</p>
+        </div>
+
+        <div class="win rise">
+          <div class="caja" style="background:var(--p-crema)">
+            <div class="icon-grid" id="iconPreview"></div>
+          </div>
+          <p class="cap"><b>Iconografía</b> — Muestra de las seis categorías. El set completo son 164 piezas.</p>
+        </div>
+
+        <div class="cifras">
+          <div class="cifra"><b>164</b><span>Íconos</span></div>
+          <div class="cifra"><b>6</b><span>Categorías</span></div>
+          <div class="cifra"><b>24</b><span>Grilla en px</span></div>
+          <div class="cifra"><b>11</b><span>Combinaciones de paleta</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CAP 3 ===================== -->
+  <section class="wrap chapter">
+    <div class="chapter-grid">
+      <div class="rail"><p class="rail-num">03</p><p class="label label-accent">Manual</p><div class="rail-line"></div></div>
+      <div class="col">
+        <h2 class="h2">Escrito para alguien que tiene diez minutos</h2>
+        <div class="prose">
+          <p>El manual se diseñó estudiando al usuario: alguien que tiene diez minutos y una presentación que entregar. <strong>125 páginas, diez secciones, navegación por tarea.</strong> El punto de entrada no pregunta qué sección buscás, pregunta qué necesitás hacer.</p>
+        </div>
+
+        <div class="win rise">
+          <div class="spread">
+            <div class="spread-l">
+              <div>
+                <p class="label" style="color:rgba(255,255,255,.55)">Sección 04</p>
+                <p style="margin:8px 0 0;font-size:clamp(1.6rem,3.6vw,2.4rem);font-weight:700;letter-spacing:-.05em;line-height:1">¿Qué<br>necesitás<br>hacer?</p>
+              </div>
+              <svg viewBox="0 0 96 48" style="width:140px;height:70px" aria-hidden="true"><g fill="rgba(255,255,255,.28)"><use href="#f-hoja" width="48" height="48"/><g transform="translate(96,48) rotate(180)"><use href="#f-hoja" width="48" height="48"/></g></g></svg>
+            </div>
+            <div class="spread-r">
+              <p class="label" style="color:rgba(22,32,43,.45)">Navegación por tarea</p>
+              <nav class="nav-tarea">
+                <div>Armar una presentación<b>p. 34</b></div>
+                <div>Hacer un flyer para la planta<b>p. 51</b></div>
+                <div>Publicar en redes<b>p. 63</b></div>
+                <div>Pedirle una pieza a un proveedor<b>p. 88</b></div>
+                <div>Usar el logo sobre una foto<b>p. 19</b></div>
+              </nav>
+            </div>
+          </div>
+          <p class="cap"><b>Spread de navegación</b> — El punto de entrada pregunta qué necesitás, no dónde buscar.</p>
+        </div>
+
+        <div class="prose">
+          <p>Incluye un glosario para no diseñadores, porque la mayoría de quienes aplican una marca todos los días no lo son.</p>
+        </div>
+
+        <div class="win rise">
+          <dl class="glosario">
+            <div class="glosario-row"><dt>Área de resguardo</dt><dd>El aire mínimo alrededor del logo. Si algo entra ahí, el logo deja de leerse como logo.</dd></div>
+            <div class="glosario-row"><dt>Vectorial</dt><dd>Un archivo que se agranda todo lo que quieras sin pixelarse. Es el que hay que mandarle al imprentero.</dd></div>
+            <div class="glosario-row"><dt>Dupla</dt><dd>Una combinación de dos colores del sistema que ya está aprobada. No hace falta elegir: están armadas.</dd></div>
+          </dl>
+          <p class="cap"><b>Glosario</b> — Definiciones para quien aplica la marca sin ser diseñador.</p>
+        </div>
+
+        <div class="prose">
+          <p>Profertil trabaja con decenas de proveedores externos. El manual opera como documento de consenso entre todos ellos. <strong>Se versiona como software</strong>, con un changelog que documenta cada cambio, de correcciones chicas a la incorporación de programas nuevos.</p>
+        </div>
+
+        <div class="win rise">
+          <div class="changelog">
+            <div class="changelog-row"><b>v1.4.0</b><span>Se incorpora el programa comunitario de escuelas</span><time>Jul 2026</time></div>
+            <div class="changelog-row"><b>v1.3.2</b><span>Corrección del área de resguardo en aplicaciones chicas</span><time>May 2026</time></div>
+            <div class="changelog-row"><b>v1.3.0</b><span>Nuevas paletas terciarias y reglas de combinación</span><time>Abr 2026</time></div>
+            <div class="changelog-row"><b>v1.0.0</b><span>Primera versión entregada a las siete áreas</span><time>Feb 2026</time></div>
+          </div>
+          <p class="cap"><b>Changelog</b> — Versionado visible: el manual es un documento vivo, no un PDF cerrado.</p>
+        </div>
+
+        <div class="cifras">
+          <div class="cifra"><b>125</b><span>Páginas</span></div>
+          <div class="cifra"><b>10</b><span>Secciones</span></div>
+          <div class="cifra"><b>7</b><span>Áreas alcanzadas</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CAP 4 ===================== -->
+  <section class="wrap chapter" id="cap4">
+    <div class="chapter-grid">
+      <div class="rail"><p class="rail-num">04</p><p class="label label-accent">Herramientas</p><div class="rail-line"></div></div>
+      <div class="col">
+        <h2 class="h2">Un sistema que depende del estudio es un sistema incompleto</h2>
+        <div class="prose">
+          <p>El generador de patrones web permite a cualquier persona de la compañía crear composiciones del sistema <strong>sin abrir un software de diseño.</strong> Elige colores, ajusta escala, descarga.</p>
+        </div>
+
+        <div class="win tool rise">
+          <div class="tool-bar">
+            <p class="label">Paleta</p>
+            <button class="tag tag-ghost" type="button" data-pal="0" aria-pressed="true">Azul + Amarillo</button>
+            <button class="tag tag-ghost" type="button" data-pal="1" aria-pressed="false">Verde + Azul</button>
+            <button class="tag tag-ghost" type="button" data-pal="2" aria-pressed="false">Tierra</button>
+            <span style="flex:1"></span>
+            <label class="label" for="escala">Escala</label>
+            <input class="range" id="escala" type="range" min="3" max="10" value="6" aria-label="Escala del patrón">
+            <button class="tag tag-ghost" type="button" id="regenerar">Regenerar</button>
+          </div>
+          <canvas class="gen-canvas" id="genCanvas" role="img" aria-label="Patrón generado con el sistema de formas"></canvas>
+          <p class="cap"><b>Generador de patrones</b> — Funciona de verdad en esta maqueta: cambiá la paleta o la escala y se recompone.</p>
+        </div>
+
+        <div class="prose">
+          <p>El buscador de íconos permite localizar, colorear y descargar la iconografía oficial en segundos.</p>
+        </div>
+
+        <div class="win tool rise">
+          <div class="tool-bar">
+            <p class="label">Color</p>
+            <button class="tag tag-ghost" type="button" data-icolor="var(--p-azul)" aria-pressed="true">Azul</button>
+            <button class="tag tag-ghost" type="button" data-icolor="var(--p-verde-osc)" aria-pressed="false">Verde</button>
+            <button class="tag tag-ghost" type="button" data-icolor="var(--p-naranja)" aria-pressed="false">Naranja</button>
+            <button class="tag tag-ghost" type="button" data-icolor="var(--p-terra)" aria-pressed="false">Terra</button>
+          </div>
+          <div class="buscador">
+            <input class="buscador-input" id="iconSearch" type="search" placeholder="Buscar un ícono: hoja, casco, camión, escuela…" aria-label="Buscar íconos">
+            <div class="icon-grid" id="iconResults"></div>
+            <p class="buscador-vacio" id="iconVacio" hidden>Sin resultados — probá con “agua”, “planta” o “datos”.</p>
+          </div>
+          <p class="cap"><b>Buscador de íconos</b> — Buscá por nombre o por categoría. En la maqueta hay 18 de los 164.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CIERRE ===================== -->
+  <section class="wrap cierre">
+    <div class="chapter-grid">
+      <div class="rail"><p class="label label-accent">Cierre</p><div class="rail-line"></div></div>
+      <div class="col">
+        <p class="cierre-quote">La marca que construyeron durante veinticinco años ya tiene la arquitectura para seguir creciendo.</p>
+        <div class="prose">
+          <p>Profertil tiene por primera vez un sistema visual unificado que su equipo opera sin depender de terceros. El manual se actualiza, las herramientas funcionan y el sistema crece con la compañía.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <p class="nota"><b>Sobre esta maqueta.</b> Es una prueba de layout del caso Profertil sobre el sistema web de Bong: los tokens de color, la tipografía, las pastillas y el dock salen de <code>styles.css</code> del cotizador. Las ventanas de imagen están reconstruidas en SVG y canvas con el alfabeto de formas y la paleta del cliente — en producción van las fotos y los renders finales. Los porcentajes de la encuesta no se muestran porque son datos del cliente, no nuestros.</p>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-row">
+    <a class="footer-brand" href="https://bongstudio.ar">
+      <svg viewBox="0 0 82 96" fill="currentColor" aria-hidden="true"><use href="#bong"/></svg>
+      <span>Bong Studio</span>
+    </a>
+    <p class="label">Brutally Clear Branding</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------------------------------------------------------------
+     Tema. El artifact/host puede venir con data-theme puesto, o con nada
+     y decidiendo por prefers-color-scheme. Arrancamos leyendo lo que haya
+     y el boton escribe encima: una eleccion explicita le gana al sistema.
+     --------------------------------------------------------------------- */
+  var root = document.documentElement;
+  function temaActual() {
+    if (root.dataset.theme) return root.dataset.theme;
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  var btnTema = document.getElementById("theme");
+  if (btnTema) {
+    btnTema.addEventListener("click", function () {
+      root.dataset.theme = temaActual() === "dark" ? "light" : "dark";
+      try { localStorage.setItem("bong-caso-tema", root.dataset.theme); } catch (e) {}
+      dibujarTodo();
+    });
+    try {
+      var guardado = localStorage.getItem("bong-caso-tema");
+      if (guardado === "light" || guardado === "dark") root.dataset.theme = guardado;
+    } catch (e) {}
+  }
+
+  /* --- Barra de progreso ------------------------------------------------ */
+  var barra = document.getElementById("progress");
+  function progreso() {
+    var alto = document.documentElement.scrollHeight - window.innerHeight;
+    var r = alto > 0 ? window.scrollY / alto : 0;
+    barra.style.transform = "scaleX(" + Math.min(1, Math.max(0, r)) + ")";
+  }
+  window.addEventListener("scroll", progreso, { passive: true });
+  progreso();
+
+  /* --- Aparicion al scrollear ------------------------------------------- */
+  var risers = document.querySelectorAll(".rise");
+  if (reduce || !("IntersectionObserver" in window)) {
+    risers.forEach(function (el) { el.classList.add("is-in"); });
+  } else {
+    var io = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -12% 0px" });
+    risers.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ---------------------------------------------------------------------
+     Patrones. Todo el sistema de formas se dibuja con cuatro piezas que
+     descienden de la hoja: hoja, cuarto, medio y circulo. La gracia es que
+     rotando y combinando esas cuatro sale el lenguaje entero, que es
+     exactamente lo que dice el caso.
+     --------------------------------------------------------------------- */
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  var PALETAS = [
+    { fondo: "#0B3FA8", formas: ["#F0C419", "#F2EFE6", "#3D8BFD"] },
+    { fondo: "#5FB52C", formas: ["#0B3FA8", "#F2EFE6", "#3D8BFD"] },
+    { fondo: "#7C4A15", formas: ["#F0C419", "#E2801E", "#5FB52C"] }
+  ];
+
+  function piezas(s) {
+    return [
+      new Path2D("M0 " + s + "A" + s + " " + s + " 0 0 1 " + s + " 0A" + s + " " + s + " 0 0 1 0 " + s + "Z"),
+      new Path2D("M0 0H" + s + "A" + s + " " + s + " 0 0 1 0 " + s + "Z"),
+      new Path2D("M0 0H" + s + "A" + (s / 2) + " " + (s / 2) + " 0 0 1 0 0Z"),
+      new Path2D("M0 " + (s / 2) + "a" + (s / 2) + " " + (s / 2) + " 0 1 0 " + s + " 0a" + (s / 2) + " " + (s / 2) + " 0 1 0 " + (-s) + " 0Z")
+    ];
+  }
+
+  function dibujarPatron(canvas, opciones) {
+    if (!canvas) return;
+    var pal = PALETAS[opciones.paleta] || PALETAS[0];
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = canvas.clientWidth;
+    var h = canvas.clientHeight;
+    if (!w || !h) return;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = pal.fondo;
+    ctx.fillRect(0, 0, w, h);
+
+    var cols = opciones.columnas;
+    var s = w / cols;
+    var filas = Math.ceil(h / s);
+    var azar = rng(opciones.semilla);
+    var formas = piezas(s);
+
+    for (var y = 0; y < filas; y++) {
+      for (var x = 0; x < cols; x++) {
+        if (azar() < opciones.vacio) continue;
+        var forma = formas[Math.floor(azar() * formas.length)];
+        var giro = Math.floor(azar() * 4) * (Math.PI / 2);
+        ctx.save();
+        ctx.translate(x * s + s / 2, y * s + s / 2);
+        ctx.rotate(giro);
+        ctx.translate(-s / 2, -s / 2);
+        ctx.fillStyle = pal.formas[Math.floor(azar() * pal.formas.length)];
+        ctx.fill(forma);
+        ctx.restore();
+      }
+    }
+  }
+
+  var hero = document.getElementById("heroCanvas");
+  var gen = document.getElementById("genCanvas");
+  var estadoGen = { paleta: 0, columnas: 6, semilla: 20260728, vacio: 0.22 };
+  var estadoHero = { paleta: 0, columnas: 9, semilla: 1004312, vacio: 0.3 };
+
+  function dibujarTodo() {
+    dibujarPatron(hero, estadoHero);
+    dibujarPatron(gen, estadoGen);
+  }
+
+  var reflow;
+  window.addEventListener("resize", function () {
+    clearTimeout(reflow);
+    reflow = setTimeout(dibujarTodo, 140);
+  });
+
+  document.querySelectorAll("[data-pal]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-pal]").forEach(function (o) { o.setAttribute("aria-pressed", "false"); });
+      b.setAttribute("aria-pressed", "true");
+      estadoGen.paleta = Number(b.dataset.pal);
+      dibujarPatron(gen, estadoGen);
+    });
+  });
+
+  var escala = document.getElementById("escala");
+  if (escala) {
+    escala.addEventListener("input", function () {
+      estadoGen.columnas = Number(escala.value);
+      dibujarPatron(gen, estadoGen);
+    });
+  }
+
+  var regenerar = document.getElementById("regenerar");
+  if (regenerar) {
+    regenerar.addEventListener("click", function () {
+      estadoGen.semilla = Math.floor(Math.random() * 1e9);
+      dibujarPatron(gen, estadoGen);
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     Iconografia. Un solo set alimenta la muestra del capitulo 2 y el
+     buscador del capitulo 4, asi no hay dos verdades del mismo dato.
+     --------------------------------------------------------------------- */
+  var ICONOS = [
+    { id: "i-planta",   n: "Fertilizante",       c: "Producción",     k: "grano nutriente urea planta" },
+    { id: "i-fabrica",  n: "Planta industrial",  c: "Producción",     k: "fabrica industria bahia" },
+    { id: "i-camion",   n: "Logística",          c: "Producción",     k: "camion transporte despacho" },
+    { id: "i-hoja",     n: "Hoja",               c: "Sostenibilidad", k: "verde ambiente cultivo brote" },
+    { id: "i-gota",     n: "Agua",               c: "Sostenibilidad", k: "gota riego hidrico" },
+    { id: "i-ciclo",    n: "Economía circular",  c: "Sostenibilidad", k: "ciclo reciclaje circular" },
+    { id: "i-escuela",  n: "Escuelas",           c: "Comunidad",      k: "educacion ingeniero white programa" },
+    { id: "i-personas", n: "Equipos",            c: "Comunidad",      k: "personas gente areas" },
+    { id: "i-manos",    n: "Alianzas",           c: "Comunidad",      k: "red vinculo acuerdo proveedores" },
+    { id: "i-campo",    n: "Campo",              c: "Comercial",      k: "surco productor agro siembra" },
+    { id: "i-bolsa",    n: "Producto",           c: "Comercial",      k: "bolsa venta despacho" },
+    { id: "i-grafico",  n: "Resultados",         c: "Comercial",      k: "grafico ventas rendimiento" },
+    { id: "i-casco",    n: "Casco",              c: "Seguridad",      k: "proteccion epp obra" },
+    { id: "i-escudo",   n: "Protección",         c: "Seguridad",      k: "escudo seguro resguardo" },
+    { id: "i-alerta",   n: "Alerta",             c: "Seguridad",      k: "riesgo aviso emergencia" },
+    { id: "i-matraz",   n: "Laboratorio",        c: "Datos",          k: "analisis calidad ensayo" },
+    { id: "i-grilla",   n: "Grilla",             c: "Datos",          k: "tabla datos estructura" },
+    { id: "i-doc",      n: "Informe",            c: "Datos",          k: "documento reporte datos" }
+  ];
+
+  var COLOR_CAT = {
+    "Producción": "var(--p-verde)",
+    "Sostenibilidad": "var(--p-verde-osc)",
+    "Comunidad": "var(--p-amarillo)",
+    "Comercial": "var(--p-naranja)",
+    "Seguridad": "var(--p-azul-claro)",
+    "Datos": "var(--p-terra)"
+  };
+
+  function tile(icono, fondo) {
+    var d = document.createElement("div");
+    d.className = "icon-tile";
+    d.style.background = fondo;
+    d.title = icono.n + " · " + icono.c;
+    d.innerHTML = '<svg viewBox="0 0 24 24" role="img" aria-label="' + icono.n + '"><use href="#' + icono.id + '"/></svg>';
+    return d;
+  }
+
+  var preview = document.getElementById("iconPreview");
+  if (preview) {
+    ICONOS.forEach(function (i) { preview.appendChild(tile(i, COLOR_CAT[i.c])); });
+  }
+
+  var resultados = document.getElementById("iconResults");
+  var vacio = document.getElementById("iconVacio");
+  var buscar = document.getElementById("iconSearch");
+  var colorIconos = "var(--p-azul)";
+
+  function normalizar(s) {
+    return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function pintarResultados() {
+    var q = normalizar(buscar ? buscar.value.trim() : "");
+    var lista = ICONOS.filter(function (i) {
+      if (!q) return true;
+      return normalizar(i.n + " " + i.c + " " + i.k).indexOf(q) !== -1;
+    });
+    resultados.textContent = "";
+    lista.forEach(function (i) { resultados.appendChild(tile(i, colorIconos)); });
+    if (vacio) vacio.hidden = lista.length !== 0;
+  }
+
+  if (resultados) {
+    pintarResultados();
+    if (buscar) buscar.addEventListener("input", pintarResultados);
+    document.querySelectorAll("[data-icolor]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("[data-icolor]").forEach(function (o) { o.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+        colorIconos = b.dataset.icolor;
+        pintarResultados();
+      });
+    });
+  }
+
+  /* --- Arranque --------------------------------------------------------- */
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(dibujarTodo);
+  }
+  dibujarTodo();
+})();
+</script>
+
+</body>
+</html>
