@@ -15,6 +15,7 @@ const MIN_GAP_MS = 40;
 
 let ctx = null;
 let master = null;
+let unlocked = false;
 let enabled = readPreference();
 const lastPlayed = new Map();
 
@@ -67,10 +68,31 @@ function ready(kind) {
   if (!enabled || throttled(kind) || !init()) {
     return false;
   }
-  if (ctx.state === "suspended") {
+  if (ctx.state !== "running") {
     ctx.resume();
   }
   return true;
+}
+
+// iOS solo destraba el audio adentro del gesto mismo, y con touchend o click
+// (pointerdown no le alcanza). Ahi se reanuda el contexto y se toca un buffer
+// mudo de un sample, el truco clasico para que Safari lo de por habilitado.
+// Se escucha en cada gesto porque iOS vuelve a suspender el audio cuando la
+// pestana pasa a segundo plano ("interrupted").
+function unlock() {
+  if (!init()) {
+    return;
+  }
+  if (ctx.state !== "running") {
+    ctx.resume();
+  }
+  if (!unlocked) {
+    const silence = ctx.createBufferSource();
+    silence.buffer = ctx.createBuffer(1, 1, 22050);
+    silence.connect(ctx.destination);
+    silence.start(0);
+    unlocked = true;
+  }
 }
 
 // Envolvente base: ataque de 3ms (sin click de arranque) y caida exponencial.
@@ -166,10 +188,14 @@ export const Sound = {
 const PRESSABLE = ".dial-btn, .action-btn, .dial-seg-btn, .toggle-chip, .floating-compass, .type-card, .currency-nav, .currency-item, .dock-btn";
 
 export function initSound() {
+  ["touchend", "click", "keydown"].forEach((type) =>
+    document.addEventListener(type, unlock, { capture: true, passive: true })
+  );
+
   document.addEventListener(
     "pointerdown",
     (event) => {
-      init();
+      unlock();
       const target = event.target.closest(PRESSABLE);
       if (target && !target.disabled) {
         Sound.tick();
