@@ -7,17 +7,17 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=32";
+} from "./currency.js?v=33";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=32";
-import { initAnalytics, track } from "./analytics.js?v=32";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=32";
-import { Sound, initSound } from "./sound.js?v=32";
-import { createResultFocus } from "./focus.js?v=32";
+} from "./pdf-fonts.js?v=33";
+import { initAnalytics, track } from "./analytics.js?v=33";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=33";
+import { Sound, initSound } from "./sound.js?v=33";
+import { createResultFocus } from "./focus.js?v=33";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1913,7 +1913,8 @@ async function init() {
   // En el telefono el resultado scrollea entero y, al bajar, el dock se
   // esconde para que la card gane ese alto.
   state.resultFocus = createResultFocus({
-    scroller: document.querySelector(".scene-card-result")
+    scroller: document.querySelector(".scene-card-result"),
+    dock: document.querySelector(".progress-dock")
   });
 
   try {
