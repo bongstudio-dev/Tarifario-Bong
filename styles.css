@@ -15,10 +15,21 @@
   --accent: #20c683;
   --accent-strong: #169d69;
   --accent-subtle: rgba(32, 198, 131, 0.14);
-  --accent-contrast: #ffffff;
   --warn: #e8a838;
   --warn-subtle: rgba(232, 168, 56, 0.12);
   --warn-border: rgba(232, 168, 56, 0.34);
+  /* Botonera (estudio Brubank, ver botonera-maqueta.html). Las superficies se
+     separan por luz y no por borde; lo lleno es una sola cosa por pantalla.
+     El texto sobre el verde lleno va oscuro: blanco sobre #20c683 da 2,2:1. */
+  --raise-1: rgba(32, 198, 131, 0.08);
+  --raise-2: rgba(32, 198, 131, 0.15);
+  --fill: #20c683;
+  --fill-hover: #45d69b;
+  --on-fill: #003a27;
+  --on-tint: #20c683;
+  --tap: 56px;
+  --r-lg: 30px;
+  --r-md: 22px;
   --border: rgba(149, 181, 169, 0.22);
   --shadow: none;
   --radius: 28px;
@@ -96,10 +107,15 @@
   --accent: #0d9b5c;
   --accent-strong: #0b8750;
   --accent-subtle: rgba(13, 155, 92, 0.12);
-  --accent-contrast: #ffffff;
   --warn: #96610d;
   --warn-subtle: rgba(150, 97, 13, 0.1);
   --warn-border: rgba(150, 97, 13, 0.28);
+  --raise-1: rgba(13, 155, 92, 0.07);
+  --raise-2: rgba(13, 155, 92, 0.13);
+  --fill: #0b8750;
+  --fill-hover: #087044;
+  --on-fill: #ffffff;
+  --on-tint: #0b7a49;
   --border: rgba(0, 0, 0, 0.08);
   --shadow: none;
   --chip-surface: rgba(0, 0, 0, 0.035);
@@ -263,8 +279,6 @@ button {
 .dock-step,
 .dock-tagline,
 .scene-kicker,
-.field-label,
-.group-label,
 .progress-label,
 .currency-footer {
   font-family: var(--font-mono);
@@ -614,208 +628,9 @@ button {
   opacity: 1;
 }
 
-.select-field {
-  display: block;
-  margin-top: 20px;
-  max-width: 100%;
-}
-
-.field-label,
-.group-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--accent);
-}
-
-.select-field select {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  color: var(--text);
-  appearance: none;
-}
-
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--tag-gap);
-  margin-top: 14px;
-  max-width: none;
-}
-
-/* Los chips de los pasos 2 a 4 comparten la tipografia de etiqueta con las
-   pastillas de servicio — misma Space Mono en caja alta, mismo tracking, mismo
-   padding en em. Lo que no comparten es la rampa de verdes: aca las opciones
-   no son categorias, asi que siguen siendo contorno + relleno al elegirlas. */
-.pill {
-  padding: var(--tag-pad-y) var(--tag-pad-x);
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--t-tag);
-  font-weight: 400;
-  line-height: var(--lh-tag);
-  letter-spacing: var(--tr-tag);
-  text-transform: uppercase;
-  transition: background 180ms ease, color 180ms ease, border-color 180ms ease, opacity 180ms ease;
-}
-
-.pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.pill:hover {
-  border-color: var(--accent);
-}
-
-.pill.is-included {
-  background: var(--accent-subtle);
-  border-color: transparent;
-  color: var(--accent);
-}
-
-.slider-card {
-  margin-top: 18px;
-  padding: 14px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--surface-strong);
-  max-width: none;
-  transition: border-color 180ms ease, background 180ms ease;
-}
-
-.slider-card:hover {
-  border-color: var(--accent);
-}
-
-.slider-card-spaced {
-  margin-top: 10px;
-}
-
-.slider-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.slider-head h3,
 .summary-key,
-.summary-value,
-.meta-chip,
-.phase,
-.amount {
+.summary-value {
   margin: 0;
-}
-
-.slider-head h3 {
-  font-size: 0.84rem;
-  font-weight: 600;
-}
-
-.slider-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.slider-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--accent);
-  font-size: 1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 180ms ease, border-color 180ms ease;
-  flex-shrink: 0;
-}
-
-.slider-btn:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.slider-btn:active {
-  transform: scale(0.92);
-}
-
-.value-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: var(--accent-subtle);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-}
-
-input[type="range"] {
-  width: 100%;
-  margin: 0;
-  appearance: none;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--border);
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 3px solid rgba(255, 255, 255, 0.9);
-  transition: transform 180ms ease;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 3px solid rgba(255, 255, 255, 0.9);
-  transition: transform 180ms ease;
-}
-
-input[type="range"]:hover::-webkit-slider-thumb,
-input[type="range"]:focus-visible::-webkit-slider-thumb {
-  transform: scale(1.14);
-}
-
-input[type="range"]:hover::-moz-range-thumb,
-input[type="range"]:focus-visible::-moz-range-thumb {
-  transform: scale(1.14);
-}
-
-input[type="range"]:active::-webkit-slider-thumb {
-  transform: scale(1.22);
-}
-
-input[type="range"]:active::-moz-range-thumb {
-  transform: scale(1.22);
-}
-
-.deliverables-groups {
-  display: grid;
-  gap: 16px;
-  margin-top: 18px;
-  max-width: none;
 }
 
 .result-top {
@@ -881,7 +696,7 @@ input[type="range"]:active::-moz-range-thumb {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--fill);
 }
 
 .currency-track {
@@ -912,7 +727,7 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 .currency-item-active {
-  color: var(--accent-contrast);
+  color: var(--on-fill);
 }
 
 .currency-item-code {
@@ -959,28 +774,626 @@ input[type="range"]:active::-moz-range-thumb {
   font-size: clamp(2rem, 5.6vw, 3.1rem);
   line-height: 0.92;
   letter-spacing: -0.1em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   Botonera — botones, espacio y radios tomados de la seccion de dolares de
+   Brubank, con los verdes de Bong. Maqueta y reglas en botonera-maqueta.html.
+   Tres radios y el full: 999 botones y pastillas, 30 tarjeta contenedora,
+   22 filas y tarjetas internas.
+   -------------------------------------------------------------------------- */
+
+/* Pastilla informativa: responde la duda antes de que aparezca. */
+.info-pill {
+  margin: 12px 0 0;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--accent-subtle);
+  color: var(--on-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.info-pill-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--on-fill);
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.info-pill-dot svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Paso 3 — complejidad y revisiones */
+.dials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.dial {
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: var(--raise-1);
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dial-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.dial-name,
+.dial-meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dial-meta {
+  color: var(--text-muted);
+}
+
+.dial-body {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 6px;
+}
+
+.dial-btn,
+.action-btn {
+  border: 0;
+  border-radius: 999px;
+  background: var(--raise-2);
+  color: var(--on-tint);
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  transition: background 180ms ease, color 180ms ease, transform 120ms ease, opacity 180ms ease;
+}
+
+.dial-btn {
+  width: 48px;
+  height: 48px;
+}
+
+.dial-btn:hover:not(:disabled),
+.action-btn:hover:not(:disabled) {
+  background: var(--accent-subtle);
+}
+
+.dial-btn:active:not(:disabled),
+.action-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.dial-btn:disabled,
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.dial-btn:focus-visible,
+.dial-seg-btn:focus-visible,
+.action-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.dial-icon,
+.action-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dial-value {
+  min-width: 0;
+  text-align: center;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  white-space: nowrap;
+}
+
+.dial-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--raise-1);
+}
+
+.dial-seg-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.dial-seg-btn:hover {
+  color: var(--text);
+}
+
+.dial-seg-btn.is-active {
+  background: var(--fill);
+  color: var(--on-fill);
+  font-weight: 700;
+}
+
+/* Base auto: la opcion mas larga (EMPRENDIMIENTO) se lleva mas ancho en vez
+   de cortarse; el resto del espacio se reparte parejo. */
+.dial-seg-btn {
+  flex: 1 1 auto;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dial-seg-btn:disabled {
+  cursor: default;
+}
+
+/* Paso 4 — output y tipo de cliente lado a lado, extras abajo a lo ancho */
+.dials-deliverables {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+
+.dial-extras {
+  grid-column: 1 / -1;
+}
+
+.dial[hidden] {
+  display: none;
+}
+
+.dial-caption {
+  margin: 0;
+  padding: 0 4px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.toggle-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.toggle-chip {
+  height: 36px;
+  padding: 0 13px 0 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--raise-1);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 180ms ease, color 180ms ease, transform 120ms ease;
+}
+
+.toggle-chip:hover {
+  color: var(--text);
+}
+
+.toggle-chip:active {
+  transform: scale(0.97);
+}
+
+.toggle-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.toggle-chip-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--raise-2);
+  color: var(--on-tint);
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.toggle-chip-mark svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toggle-chip .mark-check,
+.toggle-chip.is-active .mark-plus {
+  display: none;
+}
+
+.toggle-chip.is-active .mark-check {
+  display: inline;
+}
+
+.toggle-chip.is-active {
+  background: var(--fill);
+  color: var(--on-fill);
+  font-weight: 700;
+}
+
+.toggle-chip.is-active .toggle-chip-mark {
+  background: var(--on-fill);
+  color: var(--fill);
+}
+
+/* Paso 1 — el servicio elegido, como fila de recibo */
+.service-summary {
+  margin-top: 18px;
+  padding: 12px 14px 12px 10px;
+  border-radius: var(--r-md);
+  background: var(--raise-1);
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.service-summary .receipt-dot {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+
+.service-summary-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.service-summary-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.service-summary-caption {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.service-summary-included {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.service-summary .conversion-chip {
+  grid-row: auto;
+  grid-column: auto;
+  align-self: start;
+}
+
+/* En desktop la card no scrollea por defecto: si un paso crece mas que la
+   pantalla, que scrollee adentro en vez de cortarse. */
+@media (min-width: 721px) {
+  .scene-card:not(.scene-card-result) {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+  }
+}
+
+.dial-live {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 0 6px;
+}
+
+.dial-live-label {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dial-live-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dial-live-value strong {
+  font-size: 1.3rem;
+  letter-spacing: -0.04em;
+}
+
+.dial-live-value small {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+/* Paso 4 — fila de acciones circulares */
+.result-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  flex-shrink: 0;
+}
+
+.result-action {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.action-btn {
+  width: var(--tap);
+  height: var(--tap);
+}
+
+.action-btn.is-main {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+
+.action-btn.is-main:hover:not(:disabled) {
+  background: var(--fill-hover);
+}
+
+.action-label {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Paso 4 — conversion (USD arriba, moneda elegida abajo) */
+.conversion {
+  margin-top: 12px;
+  padding: 6px;
+  border-radius: var(--r-md);
+  background: var(--raise-1);
+  display: grid;
+  gap: 2px;
+}
+
+.conversion:empty {
+  display: none;
+}
+
+.conversion-row {
+  padding: 10px 12px 10px 10px;
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: center;
+}
+
+.conversion-row.is-source {
+  background: var(--raise-1);
+}
+
+.code-dot {
+  grid-row: span 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--raise-2);
+  color: var(--on-tint);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.is-source .code-dot {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+
+.conversion-amount {
+  min-width: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.is-source .conversion-amount {
+  color: var(--accent);
+}
+
+.conversion-chip {
+  grid-row: 1;
+  grid-column: 3;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--accent-subtle);
+  color: var(--on-tint);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.conversion-sub {
+  grid-column: 2 / 4;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.conversion-sub b {
+  color: var(--text);
+}
+
+/* Paso 4 — desglose como recibo */
+.breakdown {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.receipt-row {
+  min-height: 54px;
+  padding: 8px 14px 8px 8px;
+  border-radius: var(--r-md);
+  background: var(--raise-1);
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.receipt-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--raise-2);
+  color: var(--on-tint);
+  display: grid;
+  place-items: center;
+}
+
+.receipt-dot svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.receipt-label {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.receipt-hours {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+}
+
+.receipt-amount {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.receipt-row.is-item .receipt-label {
+  color: var(--text-secondary);
+}
+
+.receipt-group {
+  margin: 8px 0 0;
+  padding: 0 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.receipt-row.is-total {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+
+.receipt-row.is-total .receipt-dot {
+  background: var(--on-fill);
+  color: var(--fill);
+}
+
+.receipt-row.is-total .receipt-hours {
+  color: inherit;
+  opacity: 0.72;
+}
+
+.receipt-row.is-total .receipt-amount {
+  font-size: 1.02rem;
 }
 
 .result-range {
   margin-top: 8px;
   font-family: var(--font-mono);
   font-size: 0.68rem;
-}
-
-.result-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.meta-chip {
-  padding: 6px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--chip-surface);
-  color: var(--text-secondary);
-  font-size: 0.66rem;
 }
 
 /* Desglose y benchmark comparten un solo contenedor scrolleable: si cada uno
@@ -1006,46 +1419,6 @@ input[type="range"]:active::-moz-range-thumb {
 .result-scroll::-webkit-scrollbar-thumb {
   background: var(--accent);
   border-radius: 10px;
-}
-
-.breakdown {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  max-width: 100%;
-}
-
-.breakdown-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 0;
-}
-
-.breakdown-row-subtle {
-  opacity: 0.88;
-}
-
-.phase {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-  font-size: 0.76rem;
-}
-
-.phase-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
-.amount {
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
 }
 
 .benchmark {
@@ -1249,13 +1622,6 @@ input[type="range"]:active::-moz-range-thumb {
   opacity: 0.72;
 }
 
-.result-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 14px;
-}
-
 /* La guia vive en /cuanto-cobrar-por-diseno/. No puede ir dentro del cotizador
    porque en mobile el body esta en position:fixed y la pagina no scrollea. */
 .guide-page {
@@ -1326,21 +1692,21 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 .guide-cta {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
+  border-color: var(--fill);
+  background: var(--fill);
+  color: var(--on-fill);
   font-size: 0.68rem;
   padding: 15px 26px;
 }
 
 .guide-cta svg {
-  color: var(--accent-contrast);
+  color: var(--on-fill);
 }
 
 .guide-cta:hover {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  color: var(--accent-contrast);
+  background: var(--fill-hover);
+  border-color: var(--fill-hover);
+  color: var(--on-fill);
 }
 
 .guide {
@@ -1594,8 +1960,8 @@ input[type="range"]:active::-moz-range-thumb {
 .masterclass-tag {
   padding: 2px 6px;
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--fill);
+  color: var(--on-fill);
   font-family: var(--font-mono);
   font-size: 0.46rem;
   font-weight: 700;
@@ -1631,57 +1997,20 @@ input[type="range"]:active::-moz-range-thumb {
   transform: translateX(3px);
 }
 
-.btn {
-  position: relative;
-  flex: 1;
-  padding: 12px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  font-size: 0.82rem;
-  overflow: hidden;
-}
-
-.btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-  font-weight: 700;
-  transition: border-color 280ms cubic-bezier(0.94, 1, 0.36, 1), color 180ms ease;
-}
-
-.btn-primary::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 0;
-  background: #087044;
-  transition: height 280ms cubic-bezier(0.94, 1, 0.36, 1);
-  z-index: 0;
-}
-
-.btn-primary:hover {
-  border-color: #087044;
-}
-
-.btn-primary:hover::before {
-  height: 100%;
-}
-
-.btn-text {
-  position: relative;
-  z-index: 1;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--text);
-  font-weight: 600;
-}
-
 .feedback {
   min-height: 1.2em;
   margin-top: 6px;
   font-size: 0.74rem;
+}
+
+.scene-content-result .feedback {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.scene-content-result .feedback:empty {
+  min-height: 0;
+  margin-top: 0;
 }
 
 .progress-dock {
@@ -1832,8 +2161,8 @@ input[type="range"]:active::-moz-range-thumb {
   height: 56px;
   border: 1px solid var(--border);
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--fill);
+  color: var(--on-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1855,9 +2184,9 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 .floating-compass.is-back:hover {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: var(--accent);
+  background: var(--fill);
+  color: var(--on-fill);
+  border-color: var(--fill);
 }
 
 .floating-compass.is-back:hover .floating-compass-arrow {
@@ -2224,20 +2553,31 @@ body.app-ready .dock-actions > *:nth-child(2) {
     max-width: 12ch;
   }
 
-  .copy-button-mobile-hide {
-    display: none;
+  .dials {
+    grid-template-columns: 1fr;
+  }
+
+  .dial-body {
+    grid-template-columns: var(--tap) minmax(0, 1fr) var(--tap);
+  }
+
+  .dial-btn {
+    width: var(--tap);
+    height: var(--tap);
+  }
+
+  .dial-value {
+    font-size: 2rem;
+  }
+
+  .action-btn {
+    width: 52px;
+    height: 52px;
   }
 
   .scene-copy,
   .scene-content-wide {
     width: 100%;
-  }
-
-  .result-actions {
-    flex-direction: column;
-    flex-shrink: 0;
-    margin-top: 0;
-    padding-top: 12px;
   }
 
   .feedback {
@@ -2283,7 +2623,7 @@ body.app-ready .dock-actions > *:nth-child(2) {
   .progress-dock,
   .floating-compass,
   .type-card,
-  .pill,
+  .toggle-chip,
   .timeline-step::before,
   .floating-compass-arrow,
   .currency-toggle::before,
@@ -2293,8 +2633,10 @@ body.app-ready .dock-actions > *:nth-child(2) {
   .faq-answer,
   .faq-answer-inner,
   .faq-chevron,
-  input[type="range"]::-webkit-slider-thumb,
-  input[type="range"]::-moz-range-thumb {
+  .dial-btn,
+  .dial-seg-btn,
+  .action-btn,
+  .conversion-row {
     animation: none !important;
     transition: none !important;
   }
