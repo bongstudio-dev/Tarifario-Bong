@@ -281,8 +281,6 @@ button {
 .dock-step,
 .dock-tagline,
 .scene-kicker,
-.field-label,
-.group-label,
 .progress-label,
 .currency-footer {
   font-family: var(--font-mono);
@@ -632,82 +630,9 @@ button {
   opacity: 1;
 }
 
-.select-field {
-  display: block;
-  margin-top: 20px;
-  max-width: 100%;
-}
-
-.field-label,
-.group-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--accent);
-}
-
-.select-field select {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  color: var(--text);
-  appearance: none;
-}
-
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--tag-gap);
-  margin-top: 14px;
-  max-width: none;
-}
-
-/* Los chips de los pasos 2 a 4 comparten la tipografia de etiqueta con las
-   pastillas de servicio — misma Space Mono en caja alta, mismo tracking, mismo
-   padding en em. Lo que no comparten es la rampa de verdes: aca las opciones
-   no son categorias, asi que siguen siendo contorno + relleno al elegirlas. */
-.pill {
-  padding: var(--tag-pad-y) var(--tag-pad-x);
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--t-tag);
-  font-weight: 400;
-  line-height: var(--lh-tag);
-  letter-spacing: var(--tr-tag);
-  text-transform: uppercase;
-  transition: background 180ms ease, color 180ms ease, border-color 180ms ease, opacity 180ms ease;
-}
-
-.pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.pill:hover {
-  border-color: var(--accent);
-}
-
-.pill.is-included {
-  background: var(--accent-subtle);
-  border-color: transparent;
-  color: var(--accent);
-}
-
 .summary-key,
 .summary-value {
   margin: 0;
-}
-
-.deliverables-groups {
-  display: grid;
-  gap: 16px;
-  margin-top: 18px;
-  max-width: none;
 }
 
 .result-top {
@@ -914,6 +839,7 @@ button {
   border-radius: var(--r-md);
   background: var(--raise-1);
   display: grid;
+  align-content: start;
   gap: 12px;
   min-width: 0;
 }
@@ -1040,6 +966,178 @@ button {
   background: var(--fill);
   color: var(--on-fill);
   font-weight: 700;
+}
+
+/* Base auto: la opcion mas larga (EMPRENDIMIENTO) se lleva mas ancho en vez
+   de cortarse; el resto del espacio se reparte parejo. */
+.dial-seg-btn {
+  flex: 1 1 auto;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dial-seg-btn:disabled {
+  cursor: default;
+}
+
+/* Paso 4 — output y tipo de cliente lado a lado, extras abajo a lo ancho */
+.dials-deliverables {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+
+.dial-wide {
+  grid-column: 1 / -1;
+}
+
+.dial[hidden] {
+  display: none;
+}
+
+.dial-caption {
+  margin: 0;
+  padding: 0 4px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.toggle-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toggle-chip {
+  height: 40px;
+  padding: 0 14px 0 5px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--raise-1);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 180ms ease, color 180ms ease, transform 120ms ease;
+}
+
+.toggle-chip:hover {
+  color: var(--text);
+}
+
+.toggle-chip:active {
+  transform: scale(0.97);
+}
+
+.toggle-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.toggle-chip-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--raise-2);
+  color: var(--on-tint);
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.toggle-chip-mark svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toggle-chip .mark-check,
+.toggle-chip.is-active .mark-plus {
+  display: none;
+}
+
+.toggle-chip.is-active .mark-check {
+  display: inline;
+}
+
+.toggle-chip.is-active {
+  background: var(--fill);
+  color: var(--on-fill);
+  font-weight: 700;
+}
+
+.toggle-chip.is-active .toggle-chip-mark {
+  background: var(--on-fill);
+  color: var(--fill);
+}
+
+/* Paso 1 — el servicio elegido, como fila de recibo */
+.service-summary {
+  margin-top: 18px;
+  padding: 12px 14px 12px 10px;
+  border-radius: var(--r-md);
+  background: var(--raise-1);
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.service-summary .receipt-dot {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+
+.service-summary-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.service-summary-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.service-summary-caption {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.service-summary-included {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.service-summary .conversion-chip {
+  grid-row: auto;
+  grid-column: auto;
+  align-self: start;
+}
+
+/* En desktop la card no scrollea por defecto: si un paso crece mas que la
+   pantalla, que scrollee adentro en vez de cortarse. */
+@media (min-width: 721px) {
+  .scene-card:not(.scene-card-result) {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+  }
 }
 
 .dial-live {
@@ -2527,7 +2625,7 @@ body.app-ready .dock-actions > *:nth-child(2) {
   .progress-dock,
   .floating-compass,
   .type-card,
-  .pill,
+  .toggle-chip,
   .timeline-step::before,
   .floating-compass-arrow,
   .currency-toggle::before,

@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=17";
+} from "./currency.js?v=18";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=17";
-import { initAnalytics, track } from "./analytics.js?v=17";
+} from "./pdf-fonts.js?v=18";
+import { initAnalytics, track } from "./analytics.js?v=18";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -211,8 +211,14 @@ function initTheme() {
 
 function cacheDom() {
   els.typeGrid = document.querySelector("#type-grid");
-  els.marketSelect = document.querySelector("#market-select");
+  els.marketSeg = document.querySelector("#market-seg");
+  els.marketMeta = document.querySelector("#market-meta");
   els.levelPills = document.querySelector("#level-pills");
+  els.levelMeta = document.querySelector("#level-meta");
+  els.serviceSummary = document.querySelector("#service-summary");
+  els.outputMeta = document.querySelector("#output-meta");
+  els.extrasGroup = document.querySelector("#extras-group");
+  els.extrasMeta = document.querySelector("#extras-meta");
   els.includedDeliverables = document.querySelector("#included-deliverables");
   els.deliverablesGrid = document.querySelector("#deliverables-grid");
   els.deliverablesCopy = document.querySelector("#deliverables-copy");
@@ -222,8 +228,8 @@ function cacheDom() {
   els.revisionsMeta = document.querySelector("#revisions-meta");
   els.complexitySeg = document.querySelector("#complexity-seg");
   els.revisionsSeg = document.querySelector("#revisions-seg");
-  els.livePrice = document.querySelector("#live-price");
-  els.liveHours = document.querySelector("#live-hours");
+  els.livePrices = document.querySelectorAll("[data-live-price]");
+  els.liveHours = document.querySelectorAll("[data-live-hours]");
   els.resultPrice = document.querySelector("#result-price");
   els.resultPriceValue = document.querySelector("#result-price-value");
   els.resultServiceTitle = document.querySelector("#result-service-title");
@@ -257,6 +263,8 @@ function cacheDom() {
   els.compassButton = document.querySelector("#compass-button");
   els.stepScreens = Array.from(document.querySelectorAll(".step-screen"));
   els.brandTierGroup = document.querySelector("#brand-tier-group");
+  els.brandTierMeta = document.querySelector("#brand-tier-meta");
+  els.brandTierCaption = document.querySelector("#brand-tier-caption");
   els.brandTierPills = document.querySelector("#brand-tier-pills");
 }
 
@@ -833,20 +841,68 @@ function animateCompassReady() {
   }, 520);
 }
 
-function createPill({ id, label, included = false }, onClick) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "pill";
-  button.dataset.value = id;
-  button.textContent = label;
-
-  if (included) {
-    button.classList.add("is-included");
-  } else if (onClick) {
-    button.addEventListener("click", onClick);
+// Selector de opciones (una sola eleccion). Los botones se arman una sola vez
+// por juego de opciones: regenerarlos en cada syncUI pierde el foco del
+// teclado. Sin onPick, la opcion queda fija (el servicio no deja elegir).
+function renderSeg(container, options, selectedId, onPick) {
+  const key = options.map((option) => option.id).join("|");
+  if (container.dataset.key !== key) {
+    container.dataset.key = key;
+    container.innerHTML = "";
+    options.forEach((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "dial-seg-btn";
+      button.dataset.value = option.id;
+      button.textContent = option.label;
+      if (option.caption) {
+        button.title = option.caption;
+      }
+      if (onPick) {
+        button.addEventListener("click", () => onPick(option.id));
+      } else {
+        button.disabled = true;
+      }
+      container.appendChild(button);
+    });
   }
 
-  return button;
+  container.querySelectorAll(".dial-seg-btn").forEach((button) => {
+    const isActive = button.dataset.value === selectedId;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+// Extras: eleccion multiple, cada uno prende y apaga solo.
+function renderToggleChips(container, options, selectedIds, onToggle) {
+  const key = options.map((option) => option.id).join("|");
+  if (container.dataset.key !== key) {
+    container.dataset.key = key;
+    container.innerHTML = "";
+    options.forEach((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "toggle-chip";
+      button.dataset.value = option.id;
+      button.innerHTML = `
+        <span class="toggle-chip-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="mark-plus" d="M12 7v10M7 12h10"/><path class="mark-check" d="M7 12.5l3.2 3.2L17 9"/></svg></span>
+        <span class="toggle-chip-label">${option.label}</span>
+      `;
+      button.addEventListener("click", () => onToggle(option.id));
+      container.appendChild(button);
+    });
+  }
+
+  container.querySelectorAll(".toggle-chip").forEach((button) => {
+    const isActive = selectedIds.has(button.dataset.value);
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+function formatCoef(coef) {
+  return `×${coef.toFixed(2).replace(".", ",")}`;
 }
 
 function buildStaticUI() {
@@ -855,28 +911,6 @@ function buildStaticUI() {
   state.pricingData.services.forEach((service) => {
     els.typeGrid.appendChild(createServiceCard(service));
   });
-
-  state.pricingData.markets.forEach((market) => {
-    const option = document.createElement("option");
-    option.value = market.id;
-    option.textContent = market.label;
-    els.marketSelect.appendChild(option);
-  });
-
-  state.pricingData.expertise
-    .slice()
-    .sort((a, b) => EXPERTISE_ORDER.indexOf(a.id) - EXPERTISE_ORDER.indexOf(b.id))
-    .forEach((expertise) => {
-      const normalizedExpertise = {
-        ...expertise,
-        label: expertise.id === "std" ? "Estudio" : expertise.label
-      };
-      const pill = createPill(normalizedExpertise, () => {
-        state.selectedExpertise = normalizedExpertise.id;
-        syncUI();
-      });
-      els.levelPills.appendChild(pill);
-    });
 
   STEP_META.forEach((step, index) => {
     const button = document.createElement("button");
@@ -891,10 +925,49 @@ function buildStaticUI() {
   });
 }
 
+function renderProfileStep() {
+  const market = getMarketById(state.selectedMarket);
+  renderSeg(els.marketSeg, state.pricingData.markets, state.selectedMarket, (id) => {
+    state.selectedMarket = id;
+    state.displayCurrency = getDefaultCurrencyForMarket(id);
+    syncUI();
+  });
+  els.marketMeta.textContent = `${formatCoef(market.coef)} · ${getCurrencyConfig(getDefaultCurrencyForMarket(market.id)).label}`;
+
+  const levels = state.pricingData.expertise
+    .slice()
+    .sort((a, b) => EXPERTISE_ORDER.indexOf(a.id) - EXPERTISE_ORDER.indexOf(b.id))
+    .map((expertise) => ({ ...expertise, label: expertise.id === "std" ? "Estudio" : expertise.label }));
+  renderSeg(els.levelPills, levels, state.selectedExpertise, (id) => {
+    state.selectedExpertise = id;
+    syncUI();
+  });
+  els.levelMeta.textContent = formatCoef(getExpertiseById(state.selectedExpertise).coef);
+}
+
+function renderServiceSummary() {
+  const service = getCurrentService();
+  if (!service) {
+    els.serviceSummary.hidden = true;
+    els.serviceSummary.innerHTML = "";
+    return;
+  }
+
+  const included = service.included_addons.map(getAddonById).filter(Boolean).map((addon) => addon.label);
+  els.serviceSummary.hidden = false;
+  els.serviceSummary.innerHTML = `
+    <span class="receipt-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 12l4 4 8-8"/></svg></span>
+    <span class="service-summary-text">
+      <span class="service-summary-name">${service.name}</span>
+      <span class="service-summary-caption">${service.caption}</span>
+      ${included.length ? `<span class="service-summary-included">Incluye ${included.join(" · ")}</span>` : ""}
+    </span>
+    <span class="conversion-chip">${service.category}</span>
+  `;
+}
+
 function renderDeliverables() {
   const service = getCurrentService();
-  els.includedDeliverables.innerHTML = "";
-  els.deliverablesGrid.innerHTML = "";
 
   if (!service) {
     els.deliverablesCopy.textContent = "Primero elegí un servicio para destrabar outputs y extras.";
@@ -903,53 +976,44 @@ function renderDeliverables() {
 
   const allowedOutputIds = service.allowed_output_types || [service.default_output_type];
   const isOutputLocked = allowedOutputIds.length === 1;
-
-  state.pricingData.output_types
-    .filter((outputType) => allowedOutputIds.includes(outputType.id))
-    .forEach((outputType) => {
-      const pill = isOutputLocked
-        ? createPill({ ...outputType, included: true })
-        : createPill(outputType, () => {
-            state.selectedOutputType = outputType.id;
-            syncUI();
-          });
-      pill.classList.toggle("active", state.selectedOutputType === outputType.id);
-      els.includedDeliverables.appendChild(pill);
-    });
+  const outputs = state.pricingData.output_types.filter((outputType) => allowedOutputIds.includes(outputType.id));
+  renderSeg(
+    els.includedDeliverables,
+    outputs,
+    state.selectedOutputType,
+    isOutputLocked
+      ? null
+      : (id) => {
+          state.selectedOutputType = id;
+          syncUI();
+        }
+  );
+  els.outputMeta.textContent = isOutputLocked ? "Fijo" : formatCoef(getOutputTypeById(state.selectedOutputType).coef);
 
   const optionalAddons = getOptionalAddons();
-  els.deliverablesGrid.parentElement.hidden = optionalAddons.length === 0;
-
-  optionalAddons.forEach((deliverable) => {
-    const pill = createPill({ id: deliverable.id, label: deliverable.label }, () => {
-      if (state.selectedAddons.has(deliverable.id)) {
-        state.selectedAddons.delete(deliverable.id);
-      } else {
-        state.selectedAddons.add(deliverable.id);
-      }
-      syncUI();
-    });
-    pill.classList.toggle("active", state.selectedAddons.has(deliverable.id));
-    els.deliverablesGrid.appendChild(pill);
+  els.extrasGroup.hidden = optionalAddons.length === 0;
+  renderToggleChips(els.deliverablesGrid, optionalAddons, state.selectedAddons, (id) => {
+    if (state.selectedAddons.has(id)) {
+      state.selectedAddons.delete(id);
+    } else {
+      state.selectedAddons.add(id);
+    }
+    syncUI();
   });
+  const selectedExtras = optionalAddons.filter((addon) => state.selectedAddons.has(addon.id)).length;
+  els.extrasMeta.textContent = `${selectedExtras} de ${optionalAddons.length}`;
 
-  els.deliverablesCopy.textContent = `${service.name}: elegi el formato de salida y sumá solo los extras que cambian horas reales.`;
+  els.deliverablesCopy.textContent = `${service.name}: elegí el formato de salida y sumá solo los extras que cambian horas reales.`;
 
   // El tipo de cliente define scope y posicionamiento, no el perfil de quien
   // ejecuta: aplica a los cuatro perfiles, no solo a Estudio.
-  els.brandTierGroup.hidden = false;
-  els.brandTierPills.innerHTML = "";
-  state.pricingData.brand_tiers.forEach((tier) => {
-    const pill = createPill(tier, () => {
-      state.selectedBrandTier = tier.id;
-      syncUI();
-    });
-    pill.classList.toggle("active", state.selectedBrandTier === tier.id);
-    if (tier.caption) {
-      pill.title = tier.caption;
-    }
-    els.brandTierPills.appendChild(pill);
+  const tier = getBrandTierById(state.selectedBrandTier);
+  renderSeg(els.brandTierPills, state.pricingData.brand_tiers, state.selectedBrandTier, (id) => {
+    state.selectedBrandTier = id;
+    syncUI();
   });
+  els.brandTierMeta.textContent = `${formatCoef(tier.hours_coef)} horas`;
+  els.brandTierCaption.textContent = tier.caption || "";
 }
 
 function animateValue(element, nextValue) {
@@ -1342,14 +1406,16 @@ function renderDial(kind) {
 
 function renderLiveBudget() {
   if (!hasSelectedService()) {
-    els.livePrice.textContent = "";
-    els.liveHours.textContent = "";
+    els.livePrices.forEach((node) => { node.textContent = ""; });
+    els.liveHours.forEach((node) => { node.textContent = ""; });
     return;
   }
 
   const quote = calculateQuote();
-  els.livePrice.textContent = formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency);
-  els.liveHours.textContent = formatHours(quote.totalHours);
+  const price = formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency);
+  const hours = formatHours(quote.totalHours);
+  els.livePrices.forEach((node) => { node.textContent = price; });
+  els.liveHours.forEach((node) => { node.textContent = hours; });
 }
 
 function renderFlow() {
@@ -1391,7 +1457,8 @@ function trackStepChange() {
 
 function syncUI() {
   ensureOutputType();
-  els.marketSelect.value = state.selectedMarket;
+  renderServiceSummary();
+  renderProfileStep();
   renderDial("complexity");
   renderDial("revisions");
   renderLiveBudget();
@@ -1399,10 +1466,6 @@ function syncUI() {
 
   document.querySelectorAll(".type-card").forEach((card) => {
     card.classList.toggle("active", card.dataset.type === state.selectedService);
-  });
-
-  document.querySelectorAll("#level-pills .pill").forEach((pill) => {
-    pill.classList.toggle("active", pill.dataset.value === state.selectedExpertise);
   });
 
   renderDeliverables();
@@ -1747,12 +1810,6 @@ async function downloadPdf() {
   doc.save(`presupuesto-${service.id}-${fileDate}.pdf`);
 }
 function bindEvents() {
-  els.marketSelect.addEventListener("change", (event) => {
-    state.selectedMarket = event.target.value;
-    state.displayCurrency = getDefaultCurrencyForMarket(state.selectedMarket);
-    syncUI();
-  });
-
   document.addEventListener("click", (event) => {
     const button = event.target.closest("[data-slider], [data-seg]");
     if (!button || button.disabled) return;

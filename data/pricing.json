@@ -24,21 +24,21 @@
     {
       "id": "emprendimiento",
       "label": "Emprendimiento",
-      "caption": "Estrategia basica, identidad, manual 40 paginas, 2 aplicaciones.",
+      "caption": "Estrategia básica, identidad, manual 40 páginas, 2 aplicaciones.",
       "hours_coef": 1.0,
       "rate_coef": 1.0
     },
     {
       "id": "startup",
       "label": "Startup",
-      "caption": "Estrategia, identidad completa, manual 70-80 paginas, 2 aplicaciones.",
+      "caption": "Estrategia, identidad completa, manual 70-80 páginas, 2 aplicaciones.",
       "hours_coef": 1.47,
       "rate_coef": 1.38
     },
     {
       "id": "empresa",
       "label": "Empresa",
-      "caption": "Estrategia profunda, sistema de marca, manual 100-130 paginas, aplicaciones.",
+      "caption": "Estrategia profunda, sistema de marca, manual 100-130 páginas, aplicaciones.",
       "hours_coef": 2.05,
       "rate_coef": 1.592
     }
@@ -83,7 +83,7 @@
     },
     {
       "id": "typography",
-      "label": "Tipografia",
+      "label": "Tipografía",
       "H_a": 0, "H_b": 2, "H_c": 0.5
     },
     {
@@ -98,7 +98,7 @@
     },
     {
       "id": "stationery",
-      "label": "Papeleria",
+      "label": "Papelería",
       "H_a": 0, "H_b": 1.5, "H_c": 3.5
     },
     {
@@ -133,7 +133,7 @@
     },
     {
       "id": "mockup_presentation",
-      "label": "Mini presentacion con mockups",
+      "label": "Mini presentación con mockups",
       "H_a": 0, "H_b": 1, "H_c": 1
     },
     {
@@ -143,7 +143,7 @@
     },
     {
       "id": "canva_editable",
-      "label": "Version editable en Canva",
+      "label": "Versión editable en Canva",
       "H_a": 0, "H_b": 0, "H_c": 2
     },
     {
@@ -179,7 +179,7 @@
       "id": "rrss_post",
       "name": "Pieza RRSS",
       "category": "Piezas",
-      "caption": "Post estatico de respuesta rapida.",
+      "caption": "Post estático de respuesta rápida.",
       "H_a": 0, "H_b": 1.5, "H_c": 0.5,
       "default_output_type": "static",
       "allowed_output_types": ["static", "motion"],
@@ -221,7 +221,7 @@
     },
     {
       "id": "papeleria",
-      "name": "Papeleria basica",
+      "name": "Papelería básica",
       "category": "Piezas",
       "caption": "Tarjeta, membretada y sobre.",
       "H_a": 0, "H_b": 3, "H_c": 4,
@@ -232,7 +232,7 @@
     },
     {
       "id": "presentacion",
-      "name": "Presentacion corporativa",
+      "name": "Presentación corporativa",
       "category": "Piezas",
       "caption": "Deck para ventas, marca o inversores.",
       "H_a": 2, "H_b": 10, "H_c": 5,
