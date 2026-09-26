@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=19";
+} from "./currency.js?v=20";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=19";
-import { initAnalytics, track } from "./analytics.js?v=19";
+} from "./pdf-fonts.js?v=20";
+import { initAnalytics, track } from "./analytics.js?v=20";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -957,12 +957,10 @@ function renderServiceSummary() {
   els.serviceSummary.hidden = false;
   els.serviceSummary.innerHTML = `
     <span class="receipt-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 12l4 4 8-8"/></svg></span>
-    <span class="service-summary-text">
-      <span class="service-summary-name">${service.name}</span>
-      <span class="service-summary-caption">${service.caption}</span>
-      ${included.length ? `<span class="service-summary-included">Incluye ${included.join(" · ")}</span>` : ""}
-    </span>
+    <span class="service-summary-name">${service.name}</span>
     <span class="conversion-chip">${service.category}</span>
+    <span class="service-summary-caption">${service.caption}</span>
+    ${included.length ? `<span class="service-summary-included">Incluye ${included.join(" · ")}</span>` : ""}
   `;
 }
 

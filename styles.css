@@ -1078,36 +1078,47 @@ button {
   color: var(--fill);
 }
 
-/* Paso 1 — el servicio elegido, como fila de recibo */
+/* Paso 1 — el servicio elegido. Arriba tilde, nombre y categoria; abajo la
+   descripcion y lo que incluye a todo el ancho, para que no se partan en
+   tres lineas y la tarjeta entre entera en el telefono. */
 .service-summary {
-  margin-top: 18px;
-  padding: 12px 14px 12px 10px;
+  margin-top: 12px;
+  padding: 10px 14px 11px 12px;
   border-radius: var(--r-md);
   background: var(--raise-1);
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 12px;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
 }
 
 .service-summary .receipt-dot {
+  width: 28px;
+  height: 28px;
   background: var(--fill);
   color: var(--on-fill);
 }
 
-.service-summary-text {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
+.service-summary .receipt-dot svg {
+  width: 15px;
+  height: 15px;
 }
 
 .service-summary-name {
+  min-width: 0;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 
+.service-summary-caption,
+.service-summary-included {
+  grid-column: 1 / -1;
+}
+
 .service-summary-caption {
+  margin-top: 2px;
   color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.35;
@@ -1116,8 +1127,8 @@ button {
 .service-summary-included {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.04em;
+  font-size: 0.6rem;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   line-height: 1.5;
 }
@@ -1125,7 +1136,6 @@ button {
 .service-summary .conversion-chip {
   grid-row: auto;
   grid-column: auto;
-  align-self: start;
 }
 
 /* En desktop la card no scrollea por defecto: si un paso crece mas que la
