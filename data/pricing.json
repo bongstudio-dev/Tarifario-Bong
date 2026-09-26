@@ -182,7 +182,7 @@
       "caption": "Post estático de respuesta rápida.",
       "H_a": 0, "H_b": 1.5, "H_c": 0.5,
       "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
+      "allowed_output_types": ["static"],
       "included_addons": [],
       "optional_addons": ["social_pack_5", "motion_system"]
     },
@@ -193,7 +193,7 @@
       "caption": "Pieza puntual para ads o web.",
       "H_a": 0, "H_b": 2, "H_c": 1,
       "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
+      "allowed_output_types": ["static"],
       "included_addons": [],
       "optional_addons": ["formato_adicional", "motion_system"]
     },
@@ -259,7 +259,7 @@
       "caption": "Solo logo, sin sistema completo.",
       "H_a": 2, "H_b": 12, "H_c": 3,
       "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
+      "allowed_output_types": ["static"],
       "included_addons": ["logo"],
       "optional_addons": ["palette", "typography", "motion_system"]
     },
