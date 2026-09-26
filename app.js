@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=20";
+} from "./currency.js?v=21";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=20";
-import { initAnalytics, track } from "./analytics.js?v=20";
+} from "./pdf-fonts.js?v=21";
+import { initAnalytics, track } from "./analytics.js?v=21";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1161,7 +1161,7 @@ function renderResultPill() {
 }
 
 function formatHours(value) {
-  return value >= 100 ? `${Math.round(value)} h` : `${value.toFixed(value < 10 ? 1 : 0)} h`;
+  return value >= 100 ? `${Math.round(value)} h` : `${value.toFixed(value < 10 ? 1 : 0).replace(".", ",")} h`;
 }
 
 function renderBenchmark(quote) {
