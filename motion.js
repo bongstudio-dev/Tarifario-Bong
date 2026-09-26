@@ -4,7 +4,7 @@
 // bloquea el input. Todo es interrumpible: si llega otro cambio a mitad de
 // camino, arranca desde el estado actual.
 
-import { Sound } from "./sound.js?v=28";
+import { Sound } from "./sound.js?v=29";
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
