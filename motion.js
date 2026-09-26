@@ -4,6 +4,8 @@
 // bloquea el input. Todo es interrumpible: si llega otro cambio a mitad de
 // camino, arranca desde el estado actual.
 
+import { Sound } from "./sound.js?v=25";
+
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 export const MOTION = {
@@ -29,7 +31,7 @@ const rollTokens = new WeakMap();
 // la derecha (unidades con unidades). Si el valor sube ruedan hacia arriba, si
 // baja hacia abajo. Con `whole`, la palabra entera rueda como una sola columna
 // (Baja -> Media).
-export function rollText(element, next, { direction = 0, delay = 0, whole = false } = {}) {
+export function rollText(element, next, { direction = 0, delay = 0, whole = false, sound = false } = {}) {
   const prev = element.dataset.rollValue ?? element.textContent;
   element.dataset.rollValue = next;
 
@@ -82,10 +84,15 @@ export function rollText(element, next, { direction = 0, delay = 0, whole = fals
   });
 
   // Al terminar vuelve a texto plano, salvo que ya haya arrancado otro cambio.
+  // Recien ahi suena: si el rolling se interrumpe, su llegada no suena.
   window.setTimeout(() => {
     if (rollTokens.get(element) === token) {
       element.textContent = next;
       element.removeAttribute("aria-label");
+      if (sound) {
+        if (dir > 0) Sound.up();
+        else Sound.down();
+      }
     }
   }, longest + 20);
 }
@@ -159,11 +166,22 @@ export function placeSegThumb(container, { animate = true } = {}) {
   thumb.style.opacity = "1";
 
   if (moved) {
-    thumb.style.transformOrigin = left > prevLeft ? "left center" : "right center";
+    const toRight = left > prevLeft;
+    thumb.style.transformOrigin = toRight ? "left center" : "right center";
     thumb.animate({ scale: ["1 1", "1.08 1", "1 1"] }, { duration: MOTION.base, easing: MOTION.easeOut });
-    haptic(MOTION.fast);
+    // Blip y vibracion cuando la pastilla llega, no al tocar. Si se vuelve a
+    // tocar antes, la llegada anterior no suena.
+    window.clearTimeout(arrivals.get(container));
+    arrivals.set(container, window.setTimeout(() => {
+      Sound.toggle(toRight);
+      vibrate();
+    }, ARRIVAL_MS));
   }
 }
+
+// La transicion es de 280ms con ease-out: a los 200ms ya se ve llegada.
+const ARRIVAL_MS = 200;
+const arrivals = new WeakMap();
 
 // Reubica sin animar cuando el selector cambia de tamano o aparece (al entrar
 // a un paso, al rotar el telefono).
@@ -178,10 +196,9 @@ export function watchSegThumb(container) {
   }
 }
 
-// Vibracion leve al llegar el thumb, no al tocar. Solo donde exista.
-function haptic(delay) {
-  if (typeof navigator.vibrate !== "function" || prefersReducedMotion()) {
-    return;
+// Vibracion leve, solo donde exista (Android).
+function vibrate() {
+  if (typeof navigator.vibrate === "function" && !prefersReducedMotion()) {
+    navigator.vibrate(8);
   }
-  window.setTimeout(() => navigator.vibrate(8), delay);
 }

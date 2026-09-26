@@ -7,15 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=24";
+} from "./currency.js?v=25";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=24";
-import { initAnalytics, track } from "./analytics.js?v=24";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=24";
+} from "./pdf-fonts.js?v=25";
+import { initAnalytics, track } from "./analytics.js?v=25";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=25";
+import { Sound, initSound } from "./sound.js?v=25";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -163,6 +164,13 @@ function syncCompassMode() {
   }
 }
 
+function syncSoundToggle() {
+  const on = Sound.isEnabled();
+  els.soundToggle.dataset.sound = on ? "on" : "off";
+  els.soundToggle.setAttribute("aria-pressed", String(on));
+  els.soundToggle.setAttribute("aria-label", on ? "Silenciar sonidos" : "Activar sonidos");
+}
+
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem("bong-theme", theme);
@@ -257,6 +265,7 @@ function cacheDom() {
   els.copyFeedback = document.querySelector("#copy-feedback");
   els.masterclassBadge = document.querySelector(".masterclass-badge");
   els.themeToggle = document.querySelector("#theme-toggle");
+  els.soundToggle = document.querySelector("#sound-toggle");
   els.currencyToggle = document.querySelector("#currency-toggle");
   els.currencyFooter = document.querySelector("#currency-footer");
   els.dockStep = document.querySelector("#dock-step");
@@ -993,6 +1002,9 @@ function renderDeliverables() {
 
   els.extrasGroup.hidden = extras.length === 0;
   renderToggleChips(els.deliverablesGrid, extras, selectedExtras, (id) => {
+    const turningOn = !selectedExtras.has(id);
+    // El doble blip suena cuando el verde termino de crecer o de vaciarse.
+    window.setTimeout(() => Sound.chip(turningOn), MOTION.fast);
     if (id.startsWith("output:")) {
       const outputId = id.slice("output:".length);
       state.selectedOutputType = state.selectedOutputType === outputId ? service.default_output_type : outputId;
@@ -1312,7 +1324,8 @@ function renderResult() {
   state.renderedCurrency = state.displayCurrency;
   rollText(els.resultPriceValue, formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency), {
     direction: currencyChanged ? state.currencyMotionDirection : 0,
-    delay: MOTION.instant
+    delay: MOTION.instant,
+    sound: true
   });
   els.resultRange.textContent = `Objetivo de tiempo: ${formatHours(quote.totalHours)} · ${getRevisionById(state.selectedRevision).label}`;
   renderConversion(quote);
@@ -1401,7 +1414,7 @@ function renderLiveBudget() {
   const price = formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency);
   const hours = formatHours(quote.totalHours);
   // El precio arranca cuando la pastilla va por la mitad, no cuando llega.
-  els.livePrices.forEach((node) => rollText(node, price, { delay: MOTION.instant }));
+  els.livePrices.forEach((node) => rollText(node, price, { delay: MOTION.instant, sound: true }));
   els.liveHours.forEach((node) => fadeSwap(node, hours, MOTION.base));
 }
 
@@ -1475,6 +1488,9 @@ function goToStep(stepIndex) {
   }
 
   const nextStep = Math.max(0, Math.min(stepIndex, STEP_META.length - 1));
+  if (nextStep !== state.currentStep) {
+    Sound.step(nextStep > state.currentStep);
+  }
   // Avanzar entra desde la derecha, volver desde la izquierda: el mismo
   // camino en las dos direcciones.
   document.body.dataset.stepDirection = nextStep >= state.currentStep ? "forward" : "back";
@@ -1529,6 +1545,7 @@ async function copyBreakdown() {
     await navigator.clipboard.writeText(getQuoteText());
     track("copiar_desglose", getQuoteDimensions());
     els.copyFeedback.textContent = "✓ Copiado";
+    Sound.chip(true);
     window.setTimeout(() => {
       els.copyFeedback.textContent = "";
     }, 2000);
@@ -1842,7 +1859,10 @@ function bindEvents() {
     // Se registra despues de resolver, asi un PDF que fallo no cuenta como
     // exportado.
     downloadPdf()
-      .then(() => track("exportar_pdf", getQuoteDimensions()))
+      .then(() => {
+        Sound.confirm();
+        track("exportar_pdf", getQuoteDimensions());
+      })
       .catch((error) => {
         els.copyFeedback.textContent = "No se pudo generar el PDF.";
         console.error(error);
@@ -1857,6 +1877,11 @@ function bindEvents() {
     });
   });
   els.themeToggle.addEventListener("click", toggleThemeWithTransition);
+  els.soundToggle.addEventListener("click", () => {
+    Sound.setEnabled(!Sound.isEnabled());
+    syncSoundToggle();
+    Sound.chip(true);
+  });
   window.addEventListener("pointermove", updateCompassPointer);
   window.addEventListener("touchstart", updateCompassPointer, { passive: true });
   window.addEventListener("touchmove", updateCompassPointer, { passive: true });
@@ -1879,6 +1904,8 @@ function bindEvents() {
 async function init() {
   initTheme();
   cacheDom();
+  initSound();
+  syncSoundToggle();
 
   try {
     await initCurrency();
