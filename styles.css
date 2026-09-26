@@ -2581,8 +2581,18 @@ body.app-ready .dock-actions > *:nth-child(2) {
     min-height: 0;
   }
 
+  /* La pregunta de cada paso toma el mismo cuerpo que el valor de los
+     controles (Baja, 1 ronda): 2rem. Sin tope de ancho en ch, que a este
+     cuerpo la partia en tres renglones. El titulo del resultado convive con
+     el selector de monedas y queda como estaba. */
   .scene-title {
-    max-width: 12ch;
+    max-width: none;
+    font-size: 2rem;
+  }
+
+  .scene-title.result-step-title {
+    max-width: 7ch;
+    font-size: clamp(1.45rem, 3.3vw, 2.35rem);
   }
 
   .dials {

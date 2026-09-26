@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=21";
+} from "./currency.js?v=22";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=21";
-import { initAnalytics, track } from "./analytics.js?v=21";
+} from "./pdf-fonts.js?v=22";
+import { initAnalytics, track } from "./analytics.js?v=22";
 
 const STEP_META = [
   { title: "Servicio" },
