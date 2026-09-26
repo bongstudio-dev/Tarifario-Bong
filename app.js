@@ -7,17 +7,17 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=29";
+} from "./currency.js?v=30";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=29";
-import { initAnalytics, track } from "./analytics.js?v=29";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=29";
-import { Sound, initSound } from "./sound.js?v=29";
-import { createResultFocus } from "./focus.js?v=29";
+} from "./pdf-fonts.js?v=30";
+import { initAnalytics, track } from "./analytics.js?v=30";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=30";
+import { Sound, initSound } from "./sound.js?v=30";
+import { createResultFocus } from "./focus.js?v=30";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1910,12 +1910,10 @@ async function init() {
   cacheDom();
   initSound();
   syncSoundToggle();
-  // En el telefono el resultado es una sola pagina: al bajar se esconden el
-  // header y el dock para dejarle todo el alto al desglose.
+  // En el telefono el resultado scrollea entero y, al bajar, el dock se
+  // esconde para que la card gane ese alto.
   state.resultFocus = createResultFocus({
-    scroller: document.querySelector(".scene-card-result"),
-    pill: document.querySelector("#focus-edit"),
-    onEdit: () => goToStep(0)
+    scroller: document.querySelector(".scene-card-result")
   });
 
   try {

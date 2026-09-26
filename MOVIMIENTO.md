@@ -139,17 +139,18 @@ la bajada es instantánea y la subida tiene rebote.
 
 ### Resultado en modo foco (solo teléfono)
 
-`focus.js`. En el teléfono, la pantalla del resultado es una sola página que
-scrollea entera (precio, acciones, conversión, desglose, presupuesto de tiempo
-y masterclass), en vez de un scroll chico adentro de la card.
+`focus.js`. En el teléfono, la card del resultado scrollea entera (precio,
+acciones, conversión, desglose, presupuesto de tiempo y masterclass), en vez de
+un scroll chico adentro.
 
-- La card ocupa toda la pantalla y el header y el dock flotan encima.
-- Al bajar más de 6 px, el header sube y el dock baja, y el desglose se lee a
-  todo el alto. Al subir, vuelven. Cerca del tope siempre están.
-- Mientras están escondidos aparece una pastilla "Editar" arriba a la
-  izquierda, que vuelve al paso 1.
-- Se mueven con la propiedad `translate`, no con `transform`: el header y el
-  dock ya tienen el `transform` tomado por su animación de entrada.
+- Arranca como cualquier paso: debajo del header y arriba del dock, con el
+  mismo aire.
+- Al bajar más de 6 px se esconde el dock y el borde de abajo de la card baja
+  a ocupar su lugar (transición del `padding-bottom` del shell). Arriba no
+  cambia nada: el header queda y el espacio hasta la card se mantiene.
+- Al subir, o cerca del tope, el dock vuelve y la card se acorta.
+- El dock se mueve con la propiedad `translate`, no con `transform`: ya tiene
+  el `transform` tomado por su animación de entrada.
 - En desktop no cambia nada.
 
 ### Carrusel de monedas
