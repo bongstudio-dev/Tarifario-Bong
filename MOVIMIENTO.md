@@ -145,9 +145,14 @@ un scroll chico adentro.
 
 - Arranca como cualquier paso: debajo del header y arriba del dock, con el
   mismo aire.
-- Al bajar más de 6 px se esconde el dock y el borde de abajo de la card baja
-  a ocupar su lugar (transición del `padding-bottom` del shell). Arriba no
-  cambia nada: el header queda y el espacio hasta la card se mantiene.
+- Al bajar más de 6 px se esconde el dock y la card se abre hacia abajo hasta
+  14 px del fondo. Arriba no cambia nada: el header queda y el espacio hasta la
+  card se mantiene.
+- La card no cambia de alto: mide siempre el alto completo y con el dock
+  visible se recorta con `clip-path` donde empieza el dock. Si el scroller
+  cambiara de alto, al fondo de la página el contenido pegaría un salto (el
+  navegador corrige el scroll) y en iOS se cortaría la inercia.
+- El rebote elástico de iOS en los bordes se ignora: no hace aparecer el dock.
 - Al subir, o cerca del tope, el dock vuelve y la card se acorta.
 - El dock se mueve con la propiedad `translate`, no con `transform`: ya tiene
   el `transform` tomado por su animación de entrada.

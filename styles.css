@@ -1326,27 +1326,28 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Resultado en modo foco (focus.js), solo en el telefono. La card arranca
-   como cualquier paso, entre el header y el dock, y scrollea entera. Al bajar
-   se esconde el dock y el borde de abajo de la card baja a ocupar su lugar;
-   arriba no cambia nada. El dock se mueve con `translate`, que compone con su
-   animacion de entrada (tiene el transform tomado con fill both).
+   Resultado en modo foco (focus.js), solo en el telefono. La card scrollea
+   entera y arranca como cualquier paso, entre el header y el dock. Al bajar
+   se esconde el dock y la card se abre hacia abajo; arriba no cambia nada.
+
+   La card mide siempre el alto completo (hasta 14px del fondo) y lo que
+   cambia es un recorte: con el dock visible, `clip-path` la corta donde
+   empieza el dock. Asi el scroller nunca cambia de alto: si cambiara, al
+   fondo de la pagina el contenido pegaba un salto y en iOS se cortaba la
+   inercia del scroll. Un espaciador abajo deja que lo ultimo suba por
+   encima del recorte.
    -------------------------------------------------------------------------- */
 @media (max-width: 720px) {
   .progress-dock {
     transition: translate var(--t-base) var(--ease-out);
   }
 
+  body.is-result-focus {
+    --focus-clip: calc(var(--mobile-pad-bottom, 82px) - 14px - env(safe-area-inset-bottom, 0px));
+  }
+
   body.is-result-focus .app-shell {
-    transition: padding-bottom var(--t-base) var(--ease-out);
-  }
-
-  body.is-result-focus.is-dock-hidden .app-shell {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-  }
-
-  body.is-result-focus.is-dock-hidden .progress-dock {
-    translate: 0 calc(100% + 24px);
   }
 
   body.is-result-focus .scene-card-result {
@@ -1354,6 +1355,14 @@ button {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    padding-bottom: calc(18px + var(--focus-clip));
+    border-color: transparent;
+    clip-path: inset(0 0 var(--focus-clip) 0 round 24px);
+    transition: clip-path var(--t-base) var(--ease-out);
+  }
+
+  body.is-result-focus.is-dock-hidden .scene-card-result {
+    clip-path: inset(0 0 0 0 round 24px);
   }
 
   body.is-result-focus .scene-card-result::-webkit-scrollbar {
@@ -1369,6 +1378,10 @@ button {
 
   body.is-result-focus .result-scroll {
     padding-right: 0;
+  }
+
+  body.is-result-focus.is-dock-hidden .progress-dock {
+    translate: 0 calc(100% + 24px);
   }
 }
 

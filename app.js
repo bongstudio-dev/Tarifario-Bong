@@ -7,17 +7,17 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=30";
+} from "./currency.js?v=31";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=30";
-import { initAnalytics, track } from "./analytics.js?v=30";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=30";
-import { Sound, initSound } from "./sound.js?v=30";
-import { createResultFocus } from "./focus.js?v=30";
+} from "./pdf-fonts.js?v=31";
+import { initAnalytics, track } from "./analytics.js?v=31";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=31";
+import { Sound, initSound } from "./sound.js?v=31";
+import { createResultFocus } from "./focus.js?v=31";
 
 const STEP_META = [
   { title: "Servicio" },
