@@ -402,6 +402,28 @@ button {
   transform: translateX(-50%) translateY(0);
 }
 
+/* Parlante: con sonido se ven las ondas; en silencio, una cruz. */
+.sound-icon path {
+  transition: opacity var(--t-fast) var(--ease-out), transform var(--t-base) var(--ease-out);
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+.sound-mute,
+.sound-toggle[data-sound="off"] .sound-wave {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.sound-toggle[data-sound="off"] .sound-mute {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.sound-wave-far {
+  transition-delay: 40ms;
+}
+
 .theme-icon {
   position: absolute;
   width: 18px;
@@ -2387,6 +2409,10 @@ body.app-ready .dock-actions > *:nth-child(1) {
 
 body.app-ready .dock-actions > *:nth-child(2) {
   animation-delay: 370ms;
+}
+
+body.app-ready .dock-actions > *:nth-child(3) {
+  animation-delay: 440ms;
 }
 
 .step-screen.is-active .scene-card {
