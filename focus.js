@@ -1,8 +1,8 @@
 // Resultado en modo foco (solo telefono). La card del resultado scrollea
 // entera, en vez de un scroll chico adentro. Arranca como cualquier paso:
 // debajo del header y arriba del dock, con su aire. Al bajar, el dock se
-// esconde y el borde de abajo de la card baja a ocupar ese lugar; el header
-// se queda y el espacio de arriba no cambia. Al subir, el dock vuelve.
+// esconde y la card se abre hacia abajo (un recorte, no un cambio de alto:
+// ver styles.css); el header se queda. Al subir, el dock vuelve.
 
 const mobileQuery = window.matchMedia("(max-width: 720px)");
 const THRESHOLD = 6; // px de scroll antes de decidir la direccion
@@ -12,7 +12,6 @@ export function createResultFocus({ scroller }) {
   let active = false;
   let onResultStep = false;
   let lastY = 0;
-  let lastHeight = 0;
 
   function setDockHidden(hidden) {
     document.body.classList.toggle("is-dock-hidden", hidden);
@@ -20,19 +19,17 @@ export function createResultFocus({ scroller }) {
 
   function onScroll() {
     const y = scroller.scrollTop;
-    // Cuando la card crece o se achica, el navegador corrige el scroll solo.
-    // Ese movimiento no es de la persona: si se leyera, al fondo de la pagina
-    // el dock se esconderia y volveria en loop.
-    if (scroller.clientHeight !== lastHeight) {
-      lastHeight = scroller.clientHeight;
-      lastY = y;
+    const max = scroller.scrollHeight - scroller.clientHeight;
+    // El rebote elastico de iOS en los bordes no es la persona scrolleando:
+    // al volver del rebote de abajo, el dock no tiene que aparecer.
+    if (y < 0 || y > max) {
       return;
     }
     if (y <= TOP_ZONE) {
       setDockHidden(false);
     } else if (y > lastY + THRESHOLD) {
       setDockHidden(true);
-    } else if (y < lastY - THRESHOLD) {
+    } else if (y < lastY - THRESHOLD && y < max - 1) {
       setDockHidden(false);
     } else {
       return;
@@ -50,7 +47,6 @@ export function createResultFocus({ scroller }) {
     document.body.classList.toggle("is-result-focus", active);
     scroller.scrollTop = 0;
     lastY = 0;
-    lastHeight = scroller.clientHeight;
     setDockHidden(false);
   }
 
