@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=16";
+} from "./currency.js?v=17";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=16";
-import { initAnalytics, track } from "./analytics.js?v=16";
+} from "./pdf-fonts.js?v=17";
+import { initAnalytics, track } from "./analytics.js?v=17";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -216,10 +216,14 @@ function cacheDom() {
   els.includedDeliverables = document.querySelector("#included-deliverables");
   els.deliverablesGrid = document.querySelector("#deliverables-grid");
   els.deliverablesCopy = document.querySelector("#deliverables-copy");
-  els.complexityRange = document.querySelector("#complexity-range");
-  els.revisionsRange = document.querySelector("#revisions-range");
   els.complexityLabel = document.querySelector("#complexity-label");
   els.revisionsLabel = document.querySelector("#revisions-label");
+  els.complexityMeta = document.querySelector("#complexity-meta");
+  els.revisionsMeta = document.querySelector("#revisions-meta");
+  els.complexitySeg = document.querySelector("#complexity-seg");
+  els.revisionsSeg = document.querySelector("#revisions-seg");
+  els.livePrice = document.querySelector("#live-price");
+  els.liveHours = document.querySelector("#live-hours");
   els.resultPrice = document.querySelector("#result-price");
   els.resultPriceValue = document.querySelector("#result-price-value");
   els.resultServiceTitle = document.querySelector("#result-service-title");
@@ -235,10 +239,13 @@ function cacheDom() {
   els.benchInsight = document.querySelector("#bench-insight");
   els.benchFootnote = document.querySelector("#bench-footnote");
   els.resultRange = document.querySelector("#result-range");
-  els.resultMeta = document.querySelector("#result-meta");
+  els.conversion = document.querySelector("#conversion");
   els.breakdown = document.querySelector("#breakdown");
+  els.resultPill = document.querySelector("#result-pill");
   els.copyButton = document.querySelector("#copy-button");
   els.pdfButton = document.querySelector("#pdf-button");
+  els.currencyCycle = document.querySelector("#currency-cycle");
+  els.editButton = document.querySelector("#edit-button");
   els.copyFeedback = document.querySelector("#copy-feedback");
   els.masterclassBadge = document.querySelector(".masterclass-badge");
   els.themeToggle = document.querySelector("#theme-toggle");
@@ -973,39 +980,122 @@ function animateValue(element, nextValue) {
   requestAnimationFrame(frame);
 }
 
-function renderMeta() {
-  if (!hasSelectedService()) {
-    els.resultMeta.innerHTML = "";
-    return;
-  }
-
-  const chips = [
-    `Mercado: ${getMarketById(state.selectedMarket).label}`,
-    `Perfil: ${getExpertiseById(state.selectedExpertise).label}`,
-    `Cliente: ${getBrandTierById(state.selectedBrandTier).label}`,
-    `Complejidad: ${getComplexityById(state.selectedComplexity).label}`,
-    `Output: ${getOutputTypeById(state.selectedOutputType).label}`
-  ];
-
-  els.resultMeta.innerHTML = chips.map((chip) => `<span class="meta-chip">${chip}</span>`).join("");
+// Monto sin simbolo: en la conversion y en las filas el codigo de moneda ya
+// va al lado, y "$" solo no distingue USD de ARS.
+function formatAmount(value, currency) {
+  return new Intl.NumberFormat(getCurrencyConfig(currency).locale, {
+    maximumFractionDigits: 0
+  }).format(Math.round(value));
 }
 
+function formatRowHours(value) {
+  return `${value.toFixed(1).replace(".", ",")} h`;
+}
+
+function getRateLabel(currency) {
+  if (currency === "ars") {
+    return `Dólar blue: <b>$${Math.round(getDolarBlueMeta().venta).toLocaleString("es-AR")}</b>`;
+  }
+
+  const config = getCurrencyConfig(currency);
+  const rate = getFxMeta().rates[config.code];
+  if (!rate) {
+    return "Sin cotización disponible";
+  }
+
+  const digits = rate < 100 ? 2 : 0;
+  const value = rate.toLocaleString("es-AR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return `1 USD = <b>${value} ${config.label}</b>`;
+}
+
+// La tarjeta de conversion de Brubank: arriba el precio base del modelo en
+// USD, abajo la moneda elegida con su cotizacion. Si la moneda elegida es USD,
+// abajo va ARS, que es la que mas se usa para comparar.
+function renderConversion(quote) {
+  const target = state.displayCurrency === "usd" ? "ars" : state.displayCurrency;
+  const targetConfig = getCurrencyConfig(target);
+  const context = [
+    getMarketById(state.selectedMarket).label,
+    getExpertiseById(state.selectedExpertise).label,
+    getBrandTierById(state.selectedBrandTier).label,
+    `Complejidad ${getComplexityById(state.selectedComplexity).label.toLowerCase()}`,
+    getOutputTypeById(state.selectedOutputType).label
+  ].join(" · ");
+
+  els.conversion.innerHTML = `
+    <div class="conversion-row is-source">
+      <span class="code-dot">USD</span>
+      <span class="conversion-amount">${formatAmount(quote.suggestedUsd, "usd")} USD</span>
+      <span class="conversion-chip">Sugerido</span>
+      <span class="conversion-sub">${context}</span>
+    </div>
+    <div class="conversion-row">
+      <span class="code-dot">${targetConfig.label}</span>
+      <span class="conversion-amount">${formatAmount(convertUsd(quote.suggestedUsd, target), target)} ${targetConfig.label}</span>
+      <span class="conversion-sub">${getRateLabel(target)}</span>
+    </div>
+  `;
+}
+
+const PHASE_ROWS = {
+  estrategia: {
+    label: "Estrategia",
+    icon: '<circle cx="12" cy="12" r="8"/><path d="M15 9l-2 4-4 2 2-4z"/>'
+  },
+  diseno: {
+    label: "Diseño",
+    icon: '<path d="M4 20l4-1L19 8l-3-3L5 16l-1 4zM14 7l3 3"/>'
+  },
+  produccion: {
+    label: "Producción",
+    icon: '<path d="M4 8l8-4 8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4"/>'
+  }
+};
+const ITEM_ROW_ICON = '<rect x="5" y="5" width="14" height="14" rx="4"/>';
+const TOTAL_ROW_ICON = '<path d="M6 12l4 4 8-8"/>';
+
+function receiptRow({ label, hours, usd, icon, modifier = "" }) {
+  return `
+    <div class="receipt-row${modifier}">
+      <span class="receipt-dot"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg></span>
+      <span class="receipt-label">${label}<span class="receipt-hours">${formatRowHours(hours)}</span></span>
+      <span class="receipt-amount">${formatMoney(convertUsd(usd, state.displayCurrency), state.displayCurrency)}</span>
+    </div>
+  `;
+}
+
+// Fases y entregables son dos formas de repartir el mismo total, no se suman
+// entre si. Por eso el total va primero y cada reparto con su propio rotulo.
 function renderBreakdown(quote) {
-  const phaseRows = Object.entries(quote.breakdown).map(([phase, amount]) => `
-    <div class="breakdown-row">
-      <span class="phase"><span class="phase-dot"></span>${phase === "estrategia" ? "Estrategia" : phase === "diseno" ? "Diseno" : "Produccion"} · ${amount.hours.toFixed(1)}h</span>
-      <span class="amount">${formatMoney(convertUsd(amount.usd, state.displayCurrency), state.displayCurrency)}</span>
-    </div>
-  `);
+  const totalRow = receiptRow({
+    label: "Total",
+    hours: quote.totalHours,
+    usd: quote.suggestedUsd,
+    icon: TOTAL_ROW_ICON,
+    modifier: " is-total"
+  });
+  const phaseRows = Object.entries(quote.breakdown).map(([phase, amount]) =>
+    receiptRow({ ...PHASE_ROWS[phase], hours: amount.hours, usd: amount.usd })
+  );
+  const itemRows = quote.lineItems.map((item) =>
+    receiptRow({ label: item.label, hours: item.hours, usd: item.usd, icon: ITEM_ROW_ICON, modifier: " is-item" })
+  );
 
-  const lineRows = quote.lineItems.map((item) => `
-    <div class="breakdown-row breakdown-row-subtle">
-      <span class="phase">${item.label} · ${item.hours.toFixed(1)}h</span>
-      <span class="amount">${formatMoney(convertUsd(item.usd, state.displayCurrency), state.displayCurrency)}</span>
-    </div>
-  `);
+  els.breakdown.innerHTML = [
+    totalRow,
+    `<p class="receipt-group">Por fase</p>`,
+    ...phaseRows,
+    ...(itemRows.length ? [`<p class="receipt-group">Por entregable</p>`, ...itemRows] : [])
+  ].join("");
+}
 
-  els.breakdown.innerHTML = [...phaseRows, ...lineRows].join("");
+function renderResultPill() {
+  const revision = getRevisionById(state.selectedRevision);
+  els.resultPill.innerHTML = `
+    <span class="info-pill-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 12l4 4 8-8"/></svg></span>
+    Incluye ${revision.label} de revisión
+  `;
+  els.resultPill.hidden = false;
 }
 
 function formatHours(value) {
@@ -1168,7 +1258,8 @@ function renderResult() {
     els.resultPriceValue.dataset.rawValue = "0";
     els.resultRange.textContent = "Elegí un servicio para calcular el presupuesto.";
     els.breakdown.innerHTML = "";
-    els.resultMeta.innerHTML = "";
+    els.conversion.innerHTML = "";
+    els.resultPill.hidden = true;
     els.benchmarkSection.hidden = true;
     renderCurrencyToggle();
     els.copyButton.disabled = true;
@@ -1180,12 +1271,85 @@ function renderResult() {
   els.resultServiceTitle.textContent = getCurrentService().name;
   animateValue(els.resultPriceValue, convertUsd(quote.suggestedUsd, state.displayCurrency));
   els.resultRange.textContent = `Objetivo de tiempo: ${formatHours(quote.totalHours)} · ${getRevisionById(state.selectedRevision).label}`;
-  renderMeta();
+  renderConversion(quote);
   renderBreakdown(quote);
+  renderResultPill();
   renderBenchmark(quote);
   renderCurrencyToggle();
   els.copyButton.disabled = false;
   els.pdfButton.disabled = false;
+}
+
+function getDialConfig(kind) {
+  if (kind === "complexity") {
+    return {
+      list: state.pricingData.complexity,
+      selected: state.selectedComplexity,
+      label: els.complexityLabel,
+      meta: els.complexityMeta,
+      seg: els.complexitySeg,
+      shortLabel: (item) => item.label,
+      metaLabel: (item) => `×${item.coef.toFixed(2).replace(".", ",")}`
+    };
+  }
+
+  return {
+    list: state.pricingData.revisions,
+    selected: state.selectedRevision,
+    label: els.revisionsLabel,
+    meta: els.revisionsMeta,
+    seg: els.revisionsSeg,
+    shortLabel: (item) => item.label.replace(/ rondas?$/, ""),
+    metaLabel: (item) =>
+      item.extra_hours_coef > 0 ? `+${Math.round(item.extra_hours_coef * 100)}% horas` : "Sin horas extra"
+  };
+}
+
+function setDial(kind, index) {
+  const { list } = getDialConfig(kind);
+  const item = list[Math.max(0, Math.min(index, list.length - 1))];
+  if (kind === "complexity") {
+    state.selectedComplexity = item.id;
+  } else {
+    state.selectedRevision = item.id;
+  }
+}
+
+// Los botones del selector se arman una sola vez: si se regeneran en cada
+// syncUI, el foco del teclado se pierde al elegir una opcion.
+function renderDial(kind) {
+  const config = getDialConfig(kind);
+  const index = config.list.findIndex((item) => item.id === config.selected);
+  const item = config.list[index];
+
+  if (config.seg.childElementCount !== config.list.length) {
+    config.seg.innerHTML = config.list
+      .map((option, i) => `<button class="dial-seg-btn" type="button" data-seg="${kind}" data-index="${i}">${config.shortLabel(option)}</button>`)
+      .join("");
+  }
+
+  config.seg.querySelectorAll(".dial-seg-btn").forEach((button, i) => {
+    button.classList.toggle("is-active", i === index);
+    button.setAttribute("aria-pressed", String(i === index));
+  });
+  config.label.textContent = item.label;
+  config.meta.textContent = config.metaLabel(item);
+  document.querySelectorAll(`.dial-btn[data-slider="${kind}"]`).forEach((button) => {
+    const dir = Number(button.dataset.dir);
+    button.disabled = dir < 0 ? index === 0 : index === config.list.length - 1;
+  });
+}
+
+function renderLiveBudget() {
+  if (!hasSelectedService()) {
+    els.livePrice.textContent = "";
+    els.liveHours.textContent = "";
+    return;
+  }
+
+  const quote = calculateQuote();
+  els.livePrice.textContent = formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency);
+  els.liveHours.textContent = formatHours(quote.totalHours);
 }
 
 function renderFlow() {
@@ -1228,10 +1392,9 @@ function trackStepChange() {
 function syncUI() {
   ensureOutputType();
   els.marketSelect.value = state.selectedMarket;
-  els.complexityRange.value = String(state.pricingData.complexity.findIndex((item) => item.id === state.selectedComplexity) + 1);
-  els.revisionsRange.value = String(state.pricingData.revisions.findIndex((item) => item.id === state.selectedRevision) + 1);
-  els.complexityLabel.textContent = getComplexityById(state.selectedComplexity).label;
-  els.revisionsLabel.textContent = getRevisionById(state.selectedRevision).label;
+  renderDial("complexity");
+  renderDial("revisions");
+  renderLiveBudget();
   els.resultPriceValue.dataset.rawValue = "";
 
   document.querySelectorAll(".type-card").forEach((card) => {
@@ -1280,8 +1443,8 @@ function getQuoteText() {
     "",
     "Fases:",
     `- Estrategia: ${quote.breakdown.estrategia.hours.toFixed(1)}h / ${formatMoney(quote.breakdown.estrategia.usd, "usd")}`,
-    `- Diseno: ${quote.breakdown.diseno.hours.toFixed(1)}h / ${formatMoney(quote.breakdown.diseno.usd, "usd")}`,
-    `- Produccion: ${quote.breakdown.produccion.hours.toFixed(1)}h / ${formatMoney(quote.breakdown.produccion.usd, "usd")}`,
+    `- Diseño: ${quote.breakdown.diseno.hours.toFixed(1)}h / ${formatMoney(quote.breakdown.diseno.usd, "usd")}`,
+    `- Producción: ${quote.breakdown.produccion.hours.toFixed(1)}h / ${formatMoney(quote.breakdown.produccion.usd, "usd")}`,
     "",
     "Items:",
     ...quote.lineItems.map((item) => `- ${item.label}: ${item.hours.toFixed(1)}h / ${formatMoney(item.usd, "usd")}`),
@@ -1590,38 +1753,27 @@ function bindEvents() {
     syncUI();
   });
 
-  els.complexityRange.addEventListener("input", (event) => {
-    const index = Number(event.target.value) - 1;
-    state.selectedComplexity = state.pricingData.complexity[index].id;
-    syncUI();
-  });
-
-  els.revisionsRange.addEventListener("input", (event) => {
-    const index = Number(event.target.value) - 1;
-    state.selectedRevision = state.pricingData.revisions[index].id;
-    syncUI();
-  });
-
   document.addEventListener("click", (event) => {
-    const btn = event.target.closest(".slider-btn");
-    if (!btn) return;
-    
-    const slider = btn.dataset.slider;
-    const dir = Number(btn.dataset.dir);
-    const rangeEl = slider === "complexity" ? els.complexityRange : els.revisionsRange;
-    const currentValue = Number(rangeEl.value);
-    const min = Number(rangeEl.min);
-    const max = Number(rangeEl.max);
-    const newValue = Math.min(max, Math.max(min, currentValue + dir));
-    rangeEl.value = newValue;
-    
-    if (slider === "complexity") {
-      state.selectedComplexity = state.pricingData.complexity[newValue - 1].id;
-    } else {
-      state.selectedRevision = state.pricingData.revisions[newValue - 1].id;
-    }
+    const button = event.target.closest("[data-slider], [data-seg]");
+    if (!button || button.disabled) return;
+
+    const kind = button.dataset.slider || button.dataset.seg;
+    const { list, selected } = getDialConfig(kind);
+    const current = list.findIndex((item) => item.id === selected);
+    const index = button.dataset.seg ? Number(button.dataset.index) : current + Number(button.dataset.dir);
+    setDial(kind, index);
     syncUI();
   });
+
+  els.currencyCycle.addEventListener("click", () => {
+    const currencies = getDisplayCurrencies();
+    const index = currencies.findIndex(({ id }) => id === state.displayCurrency);
+    state.currencyMotionDirection = 1;
+    state.displayCurrency = currencies[(index + 1) % currencies.length].id;
+    syncUI();
+  });
+
+  els.editButton.addEventListener("click", () => goToStep(0));
 
   els.copyButton.addEventListener("click", copyBreakdown);
   // downloadPdf es async: sin este catch, cualquier falla queda como rejection

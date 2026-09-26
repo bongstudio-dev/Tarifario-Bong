@@ -47,7 +47,7 @@
        archivos viejos y el cambio no llega al usuario. Para bumpear todo junto
        corre el comando que esta en el README, no lo escribo aca porque el
        propio sed se lo comeria. -->
-  <link rel="stylesheet" href="./styles.css?v=16">
+  <link rel="stylesheet" href="./styles.css?v=17">
 
   <script type="application/ld+json">
 {
@@ -175,27 +175,39 @@
               <p class="scene-kicker">Paso 3</p>
               <h2 class="scene-title">¿Qué tensión tiene el proyecto?</h2>
               <p class="scene-copy">Ajustá complejidad y revisiones reales.</p>
-              <div class="slider-card">
-                <div class="slider-head">
-                  <h3>Complejidad</h3>
-                  <div class="slider-controls">
-                    <span class="value-pill" id="complexity-label">Media</span>
-                    <button class="slider-btn" type="button" data-slider="complexity" data-dir="-1" aria-label="Bajar complejidad">−</button>
-                    <button class="slider-btn" type="button" data-slider="complexity" data-dir="1" aria-label="Subir complejidad">+</button>
+              <div class="dials">
+                <section class="dial">
+                  <div class="dial-head">
+                    <h3 class="dial-name">Complejidad</h3>
+                    <span class="dial-meta" id="complexity-meta"></span>
                   </div>
-                </div>
-                <input id="complexity-range" type="range" min="1" max="3" step="1" value="2">
+                  <div class="dial-body">
+                    <button class="dial-btn" type="button" data-slider="complexity" data-dir="-1" aria-label="Bajar complejidad"><svg class="dial-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+                    <output class="dial-value" id="complexity-label" aria-live="polite"></output>
+                    <button class="dial-btn" type="button" data-slider="complexity" data-dir="1" aria-label="Subir complejidad"><svg class="dial-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>
+                  </div>
+                  <div class="dial-seg" id="complexity-seg" role="group" aria-label="Complejidad"></div>
+                </section>
+                <section class="dial">
+                  <div class="dial-head">
+                    <h3 class="dial-name">Revisiones</h3>
+                    <span class="dial-meta" id="revisions-meta"></span>
+                  </div>
+                  <div class="dial-body">
+                    <button class="dial-btn" type="button" data-slider="revisions" data-dir="-1" aria-label="Menos revisiones"><svg class="dial-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+                    <output class="dial-value" id="revisions-label" aria-live="polite"></output>
+                    <button class="dial-btn" type="button" data-slider="revisions" data-dir="1" aria-label="Más revisiones"><svg class="dial-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>
+                  </div>
+                  <div class="dial-seg" id="revisions-seg" role="group" aria-label="Revisiones"></div>
+                </section>
               </div>
-              <div class="slider-card slider-card-spaced">
-                <div class="slider-head">
-                  <h3>Revisiones</h3>
-                  <div class="slider-controls">
-                    <span class="value-pill" id="revisions-label">2 rondas</span>
-                    <button class="slider-btn" type="button" data-slider="revisions" data-dir="-1" aria-label="Menos revisiones">−</button>
-                    <button class="slider-btn" type="button" data-slider="revisions" data-dir="1" aria-label="Más revisiones">+</button>
-                  </div>
-                </div>
-                <input id="revisions-range" type="range" min="1" max="4" step="1" value="2">
+              <p class="info-pill">
+                <span class="info-pill-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></span>
+                Cada ronda suma horas de diseño y producción
+              </p>
+              <div class="dial-live" aria-live="polite">
+                <span class="dial-live-label">Presupuesto</span>
+                <span class="dial-live-value"><strong id="live-price"></strong><small id="live-hours"></small></span>
               </div>
             </div>
           </article>
@@ -239,9 +251,37 @@
                 <span id="result-price-value">USD $0</span>
               </h2>
               <p class="result-range" id="result-range">Objetivo de tiempo: 0 h</p>
-              <div class="result-meta" id="result-meta"></div>
+              <div class="result-actions" role="group" aria-label="Acciones del presupuesto">
+                <div class="result-action">
+                  <button class="action-btn is-main" id="pdf-button" type="button" aria-label="Exportar PDF">
+                    <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+                  </button>
+                  <span class="action-label">PDF</span>
+                </div>
+                <div class="result-action">
+                  <button class="action-btn" id="copy-button" type="button" aria-label="Copiar desglose">
+                    <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+                  </button>
+                  <span class="action-label">Copiar</span>
+                </div>
+                <div class="result-action">
+                  <button class="action-btn" id="currency-cycle" type="button" aria-label="Cambiar moneda">
+                    <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg>
+                  </button>
+                  <span class="action-label">Moneda</span>
+                </div>
+                <div class="result-action">
+                  <button class="action-btn" id="edit-button" type="button" aria-label="Editar respuestas desde el paso 1">
+                    <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/></svg>
+                  </button>
+                  <span class="action-label">Editar</span>
+                </div>
+              </div>
+              <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
               <div class="result-scroll">
+                <div class="conversion" id="conversion"></div>
                 <div class="breakdown" id="breakdown"></div>
+                <p class="info-pill" id="result-pill" hidden></p>
                 <div class="benchmark" id="benchmark-section" hidden>
                   <div class="benchmark-header">
                     <span class="benchmark-title">Presupuesto de tiempo</span>
@@ -264,13 +304,6 @@
                 </div>
               </div>
             </div>
-            <div class="result-actions">
-              <button class="btn btn-primary" id="pdf-button" type="button">
-                <span class="btn-text">Exportar PDF</span>
-              </button>
-              <button class="btn btn-secondary copy-button-mobile-hide" id="copy-button" type="button">Copiar desglose</button>
-            </div>
-            <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
             <a
               class="masterclass-badge"
               href="https://bongstudio.ar/masterclass"
@@ -279,7 +312,7 @@
             >
               <img
                 class="masterclass-art"
-                src="./assets/img/masterclass.png?v=16"
+                src="./assets/img/masterclass.png?v=17"
                 alt=""
                 width="256"
                 height="256"
@@ -317,6 +350,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js?v=16"></script>
+  <script type="module" src="./app.js?v=17"></script>
 </body>
 </html>

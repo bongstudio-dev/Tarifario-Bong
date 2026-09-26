@@ -60,7 +60,7 @@
     { "id": "high","label": "Alta",  "coef": 1.7 }
   ],
   "output_types": [
-    { "id": "static",      "label": "Estatico",       "coef": 1.0 },
+    { "id": "static",      "label": "Estático",       "coef": 1.0 },
     { "id": "motion",      "label": "Motion",         "coef": 1.2 },
     { "id": "interactive", "label": "Interactivo / 3D","coef": 1.4 }
   ],
