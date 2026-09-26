@@ -15,7 +15,6 @@ const MIN_GAP_MS = 40;
 
 let ctx = null;
 let master = null;
-let unlocked = false;
 let enabled = readPreference();
 const lastPlayed = new Map();
 
@@ -64,14 +63,18 @@ function throttled(kind) {
   return false;
 }
 
+// Si el contexto todavia no corre (iOS lo deja suspendido hasta un gesto
+// valido), el sonido se saltea: programarlo igual lo deja en cola y suena
+// tarde, amontonado con otros, cuando el audio arranca.
 function ready(kind) {
-  if (!enabled || throttled(kind) || !init()) {
+  if (!enabled || !init()) {
     return false;
   }
   if (ctx.state !== "running") {
-    ctx.resume();
+    ctx.resume().catch(() => {});
+    return false;
   }
-  return true;
+  return !throttled(kind);
 }
 
 // iOS solo destraba el audio adentro del gesto mismo, y con touchend o click
@@ -79,20 +82,18 @@ function ready(kind) {
 // mudo de un sample, el truco clasico para que Safari lo de por habilitado.
 // Se escucha en cada gesto porque iOS vuelve a suspender el audio cuando la
 // pestana pasa a segundo plano ("interrupted").
+// El buffer mudo se toca en cada intento hasta que el contexto corre: antes
+// se marcaba como hecho en el primer pointerdown, que iOS no toma como gesto,
+// y en el touchend (el que si vale) ya no se repetia.
 function unlock() {
-  if (!init()) {
+  if (!init() || ctx.state === "running") {
     return;
   }
-  if (ctx.state !== "running") {
-    ctx.resume();
-  }
-  if (!unlocked) {
-    const silence = ctx.createBufferSource();
-    silence.buffer = ctx.createBuffer(1, 1, 22050);
-    silence.connect(ctx.destination);
-    silence.start(0);
-    unlocked = true;
-  }
+  ctx.resume().catch(() => {});
+  const silence = ctx.createBufferSource();
+  silence.buffer = ctx.createBuffer(1, 1, 22050);
+  silence.connect(ctx.destination);
+  silence.start(0);
 }
 
 // Envolvente base: ataque de 3ms (sin click de arranque) y caida exponencial.
