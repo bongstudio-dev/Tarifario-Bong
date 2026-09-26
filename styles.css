@@ -1326,26 +1326,14 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Resultado en modo foco (focus.js), solo en el telefono. La card scrollea
-   entera y arranca como cualquier paso, entre el header y el dock. Al bajar
-   se esconde el dock y la card se abre hacia abajo; arriba no cambia nada.
-
-   La card mide siempre el alto completo (hasta 14px del fondo) y lo que
-   cambia es un recorte: con el dock visible, `clip-path` la corta donde
-   empieza el dock. Asi el scroller nunca cambia de alto: si cambiara, al
-   fondo de la pagina el contenido pegaba un salto y en iOS se cortaba la
-   inercia del scroll. Cerca del final focus.js deja el dock escondido, asi
-   lo ultimo nunca queda debajo del recorte.
+   Resultado en modo foco (focus.js), solo en el telefono. La card mide
+   siempre el alto completo (hasta 14px del fondo) y focus.js la recorta con
+   clip-path donde empieza el dock; el dock sigue al scroll 1:1 con
+   `translate`. Nada de esto toca el layout mientras se scrollea. Abajo el
+   contenido reserva el lugar del dock (--focus-room) para que lo ultimo
+   pueda quedar arriba del dock cuando este vuelve al final.
    -------------------------------------------------------------------------- */
 @media (max-width: 720px) {
-  .progress-dock {
-    transition: translate var(--t-base) var(--ease-out);
-  }
-
-  body.is-result-focus {
-    --focus-clip: calc(var(--mobile-pad-bottom, 82px) - 14px - env(safe-area-inset-bottom, 0px));
-  }
-
   body.is-result-focus .app-shell {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
   }
@@ -1355,13 +1343,8 @@ button {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    padding-bottom: calc(18px + var(--focus-room, 0px));
     border-color: transparent;
-    clip-path: inset(0 0 var(--focus-clip) 0 round 24px);
-    transition: clip-path var(--t-base) var(--ease-out);
-  }
-
-  body.is-result-focus.is-dock-hidden .scene-card-result {
-    clip-path: inset(0 0 0 0 round 24px);
   }
 
   body.is-result-focus .scene-card-result::-webkit-scrollbar {
@@ -1379,8 +1362,14 @@ button {
     padding-right: 0;
   }
 
-  body.is-result-focus.is-dock-hidden .progress-dock {
-    translate: 0 calc(100% + 24px);
+  /* Solo al soltar a mitad de camino: mientras el dedo scrollea, el dock
+     y el recorte siguen al scroll sin transicion. */
+  .scene-card-result.is-settling {
+    transition: clip-path var(--t-base) var(--ease-out);
+  }
+
+  .progress-dock.is-settling {
+    transition: translate var(--t-base) var(--ease-out);
   }
 }
 

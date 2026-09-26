@@ -141,24 +141,37 @@ la bajada es instantánea y la subida tiene rebote.
 
 `focus.js`. En el teléfono, la card del resultado scrollea entera (precio,
 acciones, conversión, desglose, presupuesto de tiempo y masterclass), en vez de
-un scroll chico adentro.
+un scroll chico adentro. Arranca como cualquier paso: debajo del header y
+arriba del dock, con el mismo aire. El header no se mueve.
 
-- Arranca como cualquier paso: debajo del header y arriba del dock, con el
-  mismo aire.
-- Al bajar más de 6 px se esconde el dock y la card se abre hacia abajo hasta
-  14 px del fondo. Arriba no cambia nada: el header queda y el espacio hasta la
-  card se mantiene.
-- La card no cambia de alto: mide siempre el alto completo y con el dock
-  visible se recorta con `clip-path` donde empieza el dock. Si el scroller
-  cambiara de alto, al fondo de la página el contenido pegaría un salto (el
-  navegador corrige el scroll) y en iOS se cortaría la inercia.
-- En los últimos 96 px del scroll el dock queda siempre escondido y la card
-  abierta entera. Si volviera, su recorte taparía lo último (la masterclass)
-  justo donde la persona terminó de leer.
-- El rebote elástico de iOS en los bordes se ignora: no hace aparecer el dock.
-- Al subir, o cerca del tope, el dock vuelve y la card se acorta.
-- El dock se mueve con la propiedad `translate`, no con `transform`: ya tiene
-  el `transform` tomado por su animación de entrada.
+El dock sigue al scroll 1:1, como las barras de Chrome en Android o el "hide on
+scroll" de Material. No hay umbrales ni timers decidiendo cuándo aparece: su
+posición es una función del scroll.
+
+```
+hidden = clamp(hidden + delta, 0, D)   // D = lugar que ocupa el dock
+hidden = min(hidden, y, max - y)       // topes arriba y abajo
+```
+
+- Cada píxel que se baja, el dock baja un píxel y la card se abre un píxel
+  hacia abajo. Al subir, al revés.
+- **El tope de abajo es el que hace que todo cierre.** El contenido reserva
+  abajo D px, el lugar del dock. A medida que se llega al final, el dock
+  vuelve a entrar exactamente en lo que ese espacio reservado quedaría a la
+  vista. Nunca se ve aire vacío y nunca se tapa lo último: al final del todo,
+  la masterclass queda justo arriba del dock. Es lo que hace Safari, que
+  muestra sus barras al terminar la página, y tiene sentido narrativo: al
+  terminar de leer vuelve lo que sigue, la navegación.
+- El tope de arriba hace lo mismo: en el tope, el dock está.
+- Si se suelta a mitad de camino, el dock termina de entrar o de salir hacia
+  el lado más cercano, con una transición de 280 ms. Mientras el dedo
+  scrollea no hay transición: sigue al scroll.
+- La card nunca cambia de alto: mide siempre el alto completo y se recorta
+  con `clip-path`. El dock se mueve con `translate`, que compone con su
+  animación de entrada. Nada toca el layout mientras se scrollea, así no hay
+  saltos y iOS no corta la inercia.
+- El rebote elástico de iOS en los bordes se descarta (el scroll se acota a
+  `0..max` antes de calcular).
 - En desktop no cambia nada.
 
 ### Carrusel de monedas
