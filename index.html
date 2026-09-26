@@ -47,7 +47,7 @@
        archivos viejos y el cambio no llega al usuario. Para bumpear todo junto
        corre el comando que esta en el README, no lo escribo aca porque el
        propio sed se lo comeria. -->
-  <link rel="stylesheet" href="./styles.css?v=27">
+  <link rel="stylesheet" href="./styles.css?v=28">
 
   <script type="application/ld+json">
 {
@@ -347,7 +347,7 @@
             >
               <img
                 class="masterclass-art"
-                src="./assets/img/masterclass.png?v=27"
+                src="./assets/img/masterclass.png?v=28"
                 alt=""
                 width="256"
                 height="256"
@@ -384,7 +384,16 @@
     <p class="currency-footer is-hidden" id="currency-footer" aria-hidden="true">Dólar blue: cargando...</p>
   </div>
 
+  <div class="sheet-scrim" id="sheet-scrim" hidden></div>
+  <section class="result-sheet" id="result-sheet" aria-label="Desglose del presupuesto" hidden>
+    <div class="sheet-grab" id="sheet-grab" role="button" tabindex="0" aria-expanded="false" aria-controls="sheet-body" aria-label="Ver el desglose">
+      <span class="sheet-handle" aria-hidden="true"></span>
+      <span class="sheet-hint" id="sheet-hint">Deslizá para ver el desglose</span>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </section>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js?v=27"></script>
+  <script type="module" src="./app.js?v=28"></script>
 </body>
 </html>
