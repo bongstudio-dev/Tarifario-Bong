@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=22";
+} from "./currency.js?v=23";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=22";
-import { initAnalytics, track } from "./analytics.js?v=22";
+} from "./pdf-fonts.js?v=23";
+import { initAnalytics, track } from "./analytics.js?v=23";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -216,10 +216,8 @@ function cacheDom() {
   els.levelPills = document.querySelector("#level-pills");
   els.levelMeta = document.querySelector("#level-meta");
   els.serviceSummary = document.querySelector("#service-summary");
-  els.outputMeta = document.querySelector("#output-meta");
   els.extrasGroup = document.querySelector("#extras-group");
   els.extrasMeta = document.querySelector("#extras-meta");
-  els.includedDeliverables = document.querySelector("#included-deliverables");
   els.deliverablesGrid = document.querySelector("#deliverables-grid");
   els.deliverablesCopy = document.querySelector("#deliverables-copy");
   els.complexityLabel = document.querySelector("#complexity-label");
@@ -972,36 +970,36 @@ function renderDeliverables() {
     return;
   }
 
+  // El formato de salida ya no tiene selector propio: si el servicio admite
+  // otro ademas del default (Motion, Interactivo / 3D), aparece como un extra
+  // mas que se prende y se apaga. Los que ya ofrecen "Salida motion" como
+  // extra solo admiten estatico, para no cobrar motion dos veces.
   const allowedOutputIds = service.allowed_output_types || [service.default_output_type];
-  const isOutputLocked = allowedOutputIds.length === 1;
-  const outputs = state.pricingData.output_types.filter((outputType) => allowedOutputIds.includes(outputType.id));
-  renderSeg(
-    els.includedDeliverables,
-    outputs,
-    state.selectedOutputType,
-    isOutputLocked
-      ? null
-      : (id) => {
-          state.selectedOutputType = id;
-          syncUI();
-        }
-  );
-  els.outputMeta.textContent = isOutputLocked ? "Fijo" : formatCoef(getOutputTypeById(state.selectedOutputType).coef);
-
+  const outputChips = state.pricingData.output_types
+    .filter((outputType) => allowedOutputIds.includes(outputType.id) && outputType.id !== service.default_output_type)
+    .map((outputType) => ({ id: `output:${outputType.id}`, label: outputType.label }));
   const optionalAddons = getOptionalAddons();
-  els.extrasGroup.hidden = optionalAddons.length === 0;
-  renderToggleChips(els.deliverablesGrid, optionalAddons, state.selectedAddons, (id) => {
-    if (state.selectedAddons.has(id)) {
+  const extras = [...outputChips, ...optionalAddons];
+  const selectedExtras = new Set(state.selectedAddons);
+  if (state.selectedOutputType !== service.default_output_type) {
+    selectedExtras.add(`output:${state.selectedOutputType}`);
+  }
+
+  els.extrasGroup.hidden = extras.length === 0;
+  renderToggleChips(els.deliverablesGrid, extras, selectedExtras, (id) => {
+    if (id.startsWith("output:")) {
+      const outputId = id.slice("output:".length);
+      state.selectedOutputType = state.selectedOutputType === outputId ? service.default_output_type : outputId;
+    } else if (state.selectedAddons.has(id)) {
       state.selectedAddons.delete(id);
     } else {
       state.selectedAddons.add(id);
     }
     syncUI();
   });
-  const selectedExtras = optionalAddons.filter((addon) => state.selectedAddons.has(addon.id)).length;
-  els.extrasMeta.textContent = `${selectedExtras} de ${optionalAddons.length}`;
+  els.extrasMeta.textContent = `${extras.filter((extra) => selectedExtras.has(extra.id)).length} de ${extras.length}`;
 
-  els.deliverablesCopy.textContent = "Elegí el formato y sumá solo los extras que cambian horas.";
+  els.deliverablesCopy.textContent = "Sumá solo los extras que cambian horas.";
 
   // El tipo de cliente define scope y posicionamiento, no el perfil de quien
   // ejecuta: aplica a los cuatro perfiles, no solo a Estudio.

@@ -982,11 +982,7 @@ button {
 
 /* Paso 4 — output y tipo de cliente lado a lado, extras abajo a lo ancho */
 .dials-deliverables {
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-}
-
-.dial-extras {
-  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .dial[hidden] {
