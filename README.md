@@ -50,6 +50,13 @@ tarifas horarias de estudios en USD.
 El benchmark **no corrige el precio**. Desde que el modelo está anclado a la
 tabla propia, mover el precio ahí lo sacaría del ancla. Ubica, no decide.
 
+## Movimiento y sonido
+
+Las animaciones y los micro sonidos (`motion.js`, `sound.js`) siguen reglas
+propias: orden causal, todo interrumpible, el sonido sale con el evento visual.
+Están documentadas en [`MOVIMIENTO.md`](MOVIMIENTO.md); leerlo antes de sumar
+una animación.
+
 ## Analytics
 
 GA4 en `analytics.js`. Si el Measurement ID queda vacío no se carga ningún
