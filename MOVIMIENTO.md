@@ -137,25 +137,20 @@ la bajada es instantánea y la subida tiene rebote.
   en el orden en que se leen. Solo al llegar: si se redibujan por un cambio
   de moneda, cambian en el lugar.
 
-### Hoja del resultado (solo teléfono)
+### Resultado en modo foco (solo teléfono)
 
-`sheet.js`. En el teléfono, el precio, las acciones y la conversión quedan
-fijos en la card, y el desglose vive en una hoja que asoma abajo con el Total.
+`focus.js`. En el teléfono, la pantalla del resultado es una sola página que
+scrollea entera (precio, acciones, conversión, desglose, presupuesto de tiempo
+y masterclass), en vez de un scroll chico adentro de la card.
 
-- Dos posiciones: asomada y abierta (a 16 px del borde de arriba). Al soltar
-  busca la más cercana, salvo que el gesto sea rápido (más de 0,45 px/ms): ahí
-  manda la dirección del gesto.
-- Si se la agarra en medio de una animación, arranca desde donde está (lee el
-  `transform` actual). Pasado cada tope se puede estirar un poco, pero cuesta
-  el triple.
-- Cerrada, toda la hoja se puede arrastrar y un toque la abre. Abierta, se
-  arrastra desde la manija y el contenido scrollea.
-- Al abrir suena el aire de avanzar y las filas del recibo entran
-  escalonadas; al cerrar suena el de volver. Un velo oscurece el resto y
-  cierra con un toque, igual que Escape.
-- Mientras está, el dock de progreso se va: para volver está Editar. En
-  desktop no hay hoja y el desglose vuelve a la card (`sheet.js` mueve los
-  nodos según el ancho).
+- La card ocupa toda la pantalla y el header y el dock flotan encima.
+- Al bajar más de 6 px, el header sube y el dock baja, y el desglose se lee a
+  todo el alto. Al subir, vuelven. Cerca del tope siempre están.
+- Mientras están escondidos aparece una pastilla "Editar" arriba a la
+  izquierda, que vuelve al paso 1.
+- Se mueven con la propiedad `translate`, no con `transform`: el header y el
+  dock ya tienen el `transform` tomado por su animación de entrada.
+- En desktop no cambia nada.
 
 ### Carrusel de monedas
 

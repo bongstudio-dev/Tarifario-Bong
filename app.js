@@ -7,17 +7,17 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=28";
+} from "./currency.js?v=29";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=28";
-import { initAnalytics, track } from "./analytics.js?v=28";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=28";
-import { Sound, initSound } from "./sound.js?v=28";
-import { createResultSheet } from "./sheet.js?v=28";
+} from "./pdf-fonts.js?v=29";
+import { initAnalytics, track } from "./analytics.js?v=29";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=29";
+import { Sound, initSound } from "./sound.js?v=29";
+import { createResultFocus } from "./focus.js?v=29";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1435,7 +1435,7 @@ function renderFlow() {
     node.classList.toggle("is-complete", index < state.currentStep);
   });
   syncCompassMode();
-  state.resultSheet?.sync(state.currentStep === STEP_META.length - 1);
+  state.resultFocus?.sync(state.currentStep === STEP_META.length - 1);
   trackStepChange();
 }
 
@@ -1910,15 +1910,12 @@ async function init() {
   cacheDom();
   initSound();
   syncSoundToggle();
-  // En el telefono el desglose del resultado vive en una hoja que asoma abajo.
-  state.resultSheet = createResultSheet({
-    sheet: document.querySelector("#result-sheet"),
-    grab: document.querySelector("#sheet-grab"),
-    body: document.querySelector("#sheet-body"),
-    scrim: document.querySelector("#sheet-scrim"),
-    hint: document.querySelector("#sheet-hint"),
-    movable: [els.breakdown, els.resultPill, els.benchmarkSection, els.masterclassBadge],
-    onOpen: staggerReceipt
+  // En el telefono el resultado es una sola pagina: al bajar se esconden el
+  // header y el dock para dejarle todo el alto al desglose.
+  state.resultFocus = createResultFocus({
+    scroller: document.querySelector(".scene-card-result"),
+    pill: document.querySelector("#focus-edit"),
+    onEdit: () => goToStep(0)
   });
 
   try {

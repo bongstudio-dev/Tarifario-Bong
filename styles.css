@@ -23,8 +23,6 @@
      El texto sobre el verde lleno va oscuro: blanco sobre #20c683 da 2,2:1. */
   --raise-1: rgba(32, 198, 131, 0.08);
   --raise-2: rgba(32, 198, 131, 0.15);
-  --sheet-surface: #153226;
-  --sheet-scrim: rgba(0, 20, 13, 0.55);
   --fill: #20c683;
   --fill-hover: #45d69b;
   --on-fill: #003a27;
@@ -123,8 +121,6 @@
   --warn-border: rgba(150, 97, 13, 0.28);
   --raise-1: rgba(13, 155, 92, 0.07);
   --raise-2: rgba(13, 155, 92, 0.13);
-  --sheet-surface: #fbfaf6;
-  --sheet-scrim: rgba(22, 40, 33, 0.28);
   --fill: #0b8750;
   --fill-hover: #087044;
   --on-fill: #ffffff;
@@ -1330,125 +1326,95 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Hoja del resultado (sheet.js), solo en el telefono. Asoma abajo con el
-   Total; arrastrada hacia arriba ocupa casi todo el alto. El dock de
-   progreso se va mientras tanto: para volver esta Editar.
+   Resultado en modo foco (focus.js), solo en el telefono. La card del
+   resultado ocupa toda la pantalla y scrollea entera; el header y el dock
+   flotan encima y se van al bajar. `translate` compone con las animaciones de
+   entrada, que tienen el transform tomado.
    -------------------------------------------------------------------------- */
-.result-sheet,
-.sheet-scrim {
+.focus-edit {
   display: none;
 }
 
 @media (max-width: 720px) {
-  .result-sheet {
-    position: fixed;
-    z-index: 40;
-    left: 0;
-    right: 0;
-    top: calc(env(safe-area-inset-top, 0px) + 16px);
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    border-radius: 28px 28px 0 0;
-    background: var(--sheet-surface);
-    box-shadow: 0 -1px 0 var(--border), 0 -18px 40px rgba(0, 20, 13, 0.28);
-    transform: translateY(100%);
-    touch-action: none;
-    will-change: transform;
+  .site-header,
+  .progress-dock {
+    transition: translate var(--t-base) var(--ease-out);
   }
 
-  .result-sheet[hidden],
-  .sheet-scrim[hidden] {
+  body.is-result-focus .app-shell {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+
+  body.is-result-focus .scene-card-result {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-top: calc(var(--mobile-pad-top, 90px) - 10px);
+    padding-bottom: calc(var(--mobile-pad-bottom, 82px) - 10px);
+  }
+
+  body.is-result-focus .scene-card-result::-webkit-scrollbar {
     display: none;
   }
 
-  .result-sheet.is-animating {
-    transition: transform var(--t-slow) var(--ease-out);
+  body.is-result-focus .scene-content-result,
+  body.is-result-focus .result-scroll {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
   }
 
-  .sheet-grab {
-    flex-shrink: 0;
-    padding: 10px 16px 10px;
-    display: grid;
-    justify-items: center;
-    gap: 8px;
-    cursor: grab;
-    touch-action: none;
+  body.is-result-focus .result-scroll {
+    padding-right: 0;
   }
 
-  .sheet-grab:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -4px;
-    border-radius: 24px;
+  body.is-result-focus.is-chrome-hidden .site-header {
+    translate: 0 calc(-100% - 12px);
   }
 
-  .sheet-handle {
-    width: 40px;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--text-muted);
-    opacity: 0.5;
+  body.is-result-focus.is-chrome-hidden .progress-dock {
+    translate: 0 calc(100% + 24px);
   }
 
-  .sheet-hint {
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .sheet-body {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    padding: 0 var(--frame-inset) calc(24px + env(safe-area-inset-bottom, 0px));
-    display: flex;
-    flex-direction: column;
-  }
-
-  .sheet-body > .breakdown {
-    margin-top: 0;
-  }
-
-  .result-sheet.is-open .sheet-body {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .sheet-scrim {
+  .focus-edit {
     position: fixed;
-    inset: 0;
-    z-index: 39;
-    display: block;
-    background: var(--sheet-scrim);
+    z-index: 31;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    left: calc(var(--frame-inset) + 6px);
+    height: 40px;
+    padding: 0 16px 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--dock-surface);
+    color: var(--text);
+    backdrop-filter: blur(14px);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.84rem;
+    font-weight: 500;
     opacity: 0;
+    translate: 0 -8px;
     pointer-events: none;
-    transition: opacity var(--t-slow) var(--ease-out);
+    transition: opacity var(--t-base) var(--ease-out), translate var(--t-base) var(--ease-out);
   }
 
-  /* La card del resultado termina donde empieza la hoja asomada. */
-  body.is-result-sheet .app-shell {
-    padding-bottom: calc(var(--sheet-peek, 130px) + 10px);
+  .focus-edit svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
-  /* Mas especifico que body.app-ready .progress-dock, que si no gana. */
-  body.app-ready.is-result-sheet .progress-dock {
-    animation: progress-out-mobile var(--t-base) var(--ease-out) both;
-    pointer-events: none;
-  }
-}
-
-@keyframes progress-out-mobile {
-  from {
+  body.is-result-focus.is-chrome-hidden .focus-edit {
     opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(24px);
+    translate: 0 0;
+    pointer-events: auto;
   }
 }
 
