@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=25";
+} from "./currency.js?v=26";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=25";
-import { initAnalytics, track } from "./analytics.js?v=25";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=25";
-import { Sound, initSound } from "./sound.js?v=25";
+} from "./pdf-fonts.js?v=26";
+import { initAnalytics, track } from "./analytics.js?v=26";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=26";
+import { Sound, initSound } from "./sound.js?v=26";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1243,6 +1243,7 @@ function renderCurrencyToggle() {
     <div class="currency-carousel" role="tablist" aria-label="Cambiar moneda">
       <div class="currency-stage">
         <div class="currency-highlight" aria-hidden="true"></div>
+        <div class="currency-window">
         <div class="currency-track">
           <button
             class="currency-item currency-item-side"
@@ -1271,6 +1272,7 @@ function renderCurrencyToggle() {
           >
             <span class="currency-item-code">${nextCurrency.label}</span>
           </button>
+        </div>
         </div>
       </div>
       <div class="currency-nav-row" aria-hidden="true">
