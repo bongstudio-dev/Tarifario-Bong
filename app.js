@@ -7,16 +7,17 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=27";
+} from "./currency.js?v=28";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=27";
-import { initAnalytics, track } from "./analytics.js?v=27";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=27";
-import { Sound, initSound } from "./sound.js?v=27";
+} from "./pdf-fonts.js?v=28";
+import { initAnalytics, track } from "./analytics.js?v=28";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=28";
+import { Sound, initSound } from "./sound.js?v=28";
+import { createResultSheet } from "./sheet.js?v=28";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1434,6 +1435,7 @@ function renderFlow() {
     node.classList.toggle("is-complete", index < state.currentStep);
   });
   syncCompassMode();
+  state.resultSheet?.sync(state.currentStep === STEP_META.length - 1);
   trackStepChange();
 }
 
@@ -1908,6 +1910,16 @@ async function init() {
   cacheDom();
   initSound();
   syncSoundToggle();
+  // En el telefono el desglose del resultado vive en una hoja que asoma abajo.
+  state.resultSheet = createResultSheet({
+    sheet: document.querySelector("#result-sheet"),
+    grab: document.querySelector("#sheet-grab"),
+    body: document.querySelector("#sheet-body"),
+    scrim: document.querySelector("#sheet-scrim"),
+    hint: document.querySelector("#sheet-hint"),
+    movable: [els.breakdown, els.resultPill, els.benchmarkSection, els.masterclassBadge],
+    onOpen: staggerReceipt
+  });
 
   try {
     await initCurrency();
