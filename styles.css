@@ -1148,38 +1148,60 @@ button {
   }
 }
 
+/* Presupuesto en vivo: el numero es el protagonista, como el saldo en
+   Brubank. En el telefono se come el espacio libre de abajo y queda centrado
+   ahi; si el paso no deja aire, se pega debajo del ultimo control. */
 .dial-live {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  margin-top: 14px;
-  padding: 0 6px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 4px;
+  text-align: center;
 }
 
 .dial-live-label {
   color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 0.68rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .dial-live-value {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 10px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .dial-live-value strong {
-  font-size: 1.3rem;
-  letter-spacing: -0.04em;
+  color: var(--accent);
+  font-size: clamp(2.5rem, 10.5vw, 3.2rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.08em;
 }
 
 .dial-live-value small {
-  margin-left: 8px;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 720px) {
+  .scene-content-live {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .scene-content-live > .dial-live {
+    margin-block: auto;
+    padding-block: 12px 4px;
+  }
 }
 
 /* Paso 4 — fila de acciones circulares */
