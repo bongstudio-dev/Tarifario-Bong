@@ -15,7 +15,6 @@
   --accent: #20c683;
   --accent-strong: #169d69;
   --accent-subtle: rgba(32, 198, 131, 0.14);
-  --accent-contrast: #ffffff;
   --warn: #e8a838;
   --warn-subtle: rgba(232, 168, 56, 0.12);
   --warn-border: rgba(232, 168, 56, 0.34);
@@ -108,7 +107,6 @@
   --accent: #0d9b5c;
   --accent-strong: #0b8750;
   --accent-subtle: rgba(13, 155, 92, 0.12);
-  --accent-contrast: #ffffff;
   --warn: #96610d;
   --warn-subtle: rgba(150, 97, 13, 0.1);
   --warn-border: rgba(150, 97, 13, 0.28);
@@ -698,7 +696,7 @@ button {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--fill);
 }
 
 .currency-track {
@@ -729,7 +727,7 @@ button {
 }
 
 .currency-item-active {
-  color: var(--accent-contrast);
+  color: var(--on-fill);
 }
 
 .currency-item-code {
@@ -987,7 +985,7 @@ button {
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
 }
 
-.dial-wide {
+.dial-extras {
   grid-column: 1 / -1;
 }
 
@@ -1006,12 +1004,12 @@ button {
 .toggle-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .toggle-chip {
-  height: 40px;
-  padding: 0 14px 0 5px;
+  height: 36px;
+  padding: 0 13px 0 4px;
   border: 0;
   border-radius: 999px;
   background: var(--raise-1);
@@ -1040,8 +1038,8 @@ button {
 }
 
 .toggle-chip-mark {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   background: var(--raise-2);
   color: var(--on-tint);
@@ -1694,21 +1692,21 @@ button {
 }
 
 .guide-cta {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
+  border-color: var(--fill);
+  background: var(--fill);
+  color: var(--on-fill);
   font-size: 0.68rem;
   padding: 15px 26px;
 }
 
 .guide-cta svg {
-  color: var(--accent-contrast);
+  color: var(--on-fill);
 }
 
 .guide-cta:hover {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  color: var(--accent-contrast);
+  background: var(--fill-hover);
+  border-color: var(--fill-hover);
+  color: var(--on-fill);
 }
 
 .guide {
@@ -1962,8 +1960,8 @@ button {
 .masterclass-tag {
   padding: 2px 6px;
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--fill);
+  color: var(--on-fill);
   font-family: var(--font-mono);
   font-size: 0.46rem;
   font-weight: 700;
@@ -2163,8 +2161,8 @@ button {
   height: 56px;
   border: 1px solid var(--border);
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--fill);
+  color: var(--on-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2186,9 +2184,9 @@ button {
 }
 
 .floating-compass.is-back:hover {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: var(--accent);
+  background: var(--fill);
+  color: var(--on-fill);
+  border-color: var(--fill);
 }
 
 .floating-compass.is-back:hover .floating-compass-arrow {

@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=18";
+} from "./currency.js?v=19";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=18";
-import { initAnalytics, track } from "./analytics.js?v=18";
+} from "./pdf-fonts.js?v=19";
+import { initAnalytics, track } from "./analytics.js?v=19";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1003,7 +1003,7 @@ function renderDeliverables() {
   const selectedExtras = optionalAddons.filter((addon) => state.selectedAddons.has(addon.id)).length;
   els.extrasMeta.textContent = `${selectedExtras} de ${optionalAddons.length}`;
 
-  els.deliverablesCopy.textContent = `${service.name}: elegí el formato de salida y sumá solo los extras que cambian horas reales.`;
+  els.deliverablesCopy.textContent = "Elegí el formato y sumá solo los extras que cambian horas.";
 
   // El tipo de cliente define scope y posicionamiento, no el perfil de quien
   // ejecuta: aplica a los cuatro perfiles, no solo a Estudio.
