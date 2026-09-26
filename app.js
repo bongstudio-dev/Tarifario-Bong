@@ -7,14 +7,15 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=23";
+} from "./currency.js?v=24";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=23";
-import { initAnalytics, track } from "./analytics.js?v=23";
+} from "./pdf-fonts.js?v=24";
+import { initAnalytics, track } from "./analytics.js?v=24";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=24";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -51,6 +52,9 @@ const state = {
   serviceOrder: [],
   displayCurrency: "ars",
   currencyMotionDirection: 1,
+  // Moneda del ultimo precio dibujado: si cambia, el numero rueda en la
+  // direccion del carrusel y no segun si subio o bajo.
+  renderedCurrency: null,
   currentStep: 0,
   hasTouchedService: false,
   trackedStep: null,
@@ -870,6 +874,8 @@ function renderSeg(container, options, selectedId, onPick) {
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
   });
+  watchSegThumb(container);
+  placeSegThumb(container);
 }
 
 // Extras: eleccion multiple, cada uno prende y apaga solo.
@@ -930,7 +936,7 @@ function renderProfileStep() {
     state.displayCurrency = getDefaultCurrencyForMarket(id);
     syncUI();
   });
-  els.marketMeta.textContent = `${formatCoef(market.coef)} · ${getCurrencyConfig(getDefaultCurrencyForMarket(market.id)).label}`;
+  fadeSwap(els.marketMeta, `${formatCoef(market.coef)} · ${getCurrencyConfig(getDefaultCurrencyForMarket(market.id)).label}`);
 
   const levels = state.pricingData.expertise
     .slice()
@@ -940,7 +946,7 @@ function renderProfileStep() {
     state.selectedExpertise = id;
     syncUI();
   });
-  els.levelMeta.textContent = formatCoef(getExpertiseById(state.selectedExpertise).coef);
+  fadeSwap(els.levelMeta, formatCoef(getExpertiseById(state.selectedExpertise).coef));
 }
 
 function renderServiceSummary() {
@@ -997,7 +1003,7 @@ function renderDeliverables() {
     }
     syncUI();
   });
-  els.extrasMeta.textContent = `${extras.filter((extra) => selectedExtras.has(extra.id)).length} de ${extras.length}`;
+  fadeSwap(els.extrasMeta, `${extras.filter((extra) => selectedExtras.has(extra.id)).length} de ${extras.length}`);
 
   els.deliverablesCopy.textContent = "Sumá solo los extras que cambian horas.";
 
@@ -1008,37 +1014,10 @@ function renderDeliverables() {
     state.selectedBrandTier = id;
     syncUI();
   });
-  els.brandTierMeta.textContent = `${formatCoef(tier.hours_coef)} horas`;
-  els.brandTierCaption.textContent = tier.caption || "";
+  fadeSwap(els.brandTierMeta, `${formatCoef(tier.hours_coef)} horas`);
+  fadeSwap(els.brandTierCaption, tier.caption || "", MOTION.fast + MOTION.stagger);
 }
 
-function animateValue(element, nextValue) {
-  const currentValue = Number(element.dataset.rawValue || 0);
-  const target = Math.round(nextValue);
-  const start = performance.now();
-  const duration = 280;
-
-  if (currentValue === target) {
-    element.textContent = formatMoney(target, state.displayCurrency);
-    element.dataset.rawValue = String(target);
-    return;
-  }
-
-  function frame(now) {
-    const progress = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const value = currentValue + (target - currentValue) * eased;
-    element.textContent = formatMoney(value, state.displayCurrency);
-
-    if (progress < 1) {
-      requestAnimationFrame(frame);
-    } else {
-      element.dataset.rawValue = String(target);
-    }
-  }
-
-  requestAnimationFrame(frame);
-}
 
 // Monto sin simbolo: en la conversion y en las filas el codigo de moneda ya
 // va al lado, y "$" solo no distingue USD de ARS.
@@ -1315,7 +1294,7 @@ function renderResult() {
   if (!hasSelectedService()) {
     els.resultServiceTitle.textContent = "Selecciona un servicio";
     els.resultPriceValue.textContent = "ARS 0";
-    els.resultPriceValue.dataset.rawValue = "0";
+    els.resultPriceValue.dataset.rollValue = "ARS 0";
     els.resultRange.textContent = "Elegí un servicio para calcular el presupuesto.";
     els.breakdown.innerHTML = "";
     els.conversion.innerHTML = "";
@@ -1329,7 +1308,12 @@ function renderResult() {
 
   const quote = calculateQuote();
   els.resultServiceTitle.textContent = getCurrentService().name;
-  animateValue(els.resultPriceValue, convertUsd(quote.suggestedUsd, state.displayCurrency));
+  const currencyChanged = state.renderedCurrency !== null && state.renderedCurrency !== state.displayCurrency;
+  state.renderedCurrency = state.displayCurrency;
+  rollText(els.resultPriceValue, formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency), {
+    direction: currencyChanged ? state.currencyMotionDirection : 0,
+    delay: MOTION.instant
+  });
   els.resultRange.textContent = `Objetivo de tiempo: ${formatHours(quote.totalHours)} · ${getRevisionById(state.selectedRevision).label}`;
   renderConversion(quote);
   renderBreakdown(quote);
@@ -1381,6 +1365,8 @@ function renderDial(kind) {
   const config = getDialConfig(kind);
   const index = config.list.findIndex((item) => item.id === config.selected);
   const item = config.list[index];
+  const prevIndex = Number(config.seg.dataset.index ?? index);
+  config.seg.dataset.index = String(index);
 
   if (config.seg.childElementCount !== config.list.length) {
     config.seg.innerHTML = config.list
@@ -1392,8 +1378,12 @@ function renderDial(kind) {
     button.classList.toggle("is-active", i === index);
     button.setAttribute("aria-pressed", String(i === index));
   });
-  config.label.textContent = item.label;
-  config.meta.textContent = config.metaLabel(item);
+  watchSegThumb(config.seg);
+  placeSegThumb(config.seg);
+  // El valor rueda hacia arriba al subir y hacia abajo al bajar, y el
+  // multiplicador llega despues, como explicacion del cambio.
+  rollText(config.label, item.label, { direction: Math.sign(index - prevIndex), whole: true });
+  fadeSwap(config.meta, config.metaLabel(item));
   document.querySelectorAll(`.dial-btn[data-slider="${kind}"]`).forEach((button) => {
     const dir = Number(button.dataset.dir);
     button.disabled = dir < 0 ? index === 0 : index === config.list.length - 1;
@@ -1410,8 +1400,9 @@ function renderLiveBudget() {
   const quote = calculateQuote();
   const price = formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency);
   const hours = formatHours(quote.totalHours);
-  els.livePrices.forEach((node) => { node.textContent = price; });
-  els.liveHours.forEach((node) => { node.textContent = hours; });
+  // El precio arranca cuando la pastilla va por la mitad, no cuando llega.
+  els.livePrices.forEach((node) => rollText(node, price, { delay: MOTION.instant }));
+  els.liveHours.forEach((node) => fadeSwap(node, hours, MOTION.base));
 }
 
 function renderFlow() {
@@ -1458,7 +1449,6 @@ function syncUI() {
   renderDial("complexity");
   renderDial("revisions");
   renderLiveBudget();
-  els.resultPriceValue.dataset.rawValue = "";
 
   document.querySelectorAll(".type-card").forEach((card) => {
     card.classList.toggle("active", card.dataset.type === state.selectedService);
@@ -1469,13 +1459,30 @@ function syncUI() {
   renderFlow();
 }
 
+// Las filas del recibo entran de arriba hacia abajo, en el orden en que se
+// leen. Solo al llegar al resultado: si se re-dibujan por un cambio de moneda,
+// cambian en el lugar.
+function staggerReceipt() {
+  els.breakdown.classList.remove("is-entering");
+  void els.breakdown.offsetWidth;
+  els.breakdown.classList.add("is-entering");
+  window.setTimeout(() => els.breakdown.classList.remove("is-entering"), 900);
+}
+
 function goToStep(stepIndex) {
   if (stepIndex > 0 && !hasSelectedService()) {
     return;
   }
 
-  state.currentStep = Math.max(0, Math.min(stepIndex, STEP_META.length - 1));
+  const nextStep = Math.max(0, Math.min(stepIndex, STEP_META.length - 1));
+  // Avanzar entra desde la derecha, volver desde la izquierda: el mismo
+  // camino en las dos direcciones.
+  document.body.dataset.stepDirection = nextStep >= state.currentStep ? "forward" : "back";
+  state.currentStep = nextStep;
   renderFlow();
+  if (nextStep === STEP_META.length - 1) {
+    staggerReceipt();
+  }
 }
 
 function getQuoteText() {
