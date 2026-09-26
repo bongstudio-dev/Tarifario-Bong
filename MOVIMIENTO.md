@@ -152,6 +152,9 @@ un scroll chico adentro.
   visible se recorta con `clip-path` donde empieza el dock. Si el scroller
   cambiara de alto, al fondo de la página el contenido pegaría un salto (el
   navegador corrige el scroll) y en iOS se cortaría la inercia.
+- En los últimos 96 px del scroll el dock queda siempre escondido y la card
+  abierta entera. Si volviera, su recorte taparía lo último (la masterclass)
+  justo donde la persona terminó de leer.
 - El rebote elástico de iOS en los bordes se ignora: no hace aparecer el dock.
 - Al subir, o cerca del tope, el dock vuelve y la card se acorta.
 - El dock se mueve con la propiedad `translate`, no con `transform`: ya tiene

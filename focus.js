@@ -7,6 +7,10 @@
 const mobileQuery = window.matchMedia("(max-width: 720px)");
 const THRESHOLD = 6; // px de scroll antes de decidir la direccion
 const TOP_ZONE = 24; // cerca del tope el dock siempre esta
+// Cerca del final el dock siempre se va y la card queda abierta entera: si
+// volviera, su recorte taparia lo ultimo (la masterclass) justo donde la
+// persona termino de leer. Un poco mas que lo que ocupa el dock.
+const BOTTOM_ZONE = 96;
 
 export function createResultFocus({ scroller }) {
   let active = false;
@@ -27,9 +31,11 @@ export function createResultFocus({ scroller }) {
     }
     if (y <= TOP_ZONE) {
       setDockHidden(false);
+    } else if (y >= max - BOTTOM_ZONE) {
+      setDockHidden(true);
     } else if (y > lastY + THRESHOLD) {
       setDockHidden(true);
-    } else if (y < lastY - THRESHOLD && y < max - 1) {
+    } else if (y < lastY - THRESHOLD) {
       setDockHidden(false);
     } else {
       return;

@@ -1334,8 +1334,8 @@ button {
    cambia es un recorte: con el dock visible, `clip-path` la corta donde
    empieza el dock. Asi el scroller nunca cambia de alto: si cambiara, al
    fondo de la pagina el contenido pegaba un salto y en iOS se cortaba la
-   inercia del scroll. Un espaciador abajo deja que lo ultimo suba por
-   encima del recorte.
+   inercia del scroll. Cerca del final focus.js deja el dock escondido, asi
+   lo ultimo nunca queda debajo del recorte.
    -------------------------------------------------------------------------- */
 @media (max-width: 720px) {
   .progress-dock {
@@ -1355,7 +1355,6 @@ button {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding-bottom: calc(18px + var(--focus-clip));
     border-color: transparent;
     clip-path: inset(0 0 var(--focus-clip) 0 round 24px);
     transition: clip-path var(--t-base) var(--ease-out);
