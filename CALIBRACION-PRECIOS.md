@@ -18,13 +18,20 @@ Convención de todas las tablas:
 2. **Horas por fase** (`H_a` estrategia, `H_b` diseño, `H_c` producción) de cada
    servicio: definen cuánto vale cada uno respecto del ancla.
 3. **Tipo de cliente**, partido en dos:
-   - `hours_coef` (scope: más páginas de manual, más aplicaciones) — se aplica
-     **solo** a las categorías de `config.tier_hours_categories`: Branding e Identidad.
+   - `hours_coef` (scope: más páginas de manual, más aplicaciones). Cada servicio
+     toma una parte según su `tier_hours_weight`:
+     horas × (1 + peso × (hours_coef − 1)).
    - `rate_coef` (posicionamiento: lo que vale la hora) — se aplica a todo.
 
-   Un post para una empresa es el mismo post que para un emprendimiento, así que
-   las piezas suben solo por tarifa: Startup ×1,38 y Empresa ×1,59. En Branding e
-   Identidad suben ×2,03 y ×3,26 porque el alcance crece de verdad.
+   | Peso | Servicios | Startup | Empresa |
+   | ---: | --- | ---: | ---: |
+   | 1 | Branding completo, Manual de marca | ×2,03 | ×3,26 |
+   | 0,1 | Logotipo, Identidad visual | ×1,44 | ×1,76 |
+   | 0 | Piezas (y Logo animado) | ×1,38 | ×1,59 |
+
+   El manual pasa de 40 a 100 páginas, así que escala como el branding. Un logo
+   para una empresa es casi el mismo logo: sube por tarifa y por un poco más de
+   presentación y aplicaciones. Un post es el mismo post.
 
 4. **Mercado**: USA ×2,0 y Europa ×1,7 sobre LATAM. No es la tarifa de un
    diseñador que vive allá: es el mismo perfil latino cobrándole a un cliente de
@@ -67,9 +74,9 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
 | Branding completo | 1505 · 79.6 h | 2541 · 79.6 h | 3717 · 79.6 h | 6093 · 79.6 h |
-| Identidad visual | 995 · 54.6 h | 1680 · 54.6 h | 2457 · 54.6 h | 4028 · 54.6 h |
+| Identidad visual | 709 · 38.9 h | 1196 · 38.9 h | 1750 · 38.9 h | 2869 · 38.9 h |
 | Manual de marca | 631 · 34.6 h | 1065 · 34.6 h | 1559 · 34.6 h | 2555 · 34.6 h |
-| Logotipo | 401 · 22.0 h | 676 · 22.0 h | 989 · 22.0 h | 1622 · 22.0 h |
+| Logotipo | 285 · 15.6 h | 482 · 15.6 h | 705 · 15.6 h | 1155 · 15.6 h |
 | Logo animado | 143 · 8.8 h | 241 · 8.8 h | 352 · 8.8 h | 578 · 8.8 h |
 | Presentación corporativa | 264 · 16.3 h | 446 · 16.3 h | 652 · 16.3 h | 1068 · 16.3 h |
 | Plantillas Canva x5 | 143 · 8.8 h | 241 · 8.8 h | 352 · 8.8 h | 578 · 8.8 h |
@@ -83,9 +90,9 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
 | Branding completo | 2421 · 111.0 h | 4088 · 111.0 h | 5980 · 111.0 h | 9803 · 111.0 h |
-| Identidad visual | 1601 · 76.1 h | 2702 · 76.1 h | 3953 · 76.1 h | 6480 · 76.1 h |
+| Identidad visual | 863 · 41.0 h | 1457 · 41.0 h | 2131 · 41.0 h | 3493 · 41.0 h |
 | Manual de marca | 1015 · 48.3 h | 1714 · 48.3 h | 2507 · 48.3 h | 4110 · 48.3 h |
-| Logotipo | 644 · 30.6 h | 1088 · 30.6 h | 1592 · 30.6 h | 2609 · 30.6 h |
+| Logotipo | 347 · 16.5 h | 586 · 16.5 h | 858 · 16.5 h | 1406 · 16.5 h |
 | Logo animado | 165 · 8.8 h | 278 · 8.8 h | 406 · 8.8 h | 666 · 8.8 h |
 | Presentación corporativa | 304 · 16.3 h | 514 · 16.3 h | 752 · 16.3 h | 1233 · 16.3 h |
 | Plantillas Canva x5 | 165 · 8.8 h | 278 · 8.8 h | 406 · 8.8 h | 666 · 8.8 h |
@@ -94,7 +101,20 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Banner digital | 48 · 2.6 h | 81 · 2.6 h | 119 · 2.6 h | 195 · 2.6 h |
 | Pieza RRSS | 33 · 1.8 h | 56 · 1.8 h | 81 · 1.8 h | 133 · 1.8 h |
 
-## Último ajuste (2026-09-27, contra el criterio de la IA)
+## Último ajuste (2026-09-27): tipo de cliente en Identidad
+
+- `config.tier_hours_categories` se reemplaza por `tier_hours_weight` por
+  servicio. Manual de marca sigue escalando entero; Logotipo e Identidad visual
+  toman el 10% del scope. Es el peso que minimiza la peor brecha contra la IA
+  (10% como máximo): Logotipo Mid para Empresa pasa de USD 1088 a 586 (IA 630) e
+  Identidad visual de 2702 a 1457 (IA 1250).
+- `node scripts/check-ia.mjs`: 102 de 117 casos dentro del rango de la IA. Lo
+  que queda afuera son piezas chicas (banner, post animado, post) arriba del
+  típico, sobre todo con Empresa o USA.
+- La guía `cuanto-cobrar-por-diseno` estaba desactualizada desde el ajuste de
+  manual y piezas; se regeneraron sus rangos.
+
+## Ajuste anterior (2026-09-27, contra el criterio de la IA)
 
 - **Mercado**: USA de ×1,35 a ×2,0 y Europa de ×1,25 a ×1,7. Es la mediana por
   servicio que dio la IA para un perfil latino cobrando afuera (USA ×1,7–2,2,
@@ -103,12 +123,9 @@ Desvío máximo: 9,0% (tolerancia 10%).
   Piezas, así que el tipo de cliente le sube solo la tarifa. Mid/Emprendimiento
   sigue en USD 175 (la IA dice 180).
 
-`node scripts/check-ia.mjs`: 98 de 117 casos dentro del rango de la IA. Lo que
-queda afuera es, sobre todo, el tipo de cliente en Identidad (Logotipo e
-Identidad visual heredan el alcance de un branding) y las piezas chicas, que
-están arriba del típico.
+`node scripts/check-ia.mjs`: 98 de 117 casos dentro del rango de la IA.
 
-## Ajuste anterior (2026-09-27)
+## Ajuste de manual y piezas (2026-09-27)
 
 - **Manual de marca**: fases de 1/5/10 a 2/10/20. Mid/Emprendimiento pasa de
   USD 263 · 11,8 h a USD 525 · 23,5 h, por encima del Logotipo (USD 333).
@@ -126,4 +143,5 @@ Antes de tocar horas:
 2. verificar que `Junior` no quede irrealmente alto
 3. verificar que `Estudio` siga defendiendo posicionamiento
 4. recién después repartir horas por fase, manteniendo la proporción entre fases
-5. correr `node scripts/check-benchmark.mjs` y actualizar estas tablas
+5. correr `node scripts/check-benchmark.mjs` y `node scripts/check-ia.mjs`
+6. actualizar estas tablas y los rangos de `cuanto-cobrar-por-diseno/index.html`

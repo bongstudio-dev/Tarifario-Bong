@@ -18,8 +18,7 @@
     "X_a": 52.1,
     "X_b": 25.5,
     "X_c": 17.4,
-    "Y": 1.2,
-    "tier_hours_categories": ["Branding", "Identidad"]
+    "Y": 1.2
   },
   "brand_tiers": [
     {
@@ -160,6 +159,7 @@
       "category": "Branding",
       "caption": "Proyecto integral con estrategia y sistema.",
       "H_a": 9, "H_b": 39, "H_c": 16,
+      "tier_hours_weight": 1.0,
       "default_output_type": "static",
       "allowed_output_types": ["static", "motion"],
       "included_addons": ["logo", "palette", "typography", "brandboard"],
@@ -171,6 +171,7 @@
       "category": "Identidad",
       "caption": "Sistema visual con estrategia y piezas base.",
       "H_a": 4, "H_b": 29, "H_c": 11,
+      "tier_hours_weight": 0.1,
       "default_output_type": "static",
       "allowed_output_types": ["static", "motion"],
       "included_addons": ["logo", "palette", "typography"],
@@ -259,6 +260,7 @@
       "category": "Identidad",
       "caption": "Solo logo, sin sistema completo.",
       "H_a": 2, "H_b": 12, "H_c": 3,
+      "tier_hours_weight": 0.1,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["logo"],
@@ -270,6 +272,7 @@
       "category": "Identidad",
       "caption": "Sistema normativo y criterios de uso.",
       "H_a": 2, "H_b": 10, "H_c": 20,
+      "tier_hours_weight": 1.0,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["manual_extend"],
