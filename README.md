@@ -50,6 +50,12 @@ tarifas horarias de estudios en USD.
 El benchmark **no corrige el precio**. Desde que el modelo está anclado a la
 tabla propia, mover el precio ahí lo sacaría del ancla. Ubica, no decide.
 
+## Movimiento
+
+Las animaciones (`motion.js`, `focus.js`) siguen reglas propias: orden causal,
+todo interrumpible, nada que haga esperar. Están documentadas en
+[`MOVIMIENTO.md`](MOVIMIENTO.md); leerlo antes de sumar una animación.
+
 ## Analytics
 
 GA4 en `analytics.js`. Si el Measurement ID queda vacío no se carga ningún

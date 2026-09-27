@@ -25,21 +25,21 @@
     {
       "id": "emprendimiento",
       "label": "Emprendimiento",
-      "caption": "Estrategia basica, identidad, manual 40 paginas, 2 aplicaciones.",
+      "caption": "Estrategia básica, identidad, manual 40 páginas, 2 aplicaciones.",
       "hours_coef": 1.0,
       "rate_coef": 1.0
     },
     {
       "id": "startup",
       "label": "Startup",
-      "caption": "Estrategia, identidad completa, manual 70-80 paginas, 2 aplicaciones.",
+      "caption": "Estrategia, identidad completa, manual 70-80 páginas, 2 aplicaciones.",
       "hours_coef": 1.47,
       "rate_coef": 1.38
     },
     {
       "id": "empresa",
       "label": "Empresa",
-      "caption": "Estrategia profunda, sistema de marca, manual 100-130 paginas, aplicaciones.",
+      "caption": "Estrategia profunda, sistema de marca, manual 100-130 páginas, aplicaciones.",
       "hours_coef": 2.05,
       "rate_coef": 1.592
     }
@@ -61,7 +61,7 @@
     { "id": "high","label": "Alta",  "coef": 1.7 }
   ],
   "output_types": [
-    { "id": "static",      "label": "Estatico",       "coef": 1.0 },
+    { "id": "static",      "label": "Estático",       "coef": 1.0 },
     { "id": "motion",      "label": "Motion",         "coef": 1.2 },
     { "id": "interactive", "label": "Interactivo / 3D","coef": 1.4 }
   ],
@@ -84,7 +84,7 @@
     },
     {
       "id": "typography",
-      "label": "Tipografia",
+      "label": "Tipografía",
       "H_a": 0, "H_b": 2, "H_c": 0.5
     },
     {
@@ -99,7 +99,7 @@
     },
     {
       "id": "stationery",
-      "label": "Papeleria",
+      "label": "Papelería",
       "H_a": 0, "H_b": 1.5, "H_c": 3.5
     },
     {
@@ -134,7 +134,7 @@
     },
     {
       "id": "mockup_presentation",
-      "label": "Mini presentacion con mockups",
+      "label": "Mini presentación con mockups",
       "H_a": 0, "H_b": 1, "H_c": 1
     },
     {
@@ -144,7 +144,7 @@
     },
     {
       "id": "canva_editable",
-      "label": "Version editable en Canva",
+      "label": "Versión editable en Canva",
       "H_a": 0, "H_b": 0, "H_c": 2
     },
     {
@@ -180,10 +180,10 @@
       "id": "rrss_post",
       "name": "Pieza RRSS",
       "category": "Piezas",
-      "caption": "Post estatico de respuesta rapida.",
+      "caption": "Post estático de respuesta rápida.",
       "H_a": 0, "H_b": 1.5, "H_c": 0.5,
       "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
+      "allowed_output_types": ["static"],
       "included_addons": [],
       "optional_addons": ["social_pack_5", "motion_system"]
     },
@@ -194,7 +194,7 @@
       "caption": "Pieza puntual para ads o web.",
       "H_a": 0, "H_b": 2, "H_c": 1,
       "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
+      "allowed_output_types": ["static"],
       "included_addons": [],
       "optional_addons": ["formato_adicional", "motion_system"]
     },
@@ -222,7 +222,7 @@
     },
     {
       "id": "papeleria",
-      "name": "Papeleria basica",
+      "name": "Papelería básica",
       "category": "Piezas",
       "caption": "Tarjeta, membretada y sobre.",
       "H_a": 0, "H_b": 3, "H_c": 4,
@@ -233,7 +233,7 @@
     },
     {
       "id": "presentacion",
-      "name": "Presentacion corporativa",
+      "name": "Presentación corporativa",
       "category": "Piezas",
       "caption": "Deck para ventas, marca o inversores.",
       "H_a": 2, "H_b": 10, "H_c": 5,
@@ -260,7 +260,7 @@
       "caption": "Solo logo, sin sistema completo.",
       "H_a": 2, "H_b": 12, "H_c": 3,
       "default_output_type": "static",
-      "allowed_output_types": ["static", "motion"],
+      "allowed_output_types": ["static"],
       "included_addons": ["logo"],
       "optional_addons": ["palette", "typography", "motion_system"]
     },
