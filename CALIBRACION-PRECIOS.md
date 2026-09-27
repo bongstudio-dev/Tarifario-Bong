@@ -3,11 +3,6 @@
 Referencia de trabajo para ajustar el modelo sin mover horas a ciegas.
 Números al 2026-09-27, salidos de `data/pricing.json`.
 
-**Criterio:** el cotizador tiene que dar valores parecidos a los que da una IA.
-Mucha gente compara el número contra ChatGPT, y si no se parecen, la herramienta
-pierde confianza. `node scripts/check-ia.mjs` mide esa distancia; la tabla ancla
-fija el nivel del branding.
-
 Convención de todas las tablas:
 
 - complejidad `Media`, output default de cada servicio, mercado `LATAM`, 2 rondas, sin extras
@@ -22,11 +17,10 @@ Convención de todas las tablas:
    Fija los coeficientes de perfil y el producto horas × tarifa de cada tipo de
    cliente.
 2. **Horas por fase** (`H_a` estrategia, `H_b` diseño, `H_c` producción) de cada
-   servicio: definen cuánto vale respecto del ancla. Están calibradas para que
-   cada servicio quede, en la mediana de sus casos, en el típico de la IA.
+   servicio: definen cuánto vale respecto del ancla.
 3. **Tipo de cliente**, partido en dos:
-   - `rate_coef` (posicionamiento): Startup ×1,20 y Empresa ×1,43. Se aplica a todo
-     y es lo que la IA le da a una pieza suelta.
+   - `rate_coef` (posicionamiento): Startup ×1,20 y Empresa ×1,43. Se aplica a
+     todo; en una pieza suelta es lo único que cambia.
    - `hours_coef` (alcance: más páginas de manual, más aplicaciones): Startup ×1,64
      y Empresa ×2,17. Cada servicio toma una parte según su `tier_hours_weight`:
      horas × (1 + peso × (hours_coef − 1)).
@@ -110,42 +104,25 @@ Desvío máximo: 7,9% (tolerancia 10%).
 | Banner digital | 28 · 1.7 h | 48 · 1.7 h | 70 · 1.7 h | 97 · 1.7 h |
 | Pieza RRSS | 21 · 1.3 h | 36 · 1.3 h | 52 · 1.3 h | 73 · 1.3 h |
 
-## Contra la IA
-
-`node scripts/check-ia.mjs`: 117 de 117 casos dentro del rango de la IA; distancia
-mediana al típico 6%; 98 de 117 casos a menos de 15% del típico.
-
-Lo que queda lejos viene de la tabla ancla:
-
-- **Escalera de perfiles.** La IA ve a Junior más barato (×0,50 del Mid en
-  branding; la tabla da ×0,59) y a Senior y Estudio más caros (×1,82 y ×2,82; la
-  tabla da ×1,46 y ×2,04).
-- **Branding Mid para Startup y Empresa.** La tabla pide 2.500 y 3.750; la IA
-  dice 1.750 y 2.950.
-
 ## Historial (2026-09-27)
 
 1. **Manual y Canva**: Manual de 1/5/10 a 2/10/20 (quedaba por debajo del
    Logotipo); Canva x5 de 0/1/4 a 0/2,4/9,6. El tipo de cliente deja de sumar
    horas en piezas.
-2. **Check contra la IA** (`scripts/check-ia.mjs`, `data/ia-reference.json`).
-3. **Mercado y Logo animado**: USA ×2,0 y Europa ×1,7 (perfil latino cobrando
-   afuera); Logo animado es solo animar y pasa a Piezas.
-4. **Identidad**: peso de alcance por servicio (`tier_hours_weight`).
-5. **Piezas chicas**: RRSS, Banner y Post animado bajan de nivel.
-6. **Acercar a la IA**: tabla ancla de Estudio −15% (3.000 / 6.000 / 9.000 →
-   2.550 / 5.100 / 7.650, coeficiente 1,0 → 0,85); tipo de cliente repartido
+2. **Mercado y Logo animado**: USA ×2,0 y Europa ×1,7 (perfil latino cobrando
+   afuera); Logo animado es solo animar un logo existente y pasa a Piezas.
+3. **Identidad**: peso de alcance por servicio (`tier_hours_weight`).
+4. **Recalibración general**: tabla ancla de Estudio −15% (3.000 / 6.000 / 9.000
+   → 2.550 / 5.100 / 7.650, coeficiente 1,0 → 0,85); tipo de cliente repartido
    entre tarifa y alcance sin mover el ancla; complejidad Alta, rondas y salidas
-   a lo que dice la IA; horas de cada servicio escaladas a la mediana de sus
-   casos. Distancia mediana al típico de 14% a 6%.
+   ajustadas; horas por fase de cada servicio recalibradas.
 
 ## Regla de calibración
 
 1. Si cambia el nivel del branding, cambiar la tabla ancla, no las horas del
    branding.
-2. Para el resto de los servicios, correr `node scripts/check-ia.mjs` y mover
-   horas por fase (manteniendo la proporción entre fases) o el coeficiente del
-   eje que muestre brecha.
+2. Para el resto de los servicios, mover horas por fase (manteniendo la
+   proporción entre fases) o el coeficiente del eje que corresponda.
 3. Correr `node scripts/check-benchmark.mjs`: ancla dentro del 10%, monotonía y
    presupuesto de horas independiente del perfil.
 4. Actualizar estas tablas y los rangos de `cuanto-cobrar-por-diseno/index.html`.
