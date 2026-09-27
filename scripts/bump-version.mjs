@@ -18,6 +18,7 @@ const files = [
   "app.js",
   "motion.js",
   "focus.js",
+  "sonido-test.html",
   "cuanto-cobrar-por-diseno/index.html"
 ].map((name) => path.join(root, name));
 const pattern = /(\?v=)(\d+)/g;
