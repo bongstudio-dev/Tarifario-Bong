@@ -144,6 +144,18 @@ export function placeSegThumb(container, { animate = true } = {}) {
   thumb.dataset.left = String(left);
   const moved = left !== prevLeft;
 
+  // Si no habia nada elegido, la pastilla no viene de ningun lado: aparece en
+  // su lugar con fade en vez de viajar desde el borde.
+  if (animate && thumb.style.opacity !== "1" && !prefersReducedMotion()) {
+    thumb.classList.add("is-snapping");
+    thumb.style.transform = `translateX(${left}px)`;
+    thumb.style.width = `${width}px`;
+    void thumb.offsetWidth;
+    thumb.classList.remove("is-snapping");
+    thumb.style.opacity = "1";
+    return;
+  }
+
   if (!animate || prefersReducedMotion()) {
     thumb.classList.add("is-snapping");
     thumb.style.transform = `translateX(${left}px)`;

@@ -21,7 +21,7 @@
 // iOS no corta la inercia. Al soltar a mitad de camino, el dock termina de
 // entrar o salir con una animacion corta.
 
-import { prefersReducedMotion } from "./motion.js?v=43";
+import { prefersReducedMotion } from "./motion.js?v=44";
 
 const mobileQuery = window.matchMedia("(max-width: 720px)");
 const GAP = 14; // aire entre la card y el dock, igual que en los otros pasos

@@ -1409,6 +1409,30 @@ button {
 }
 
 /* Paso 4 — conversion (USD arriba, moneda elegida abajo) */
+.price-opinion {
+  margin-top: 12px;
+}
+
+/* En pantallas anchas la pregunta va en una sola fila para no empujar el
+   desglose fuera de la vista. */
+@media (min-width: 721px) {
+  .price-opinion {
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 8px 8px 8px 16px;
+  }
+
+  .price-opinion .dial-head {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .price-opinion .dial-meta:empty {
+    display: none;
+  }
+}
+
 .conversion {
   margin-top: 12px;
   padding: 6px;
