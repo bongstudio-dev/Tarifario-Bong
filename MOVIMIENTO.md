@@ -1,8 +1,8 @@
-# Movimiento y sonido
+# Movimiento
 
-Cómo se mueve y cómo suena el cotizador, y por qué. El código vive en
-`motion.js` (animaciones), `sound.js` (sonidos) y los tokens `--t-*`, `--ease-*`
-y `--stagger` de `styles.css`. Salió del análisis de la sección de dólares de
+Cómo se mueve el cotizador, y por qué. El código vive en `motion.js`
+(animaciones), `focus.js` (el resultado en el teléfono) y los tokens `--t-*`,
+`--ease-*` y `--stagger` de `styles.css`. Salió del análisis de la sección de dólares de
 Brubank, pasado por el sistema de Bong.
 
 ## La idea
@@ -31,8 +31,7 @@ separadas por luz.
    reacciona lo que tocaste, después cambia el dato y al final llega la
    explicación.
 2. **Lógica narrativa.** El movimiento cuenta hacia dónde fue el valor. Si el
-   precio sube, los dígitos ruedan hacia arriba. Si la pastilla va a la
-   derecha, el sonido es más agudo.
+   precio sube, los dígitos ruedan hacia arriba; si baja, hacia abajo.
 3. **Suavidad sin fricción.** Duraciones cortas, curvas que desaceleran y nada
    que bloquee el input. Ninguna interacción directa pasa de 500 ms.
 
@@ -56,14 +55,14 @@ las dos.
 
 Qué pasa cuando alguien toca "Estudio" en el selector de perfil:
 
-| Tiempo | Qué se ve | Qué se oye |
-|---|---|---|
-| 0 ms | El botón se hunde a 0,97 | tick seco |
-| 0–280 ms | La pastilla viaja hacia Estudio y se estira un 8% en esa dirección | |
-| 90 ms | Empiezan a rodar los dígitos del presupuesto | |
-| 180 ms | El multiplicador (×1,00) aparece con fade y 4 px de subida | |
-| 200 ms | La pastilla ya llegó | blip (G5 a la derecha, E5 a la izquierda); vibración leve en Android |
-| ~530 ms | Terminan de rodar los dígitos | glide hacia arriba si subió, hacia abajo si bajó |
+| Tiempo | Qué se ve |
+|---|---|
+| 0 ms | El botón se hunde a 0,97 |
+| 0–280 ms | La pastilla viaja hacia Estudio y se estira un 8% en esa dirección |
+| 90 ms | Empiezan a rodar los dígitos del presupuesto |
+| 180 ms | El multiplicador (×1,00) aparece con fade y 4 px de subida |
+| 200 ms | La pastilla ya llegó; vibración leve en Android |
+| ~530 ms | Terminan de rodar los dígitos |
 
 Primero el dato, después el porqué.
 
@@ -101,7 +100,7 @@ Primero el dato, después el porqué.
 - Con `whole: true` rueda la palabra entera como una sola columna
   (Baja → Media).
 - Al terminar vuelve a texto plano. Si llegó otro cambio antes, ese cierre no
-  se ejecuta ni suena: manda el último.
+  se ejecuta: manda el último.
 - Si el elemento está oculto, cambia sin animar.
 
 ### La explicación llega después
@@ -180,50 +179,6 @@ Las monedas vecinas viven en una ventana con la forma de la pastilla
 (`.currency-window`) y una máscara que las desvanece hacia los bordes. Se
 insinúa qué hay antes y después sin que nada asome afuera.
 
-## Sonido
-
-Micro sonidos sintetizados con Web Audio, sin archivos. Si nadie los nota
-conscientemente pero la UI se siente mejor, están bien calibrados.
-
-- **Una sola escala:** pentatónica mayor en Do, una octava arriba del Do
-  central (C6 a C7). Cualquier combinación suena armónica, y en ese registro
-  suena liviano.
-- **Timbre de campanita de vidrio.** Cada nota es una sine más un parcial
-  inarmónico a ×2,76 (el de una barra o una copa) a un cuarto del volumen, que
-  dura la mitad. Por eso suena a cristal y no a "bip". Ataque de 4 ms, sin
-  click, y caída exponencial que se desvanece en vez de cortarse.
-- **Salen con el evento visual, no con el toque.** El blip suena cuando llega
-  la pastilla, el glide cuando terminan los dígitos. La excepción es el tick,
-  que acompaña al hundimiento.
-- **Lo que avanza sube de tono y lo que retrocede baja.**
-
-| Evento | Sonido | Gain |
-|---|---|---|
-| Hundir un botón | toque de cristal, G7, 35 ms | 0,006 |
-| Llega la pastilla | campanita G6 a la derecha / E6 a la izquierda, 140 ms | 0,018 |
-| Terminan los dígitos | campanita que resbala C6 → E6 si sube, E6 → C6 si baja, 160 ms | 0,014 |
-| Prender o apagar un extra, copiar | dos campanitas C6 + G6 (al revés al apagar), 60 ms entre sí | 0,016 |
-| Cambiar de paso | ruido filtrado, 4,2 kHz al avanzar y 3 kHz al volver, 90 ms | 0,008 |
-| Exportar el PDF | arpegio C6–E6–G6–C7, la última nota con cola larga | 0,02 |
-
-Para escucharlos uno por uno: `sonido-test.html` (sin links, no se indexa).
-Abajo tiene un diagnóstico por si en algún teléfono no suena.
-
-Reglas:
-
-- Cada tipo de sonido suena como mucho una vez cada 40 ms. No se apilan.
-- Si una animación se interrumpe, su sonido de llegada no suena.
-- **iOS:** el audio solo se habilita adentro del gesto, con `touchend` o
-  `click`. `unlock()` reanuda el contexto ahí y toca un buffer mudo. Se
-  escucha en cada gesto, porque iOS vuelve a suspender el audio cuando la
-  pestaña pasa a segundo plano.
-- **Modo silencio:** en Safari se usa la sesión `ambient`. Respeta el switch
-  de silencio del iPhone y no corta la música que la persona tenga sonando.
-  Con el iPhone en silencio, el cotizador no suena, y así tiene que ser.
-- El botón de parlante del header prende y apaga todo. La preferencia se
-  guarda en `localStorage` (`bong-sound`).
-- Nada suena en hover ni en scroll.
-
 ## Accesibilidad
 
 Con `prefers-reduced-motion: reduce`:
@@ -232,7 +187,6 @@ Con `prefers-reduced-motion: reduce`:
   dígitos cambian sin rodar.
 - Se mantiene el cruce de color en 180 ms, así el cambio de estado se sigue
   viendo.
-- Los sonidos se mantienen, porque no son movimiento.
 
 ## Para sumar una animación nueva
 
@@ -242,16 +196,12 @@ Con `prefers-reduced-motion: reduce`:
 3. Usar los tokens. Nada de duraciones sueltas.
 4. Si se puede interrumpir, que sea con transición CSS o que retome desde el
    estado actual. Nunca reiniciar.
-5. Si lleva sonido, que salga cuando el evento visual termina y que respete el
-   throttle.
-6. Revisar `prefers-reduced-motion`.
+5. Revisar `prefers-reduced-motion`.
 
 ## Cómo probar
 
 - **Tocar rápido y repetido.** Seis cambios de perfil en medio segundo: la
-  pastilla tiene que terminar en la opción correcta, el número en su valor
-  final, y sonar un solo blip y un solo glide.
+  pastilla tiene que terminar en la opción correcta y el número en su valor
+  final.
 - **Movimiento reducido.** Emularlo en DevTools (Rendering → Emulate CSS media
   feature `prefers-reduced-motion`).
-- **Volumen.** Con auriculares y con el parlante del teléfono, el switch de
-  silencio apagado y el volumen a mitad: se tiene que percibir apenas.
