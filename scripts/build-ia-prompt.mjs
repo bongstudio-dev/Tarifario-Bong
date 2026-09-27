@@ -26,8 +26,8 @@ const PROFILES = {
 };
 const MARKETS = {
   latam: "LATAM: cliente latinoamericano en general (no solo Argentina) que paga en su moneda local.",
-  usa: "USA: cliente de Estados Unidos que paga en dólares.",
-  europa: "Europa: cliente europeo que paga en euros."
+  usa: "USA: el mismo perfil latinoamericano, trabajando desde LATAM para un cliente de Estados Unidos que paga en dólares. No es la tarifa de un diseñador que vive en Estados Unidos.",
+  europa: "Europa: el mismo perfil latinoamericano, trabajando desde LATAM para un cliente europeo que paga en euros. No es la tarifa de un diseñador que vive en Europa."
 };
 const COMPLEXITY = {
   low: "Baja: brief claro, pocas decisiones, referencias cerradas.",

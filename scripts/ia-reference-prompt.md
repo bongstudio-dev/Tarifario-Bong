@@ -29,7 +29,7 @@ este pedido a propósito: queremos tu estimación independiente.
 - **Post animado** (Piezas): Pieza en movimiento para redes.
 - **Papelería básica** (Piezas): Tarjeta, membretada y sobre. Incluye: Papelería.
 - **Presentación corporativa** (Piezas): Deck para ventas, marca o inversores.
-- **Logo animado** (Identidad): Identidad breve con salida motion. Incluye: Logo, Salida motion.
+- **Logo animado** (Piezas): Animación de un logo existente. Incluye: Salida motion.
 - **Logotipo** (Identidad): Solo logo, sin sistema completo. Incluye: Logo.
 - **Manual de marca** (Identidad): Sistema normativo y criterios de uso. Incluye: Manual extendido.
 
@@ -51,8 +51,8 @@ Estas descripciones son el alcance de un proyecto de branding. En los demás ser
 ### Mercado
 
 - LATAM: cliente latinoamericano en general (no solo Argentina) que paga en su moneda local.
-- USA: cliente de Estados Unidos que paga en dólares.
-- Europa: cliente europeo que paga en euros.
+- USA: el mismo perfil latinoamericano, trabajando desde LATAM para un cliente de Estados Unidos que paga en dólares. No es la tarifa de un diseñador que vive en Estados Unidos.
+- Europa: el mismo perfil latinoamericano, trabajando desde LATAM para un cliente europeo que paga en euros. No es la tarifa de un diseñador que vive en Europa.
 
 ### Complejidad
 
