@@ -18,41 +18,57 @@ Convención de todas las tablas:
    cliente.
 2. **Horas por fase** (`H_a` estrategia, `H_b` diseño, `H_c` producción) de cada
    servicio: definen cuánto vale respecto del ancla.
-3. **Tipo de cliente**, partido en dos:
+3. **Perfil**: Junior ×0,50, Senior ×1,82 y Estudio ×2,82 sobre Mid en branding.
+   El salto pesa menos donde se paga menos criterio: cada servicio lo modula con
+   su `expertise_weight`, como exponente alrededor de Mid
+   (Mid × (coef / Mid)^peso). Mid queda fijo.
+
+   | Peso | Servicios | Junior | Senior | Estudio |
+   | ---: | --- | ---: | ---: | ---: |
+   | 1 | Branding completo, Logotipo | ×0,50 | ×1,82 | ×2,82 |
+   | 0,95 | Identidad visual | ×0,52 | ×1,76 | ×2,68 |
+   | 0,9 | Manual de marca, Presentación | ×0,54 | ×1,71 | ×2,54 |
+   | 0,85 | Papelería, Logo animado | ×0,55 | ×1,66 | ×2,41 |
+   | 0,8 | Post animado | ×0,57 | ×1,61 | ×2,29 |
+   | 0,75 | Pieza RRSS, Banner, Plantillas Canva | ×0,59 | ×1,57 | ×2,17 |
+
+4. **Tipo de cliente**, partido en dos:
    - `rate_coef` (posicionamiento): Startup ×1,20 y Empresa ×1,43. Se aplica a
      todo; en una pieza suelta es lo único que cambia.
-   - `hours_coef` (alcance: más páginas de manual, más aplicaciones): Startup ×1,64
-     y Empresa ×2,17. Cada servicio toma una parte según su `tier_hours_weight`:
-     horas × (1 + peso × (hours_coef − 1)).
+   - `hours_coef` (alcance: más páginas de manual, más aplicaciones): Startup
+     ×1,325 y Empresa ×1,875. Cada servicio toma una parte según su
+     `tier_hours_weight`: horas × (1 + peso × (hours_coef − 1)).
 
    | Peso | Servicios | Startup | Empresa |
    | ---: | --- | ---: | ---: |
-   | 1 | Branding completo | ×1,97 | ×3,10 |
-   | 0,8 | Manual de marca | ×1,81 | ×2,77 |
-   | 0,25 | Identidad visual | ×1,39 | ×1,85 |
-   | 0,2 | Logotipo | ×1,35 | ×1,76 |
+   | 1,2 | Manual de marca | ×1,67 | ×2,93 |
+   | 1 | Branding completo | ×1,59 | ×2,68 |
+   | 0,4 | Identidad visual | ×1,36 | ×1,93 |
+   | 0,3 | Logotipo | ×1,32 | ×1,81 |
    | 0 | Piezas (y Logo animado) | ×1,20 | ×1,43 |
 
-4. **Mercado**: USA ×2,0 y Europa ×1,7 sobre LATAM. No es la tarifa de un
+   El manual es lo que más crece con el cliente (de 40 a más de 100 páginas).
+
+5. **Mercado**: USA ×2,0 y Europa ×1,7 sobre LATAM. No es la tarifa de un
    diseñador que vive allá: es el mismo perfil latino cobrándole a un cliente de
    afuera. No mueve el presupuesto de horas.
-5. **Ejes chicos**: complejidad Baja ×0,77 y Alta ×1,42 sobre Media; rondas
+6. **Ejes chicos**: complejidad Baja ×0,77 y Alta ×1,42 sobre Media; rondas
    (1 / 3 / +3) suman 0% / 35% / 60% de las horas de diseño y producción, contra
    15% con 2 rondas; salida Motion ×1,4 e Interactivo ×1,9.
 
 La fórmula vive en `app.js` (`calculateQuote`, `getBasePhaseHours`,
-`getBrandTierCoefs`) y está replicada en `scripts/lib/quote.mjs`.
+`getBrandTierCoefs`, `getProfileCoef`) y está replicada en `scripts/lib/quote.mjs`.
 Si cambia una, hay que cambiar la otra.
 
 ## Tabla ancla — Branding completo
 
 | Tipo de cliente | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Emprendimiento | 742 (obj. 700) | 1253 (obj. 1250) | 1832 (obj. 1700) | 2553 (obj. 2550) |
-| Startup | 1460 (obj. 1400) | 2465 (obj. 2500) | 3606 (obj. 3600) | 5025 (obj. 5100) |
-| Empresa | 2302 (obj. 2500) | 3887 (obj. 3750) | 5686 (obj. 6000) | 7923 (obj. 7650) |
+| Emprendimiento | 550 (obj. 550) | 1100 (obj. 1100) | 1999 (obj. 2000) | 3099 (obj. 3100) |
+| Startup | 874 (obj. 875) | 1748 (obj. 1750) | 3178 (obj. 3180) | 4927 (obj. 4930) |
+| Empresa | 1474 (obj. 1475) | 2948 (obj. 2950) | 5360 (obj. 5360) | 8308 (obj. 8300) |
 
-Desvío máximo: 7,9% (tolerancia 10%).
+Desvío máximo: 0,1% (tolerancia 10%).
 
 ## Todos los servicios
 
@@ -60,49 +76,49 @@ Desvío máximo: 7,9% (tolerancia 10%).
 
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Branding completo | 742 · 54.1 h | 1253 · 54.1 h | 1832 · 54.1 h | 2553 · 54.1 h |
-| Identidad visual | 415 · 31.4 h | 701 · 31.4 h | 1025 · 31.4 h | 1428 · 31.4 h |
-| Manual de marca | 331 · 25.1 h | 559 · 25.1 h | 818 · 25.1 h | 1139 · 25.1 h |
-| Logotipo | 212 · 16.0 h | 358 · 16.0 h | 524 · 16.0 h | 730 · 16.0 h |
-| Logo animado | 109 · 9.3 h | 183 · 9.3 h | 268 · 9.3 h | 374 · 9.3 h |
-| Presentación corporativa | 158 · 13.5 h | 266 · 13.5 h | 389 · 13.5 h | 542 · 13.5 h |
-| Plantillas Canva x5 | 90 · 7.7 h | 152 · 7.7 h | 222 · 7.7 h | 310 · 7.7 h |
-| Papelería básica | 64 · 5.5 h | 108 · 5.5 h | 159 · 5.5 h | 221 · 5.5 h |
-| Post animado | 41 · 3.5 h | 70 · 3.5 h | 102 · 3.5 h | 142 · 3.5 h |
-| Banner digital | 20 · 1.7 h | 33 · 1.7 h | 49 · 1.7 h | 68 · 1.7 h |
-| Pieza RRSS | 15 · 1.3 h | 25 · 1.3 h | 36 · 1.3 h | 51 · 1.3 h |
+| Branding completo | 550 · 47.5 h | 1100 · 47.5 h | 1999 · 47.5 h | 3099 · 47.5 h |
+| Identidad visual | 363 · 31.4 h | 701 · 31.4 h | 1236 · 31.4 h | 1874 · 31.4 h |
+| Manual de marca | 300 · 25.1 h | 559 · 25.1 h | 957 · 25.1 h | 1420 · 25.1 h |
+| Logotipo | 179 · 16.0 h | 358 · 16.0 h | 651 · 16.0 h | 1009 · 16.0 h |
+| Logo animado | 102 · 9.3 h | 183 · 9.3 h | 305 · 9.3 h | 442 · 9.3 h |
+| Presentación corporativa | 143 · 13.5 h | 266 · 13.5 h | 456 · 13.5 h | 676 · 13.5 h |
+| Plantillas Canva x5 | 90 · 7.7 h | 152 · 7.7 h | 238 · 7.7 h | 331 · 7.7 h |
+| Papelería básica | 60 · 5.5 h | 108 · 5.5 h | 180 · 5.5 h | 261 · 5.5 h |
+| Post animado | 40 · 3.5 h | 70 · 3.5 h | 113 · 3.5 h | 160 · 3.5 h |
+| Banner digital | 20 · 1.7 h | 33 · 1.7 h | 52 · 1.7 h | 73 · 1.7 h |
+| Pieza RRSS | 15 · 1.3 h | 25 · 1.3 h | 39 · 1.3 h | 54 · 1.3 h |
 
 ### Startup
 
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Branding completo | 1460 · 88.8 h | 2465 · 88.8 h | 3606 · 88.8 h | 5025 · 88.8 h |
-| Identidad visual | 578 · 36.4 h | 975 · 36.4 h | 1426 · 36.4 h | 1988 · 36.4 h |
-| Manual de marca | 601 · 37.9 h | 1014 · 37.9 h | 1483 · 37.9 h | 2067 · 37.9 h |
-| Logotipo | 287 · 18.1 h | 485 · 18.1 h | 709 · 18.1 h | 988 · 18.1 h |
-| Logo animado | 130 · 9.3 h | 220 · 9.3 h | 322 · 9.3 h | 448 · 9.3 h |
-| Presentación corporativa | 189 · 13.5 h | 319 · 13.5 h | 467 · 13.5 h | 651 · 13.5 h |
-| Plantillas Canva x5 | 108 · 7.7 h | 182 · 7.7 h | 267 · 7.7 h | 372 · 7.7 h |
-| Papelería básica | 77 · 5.5 h | 130 · 5.5 h | 190 · 5.5 h | 265 · 5.5 h |
-| Post animado | 50 · 3.5 h | 84 · 3.5 h | 123 · 3.5 h | 171 · 3.5 h |
-| Banner digital | 24 · 1.7 h | 40 · 1.7 h | 59 · 1.7 h | 82 · 1.7 h |
-| Pieza RRSS | 18 · 1.3 h | 30 · 1.3 h | 44 · 1.3 h | 61 · 1.3 h |
+| Branding completo | 874 · 63.0 h | 1748 · 63.0 h | 3178 · 63.0 h | 4927 · 63.0 h |
+| Identidad visual | 492 · 35.5 h | 950 · 35.5 h | 1676 · 35.5 h | 2542 · 35.5 h |
+| Manual de marca | 500 · 34.8 h | 932 · 34.8 h | 1596 · 34.8 h | 2368 · 34.8 h |
+| Logotipo | 236 · 17.6 h | 471 · 17.6 h | 857 · 17.6 h | 1328 · 17.6 h |
+| Logo animado | 122 · 9.3 h | 220 · 9.3 h | 365 · 9.3 h | 530 · 9.3 h |
+| Presentación corporativa | 171 · 13.5 h | 319 · 13.5 h | 547 · 13.5 h | 811 · 13.5 h |
+| Plantillas Canva x5 | 108 · 7.7 h | 182 · 7.7 h | 286 · 7.7 h | 397 · 7.7 h |
+| Papelería básica | 72 · 5.5 h | 130 · 5.5 h | 216 · 5.5 h | 314 · 5.5 h |
+| Post animado | 48 · 3.5 h | 84 · 3.5 h | 135 · 3.5 h | 192 · 3.5 h |
+| Banner digital | 24 · 1.7 h | 40 · 1.7 h | 63 · 1.7 h | 87 · 1.7 h |
+| Pieza RRSS | 18 · 1.3 h | 30 · 1.3 h | 47 · 1.3 h | 65 · 1.3 h |
 
 ### Empresa
 
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Branding completo | 2302 · 117.5 h | 3887 · 117.5 h | 5686 · 117.5 h | 7923 · 117.5 h |
-| Identidad visual | 767 · 40.6 h | 1295 · 40.6 h | 1894 · 40.6 h | 2639 · 40.6 h |
-| Manual de marca | 916 · 48.5 h | 1547 · 48.5 h | 2263 · 48.5 h | 3154 · 48.5 h |
-| Logotipo | 374 · 19.8 h | 632 · 19.8 h | 924 · 19.8 h | 1288 · 19.8 h |
-| Logo animado | 155 · 9.3 h | 262 · 9.3 h | 383 · 9.3 h | 534 · 9.3 h |
-| Presentación corporativa | 225 · 13.5 h | 381 · 13.5 h | 557 · 13.5 h | 776 · 13.5 h |
-| Plantillas Canva x5 | 129 · 7.7 h | 217 · 7.7 h | 318 · 7.7 h | 443 · 7.7 h |
-| Papelería básica | 92 · 5.5 h | 155 · 5.5 h | 227 · 5.5 h | 316 · 5.5 h |
-| Post animado | 59 · 3.5 h | 100 · 3.5 h | 146 · 3.5 h | 203 · 3.5 h |
-| Banner digital | 28 · 1.7 h | 48 · 1.7 h | 70 · 1.7 h | 97 · 1.7 h |
-| Pieza RRSS | 21 · 1.3 h | 36 · 1.3 h | 52 · 1.3 h | 73 · 1.3 h |
+| Branding completo | 1474 · 89.1 h | 2948 · 89.1 h | 5360 · 89.1 h | 8308 · 89.1 h |
+| Identidad visual | 700 · 42.4 h | 1352 · 42.4 h | 2386 · 42.4 h | 3618 · 42.4 h |
+| Manual de marca | 878 · 51.4 h | 1638 · 51.4 h | 2805 · 51.4 h | 4162 · 51.4 h |
+| Logotipo | 323 · 20.3 h | 646 · 20.3 h | 1175 · 20.3 h | 1821 · 20.3 h |
+| Logo animado | 145 · 9.3 h | 262 · 9.3 h | 436 · 9.3 h | 632 · 9.3 h |
+| Presentación corporativa | 204 · 13.5 h | 381 · 13.5 h | 652 · 13.5 h | 967 · 13.5 h |
+| Plantillas Canva x5 | 129 · 7.7 h | 217 · 7.7 h | 340 · 7.7 h | 473 · 7.7 h |
+| Papelería básica | 86 · 5.5 h | 155 · 5.5 h | 258 · 5.5 h | 374 · 5.5 h |
+| Post animado | 57 · 3.5 h | 100 · 3.5 h | 161 · 3.5 h | 229 · 3.5 h |
+| Banner digital | 28 · 1.7 h | 48 · 1.7 h | 75 · 1.7 h | 104 · 1.7 h |
+| Pieza RRSS | 21 · 1.3 h | 36 · 1.3 h | 56 · 1.3 h | 78 · 1.3 h |
 
 ## Historial (2026-09-27)
 
@@ -116,6 +132,12 @@ Desvío máximo: 7,9% (tolerancia 10%).
    → 2.550 / 5.100 / 7.650, coeficiente 1,0 → 0,85); tipo de cliente repartido
    entre tarifa y alcance sin mover el ancla; complejidad Alta, rondas y salidas
    ajustadas; horas por fase de cada servicio recalibradas.
+
+5. **Tabla ancla nueva**: Emprendimiento 550 / 1.100 / 2.000 / 3.100; Startup
+   875 / 1.750 / 3.180 / 4.930; Empresa 1.475 / 2.950 / 5.360 / 8.300. Junior y
+   Mid bajan, Senior sube y Estudio vuelve a 3.100 en Emprendimiento. Se suma el
+   peso de perfil por servicio (`expertise_weight`) para que el salto entre
+   perfiles de un branding no se traslade entero a las piezas.
 
 ## Regla de calibración
 

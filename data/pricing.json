@@ -9,9 +9,9 @@
     "conditions": "complejidad Media, output Estatico, mercado LATAM, 2 rondas",
     "note": "Todo el sistema se calibra desde esta tabla. Si cambia, correr scripts/check-benchmark.mjs.",
     "targets": {
-      "emprendimiento": { "jr": 700, "mid": 1250, "sr": 1700, "std": 2550 },
-      "startup":        { "jr": 1400, "mid": 2500, "sr": 3600, "std": 5100 },
-      "empresa":        { "jr": 2500, "mid": 3750, "sr": 6000, "std": 7650 }
+      "emprendimiento": { "jr": 550, "mid": 1100, "sr": 2000, "std": 3100 },
+      "startup":        { "jr": 875, "mid": 1750, "sr": 3180, "std": 4930 },
+      "empresa":        { "jr": 1475, "mid": 2950, "sr": 5360, "std": 8300 }
     }
   },
   "config": {
@@ -32,14 +32,14 @@
       "id": "startup",
       "label": "Startup",
       "caption": "Estrategia, identidad completa, manual 70-80 páginas, 2 aplicaciones.",
-      "hours_coef": 1.64,
+      "hours_coef": 1.325,
       "rate_coef": 1.2
     },
     {
       "id": "empresa",
       "label": "Empresa",
       "caption": "Estrategia profunda, sistema de marca, manual 100-130 páginas, aplicaciones.",
-      "hours_coef": 2.17,
+      "hours_coef": 1.875,
       "rate_coef": 1.43
     }
   ],
@@ -49,10 +49,10 @@
     { "id": "europa","label": "Europa","coef": 1.7 }
   ],
   "expertise": [
-    { "id": "jr",  "label": "Junior",  "coef": 0.247 },
+    { "id": "jr",  "label": "Junior",  "coef": 0.2085 },
     { "id": "mid", "label": "Mid",     "coef": 0.417 },
-    { "id": "sr",  "label": "Senior",  "coef": 0.610 },
-    { "id": "std", "label": "Estudio", "coef": 0.85 }
+    { "id": "sr",  "label": "Senior",  "coef": 0.758 },
+    { "id": "std", "label": "Estudio", "coef": 1.175 }
   ],
   "complexity": [
     { "id": "low", "label": "Baja",  "coef": 1.0 },
@@ -158,8 +158,9 @@
       "name": "Branding completo",
       "category": "Branding",
       "caption": "Proyecto integral con estrategia y sistema.",
-      "H_a": 9, "H_b": 39, "H_c": 16,
+      "H_a": 7.9, "H_b": 34.24, "H_c": 14.05,
       "tier_hours_weight": 1.0,
+      "expertise_weight": 1.0,
       "default_output_type": "static",
       "allowed_output_types": ["static", "motion"],
       "included_addons": ["logo", "palette", "typography", "brandboard"],
@@ -171,7 +172,8 @@
       "category": "Identidad",
       "caption": "Sistema visual con estrategia y piezas base.",
       "H_a": 3.38, "H_b": 24.54, "H_c": 9.31,
-      "tier_hours_weight": 0.25,
+      "tier_hours_weight": 0.4,
+      "expertise_weight": 0.95,
       "default_output_type": "static",
       "allowed_output_types": ["static", "motion"],
       "included_addons": ["logo", "palette", "typography"],
@@ -183,6 +185,7 @@
       "category": "Piezas",
       "caption": "Post estático de respuesta rápida.",
       "H_a": 0, "H_b": 1.07, "H_c": 0.36,
+      "expertise_weight": 0.75,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": [],
@@ -194,6 +197,7 @@
       "category": "Piezas",
       "caption": "Pieza puntual para ads o web.",
       "H_a": 0, "H_b": 1.31, "H_c": 0.65,
+      "expertise_weight": 0.75,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": [],
@@ -205,6 +209,7 @@
       "category": "Piezas",
       "caption": "Sistema editable para equipo o cliente.",
       "H_a": 0, "H_b": 2.09, "H_c": 8.36,
+      "expertise_weight": 0.75,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": [],
@@ -216,6 +221,7 @@
       "category": "Piezas",
       "caption": "Pieza en movimiento para redes.",
       "H_a": 0, "H_b": 1.09, "H_c": 2.18,
+      "expertise_weight": 0.8,
       "default_output_type": "motion",
       "allowed_output_types": ["motion"],
       "included_addons": [],
@@ -227,6 +233,7 @@
       "category": "Piezas",
       "caption": "Tarjeta, membretada y sobre.",
       "H_a": 0, "H_b": 2.95, "H_c": 3.93,
+      "expertise_weight": 0.85,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["stationery"],
@@ -238,6 +245,7 @@
       "category": "Piezas",
       "caption": "Deck para ventas, marca o inversores.",
       "H_a": 1.65, "H_b": 8.24, "H_c": 4.12,
+      "expertise_weight": 0.9,
       "default_output_type": "static",
       "allowed_output_types": ["static", "interactive"],
       "included_addons": [],
@@ -249,6 +257,7 @@
       "category": "Piezas",
       "caption": "Animación de un logo existente.",
       "H_a": 0, "H_b": 1.8, "H_c": 7.2,
+      "expertise_weight": 0.85,
       "default_output_type": "motion",
       "allowed_output_types": ["motion"],
       "included_addons": ["motion_system"],
@@ -260,7 +269,8 @@
       "category": "Identidad",
       "caption": "Solo logo, sin sistema completo.",
       "H_a": 2.15, "H_b": 12.88, "H_c": 3.22,
-      "tier_hours_weight": 0.2,
+      "tier_hours_weight": 0.3,
+      "expertise_weight": 1.0,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["logo"],
@@ -272,7 +282,8 @@
       "category": "Identidad",
       "caption": "Sistema normativo y criterios de uso.",
       "H_a": 2.13, "H_b": 10.64, "H_c": 21.28,
-      "tier_hours_weight": 0.8,
+      "tier_hours_weight": 1.2,
+      "expertise_weight": 0.9,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["manual_extend"],

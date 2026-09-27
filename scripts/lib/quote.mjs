@@ -12,13 +12,18 @@ export function createQuoter(pricing, benchmark) {
 
   // La banda se lee como referencia de perfil Mid y se corre por perfil con la
   // escalera de la tabla ancla. Espejo de getProfileRateCoef() en app.js.
-  function blendedBand(category, expertise) {
+  // Espejo de getProfileCoef() en app.js: el salto entre perfiles se modula por
+  // servicio alrededor de Mid.
+  const profileCoef = (service, expertise) =>
+    midCoef * (expertise.coef / midCoef) ** (service.expertise_weight ?? 1);
+
+  function blendedBand(category, profile) {
     const bands = readyTracks.map((track) => ({
       weight: track.weight,
       band: track.by_category[category] || track.defaults
     }));
     const total = bands.reduce((sum, entry) => sum + entry.weight, 0);
-    const k = expertise.coef / midCoef;
+    const k = profile / midCoef;
     const blend = (key) =>
       (bands.reduce((sum, entry) => sum + entry.band[key] * entry.weight, 0) / total) * k;
     return { p25: blend("p25"), median: blend("median"), p90: blend("p90") };
@@ -44,13 +49,13 @@ export function createQuoter(pricing, benchmark) {
       c: base.c + extra * REVISION_DISTRIBUTION.production
     };
     const multiplier =
-      expertise.coef * complexity.coef * output.coef * market.coef * Y * tier.rate_coef;
+      profileCoef(service, expertise) * complexity.coef * output.coef * market.coef * Y * tier.rate_coef;
     const totalHours = hours.a + hours.b + hours.c;
     const usd = (hours.a * X_a + hours.b * X_b + hours.c * X_c) * multiplier;
 
     // El precio manda; las horas son el presupuesto que lo deja a tarifa de
     // mercado. Mas horas trabajadas = tarifa mas baja, por eso max sale del p25.
-    const band = blendedBand(service.category, expertise);
+    const band = blendedBand(service.category, profileCoef(service, expertise));
     const comparable = usd / (market.coef * tier.rate_coef);
     const budget = {
       min: comparable / band.p90,
