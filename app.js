@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=37";
+} from "./currency.js?v=38";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=37";
-import { initAnalytics, track } from "./analytics.js?v=37";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=37";
-import { createResultFocus } from "./focus.js?v=37";
+} from "./pdf-fonts.js?v=38";
+import { initAnalytics, track } from "./analytics.js?v=38";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=38";
+import { createResultFocus } from "./focus.js?v=38";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -448,10 +448,17 @@ function getAllSelectedLineItems() {
 // El tipo de cliente se parte en dos: scope real (mas paginas de manual, mas
 // aplicaciones = mas horas) y posicionamiento (lo que vale esa hora). Meterlo
 // todo como precio dejaria el PDF diciendo 72h para un proyecto de USD 9.000.
+// El scope solo crece de verdad en Branding e Identidad: un post para una
+// empresa es el mismo post, asi que las piezas llevan solo posicionamiento.
+function tierScalesHours() {
+  const scopeCategories = state.pricingData.config.tier_hours_categories || [];
+  return scopeCategories.includes(getCurrentService()?.category);
+}
+
 function getBrandTierCoefs() {
   const tier = getBrandTierById(state.selectedBrandTier);
   return {
-    hours: tier?.hours_coef ?? 1.0,
+    hours: tierScalesHours() ? tier?.hours_coef ?? 1.0 : 1.0,
     rate: tier?.rate_coef ?? 1.0
   };
 }
@@ -1024,7 +1031,12 @@ function renderDeliverables() {
     state.selectedBrandTier = id;
     syncUI();
   });
-  fadeSwap(els.brandTierMeta, `${formatCoef(tier.hours_coef)} horas`);
+  // En piezas el tipo de cliente no suma horas, solo tarifa: la etiqueta
+  // muestra lo que efectivamente mueve.
+  fadeSwap(
+    els.brandTierMeta,
+    tierScalesHours() ? `${formatCoef(tier.hours_coef)} horas` : `${formatCoef(tier.rate_coef)} tarifa`
+  );
   fadeSwap(els.brandTierCaption, tier.caption || "", MOTION.fast + MOTION.stagger);
 }
 
