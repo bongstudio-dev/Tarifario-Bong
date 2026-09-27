@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=41";
+} from "./currency.js?v=42";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=41";
-import { initAnalytics, track } from "./analytics.js?v=41";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=41";
-import { createResultFocus } from "./focus.js?v=41";
+} from "./pdf-fonts.js?v=42";
+import { initAnalytics, track } from "./analytics.js?v=42";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=42";
+import { createResultFocus } from "./focus.js?v=42";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1595,6 +1595,32 @@ async function copyBreakdown() {
   }
 }
 
+const RECEIPT_FONT_SIZE = 9;
+const RECEIPT_GAP = 3;
+
+function getReceiptLayout(doc, rows, left, right) {
+  doc.setFont("SpaceMono", "normal");
+  doc.setFontSize(RECEIPT_FONT_SIZE);
+  const widest = (key) => Math.max(0, ...rows.map((row) => doc.getTextWidth(row[key])));
+  const hoursRight = right - widest("amount") - RECEIPT_GAP;
+  return {
+    left,
+    right,
+    hoursRight,
+    labelMaxWidth: hoursRight - widest("hours") - RECEIPT_GAP - left
+  };
+}
+
+function drawReceiptRow(doc, row, y, layout) {
+  let label = row.label;
+  while (label.length > 1 && doc.getTextWidth(label) > layout.labelMaxWidth) {
+    label = label.slice(0, -1);
+  }
+  doc.text(label.trimEnd(), layout.left, y);
+  doc.text(row.hours, layout.hoursRight, y, { align: "right" });
+  doc.text(row.amount, layout.right, y, { align: "right" });
+}
+
 function drawTicketLine(doc, y, xStart = 12, xEnd = 93) {
   doc.setDrawColor(160, 160, 160);
   doc.setLineDashPattern([1, 2], 0);
@@ -1787,24 +1813,35 @@ async function downloadPdf() {
   drawTicketLine(doc, y + 1, pad, right);
   y += 10;
 
+  // Filas del recibo: nombre, horas e importe. La columna de horas se calcula
+  // con el importe mas ancho para que no se pisen cuando la moneda tiene
+  // montos largos (pesos, por ejemplo).
+  const receiptAmount = (usd) =>
+    `${displayCurrencyConfig.code} ${formatAmount(convertUsd(usd, state.displayCurrency), state.displayCurrency)}`;
+  const phaseRows = [
+    ["Estrategia", quote.breakdown.estrategia],
+    ["Diseno", quote.breakdown.diseno],
+    ["Produccion", quote.breakdown.produccion]
+  ].map(([label, value]) => ({
+    label: label.toUpperCase(),
+    hours: `${value.hours.toFixed(1)}H`,
+    amount: receiptAmount(value.usd)
+  }));
+  const itemRows = visibleLineItems.map((item) => ({
+    label: item.label.toUpperCase(),
+    hours: `${item.hours.toFixed(1)}H`,
+    amount: receiptAmount(item.usd)
+  }));
+  const receiptLayout = getReceiptLayout(doc, [...phaseRows, ...itemRows], pad, right);
+
   doc.setFont("Satoshi", "bold");
   doc.setFontSize(10);
   doc.text("FASES", pad, y);
   y += 8;
   doc.setFont("SpaceMono", "normal");
-  [
-    ["Estrategia", quote.breakdown.estrategia],
-    ["Diseno", quote.breakdown.diseno],
-    ["Produccion", quote.breakdown.produccion]
-  ].forEach(([label, value]) => {
-    doc.text(label.toUpperCase(), pad, y);
-    doc.text(`${value.hours.toFixed(1)}H`, 56, y);
-    doc.text(
-      `${displayCurrencyConfig.code} ${formatMoney(convertUsd(value.usd, state.displayCurrency), state.displayCurrency)}`,
-      right,
-      y,
-      { align: "right" }
-    );
+  doc.setFontSize(RECEIPT_FONT_SIZE);
+  phaseRows.forEach((row) => {
+    drawReceiptRow(doc, row, y, receiptLayout);
     y += 7;
   });
 
@@ -1815,15 +1852,9 @@ async function downloadPdf() {
   doc.text("ITEMS", pad, y);
   y += 8;
   doc.setFont("SpaceMono", "normal");
-  visibleLineItems.forEach((item) => {
-    doc.text(item.label.toUpperCase().slice(0, 22), pad, y);
-    doc.text(`${item.hours.toFixed(1)}H`, 56, y);
-    doc.text(
-      `${displayCurrencyConfig.code} ${formatMoney(convertUsd(item.usd, state.displayCurrency), state.displayCurrency)}`,
-      right,
-      y,
-      { align: "right" }
-    );
+  doc.setFontSize(RECEIPT_FONT_SIZE);
+  itemRows.forEach((row) => {
+    drawReceiptRow(doc, row, y, receiptLayout);
     y += 6.5;
   });
 
@@ -1836,10 +1867,13 @@ async function downloadPdf() {
   y += 12;
   doc.setFont("SpaceMono", "bold");
   doc.setFontSize(20);
-  doc.text(`USD ${formatMoney(quote.suggestedUsd, "usd")}`, pad, y);
-  y += 8;
-  doc.setFontSize(11);
-  doc.text(`${displayCurrencyConfig.code} ${formatMoney(displayTotal, state.displayCurrency)}`, pad, y);
+  doc.text(`USD ${formatAmount(quote.suggestedUsd, "usd")}`, pad, y);
+  // En USD no hay conversion: la segunda linea repetiria el total.
+  if (state.displayCurrency !== "usd") {
+    y += 8;
+    doc.setFontSize(11);
+    doc.text(`${displayCurrencyConfig.code} ${formatAmount(displayTotal, state.displayCurrency)}`, pad, y);
+  }
   y += 9;
 
   doc.setFont("SpaceMono", "normal");
