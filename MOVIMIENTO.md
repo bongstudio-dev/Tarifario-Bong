@@ -185,8 +185,13 @@ insinúa qué hay antes y después sin que nada asome afuera.
 Micro sonidos sintetizados con Web Audio, sin archivos. Si nadie los nota
 conscientemente pero la UI se siente mejor, están bien calibrados.
 
-- **Una sola escala:** pentatónica mayor en Do. Cualquier combinación suena
-  armónica.
+- **Una sola escala:** pentatónica mayor en Do, una octava arriba del Do
+  central (C6 a C7). Cualquier combinación suena armónica, y en ese registro
+  suena liviano.
+- **Timbre de campanita de vidrio.** Cada nota es una sine más un parcial
+  inarmónico a ×2,76 (el de una barra o una copa) a un cuarto del volumen, que
+  dura la mitad. Por eso suena a cristal y no a "bip". Ataque de 4 ms, sin
+  click, y caída exponencial que se desvanece en vez de cortarse.
 - **Salen con el evento visual, no con el toque.** El blip suena cuando llega
   la pastilla, el glide cuando terminan los dígitos. La excepción es el tick,
   que acompaña al hundimiento.
@@ -194,12 +199,15 @@ conscientemente pero la UI se siente mejor, están bien calibrados.
 
 | Evento | Sonido | Gain |
 |---|---|---|
-| Hundir un botón | tick, triangle 1800 Hz, 20 ms | 0,025 |
-| Llega la pastilla | blip sine, G5 a la derecha / E5 a la izquierda, 60 ms | 0,04 |
-| Terminan los dígitos | glide C5 → E5 si sube, E5 → C5 si baja, 70 ms | 0,03 |
-| Prender o apagar un extra, copiar | doble blip C5 + G5 (al revés al apagar) | 0,035 |
-| Cambiar de paso | ruido filtrado, 2 kHz al avanzar y 1,4 kHz al volver, 80 ms | 0,015 |
-| Exportar el PDF | arpegio C5–E5–G5–C6, el único momento con melodía | 0,045 |
+| Hundir un botón | toque de cristal, G7, 35 ms | 0,006 |
+| Llega la pastilla | campanita G6 a la derecha / E6 a la izquierda, 140 ms | 0,018 |
+| Terminan los dígitos | campanita que resbala C6 → E6 si sube, E6 → C6 si baja, 160 ms | 0,014 |
+| Prender o apagar un extra, copiar | dos campanitas C6 + G6 (al revés al apagar), 60 ms entre sí | 0,016 |
+| Cambiar de paso | ruido filtrado, 4,2 kHz al avanzar y 3 kHz al volver, 90 ms | 0,008 |
+| Exportar el PDF | arpegio C6–E6–G6–C7, la última nota con cola larga | 0,02 |
+
+Para escucharlos uno por uno: `sonido-test.html` (sin links, no se indexa).
+Abajo tiene un diagnóstico por si en algún teléfono no suena.
 
 Reglas:
 
