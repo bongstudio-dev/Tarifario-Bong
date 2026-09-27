@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=42";
+} from "./currency.js?v=43";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=42";
-import { initAnalytics, track } from "./analytics.js?v=42";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=42";
-import { createResultFocus } from "./focus.js?v=42";
+} from "./pdf-fonts.js?v=43";
+import { initAnalytics, track } from "./analytics.js?v=43";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=43";
+import { createResultFocus } from "./focus.js?v=43";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -336,6 +336,16 @@ function getRevisionById(id) {
 
 function getOutputTypeById(id) {
   return state.pricingData.output_types.find((item) => item.id === id);
+}
+
+// La salida solo se nombra cuando se eligio como extra: la que trae el
+// servicio por default no es una decision y no le dice nada al cliente.
+function getOutputExtraLabel() {
+  const service = getCurrentService();
+  if (!service || !state.selectedOutputType || state.selectedOutputType === service.default_output_type) {
+    return null;
+  }
+  return getOutputTypeById(state.selectedOutputType)?.label ?? null;
 }
 
 function getMarketById(id) {
@@ -1110,8 +1120,10 @@ function renderConversion(quote) {
     getExpertiseById(state.selectedExpertise).label,
     getBrandTierById(state.selectedBrandTier).label,
     `Complejidad ${getComplexityById(state.selectedComplexity).label.toLowerCase()}`,
-    getOutputTypeById(state.selectedOutputType).label
-  ].join(" · ");
+    getOutputExtraLabel()
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   els.conversion.innerHTML = `
     <div class="conversion-row is-source">
@@ -1556,7 +1568,7 @@ function getQuoteText() {
     `Perfil: ${getExpertiseById(state.selectedExpertise).label}`,
     `Cliente: ${getBrandTierById(state.selectedBrandTier).label}`,
     `Complejidad: ${getComplexityById(state.selectedComplexity).label}`,
-    `Output: ${getOutputTypeById(state.selectedOutputType).label}`,
+    ...(getOutputExtraLabel() ? [`Salida: ${getOutputExtraLabel()}`] : []),
     "",
     `Precio sugerido: ${formatMoney(quote.suggestedUsd, "usd")} / ${formatMoney(quote.suggestedArs, "ars")}`,
     `Rango habitual: ${formatPriceRange(quote.suggestedUsd, "usd")}`,
@@ -1726,7 +1738,7 @@ async function downloadPdf() {
   const benchmarkPdfLines = quote.benchmark ? 1 : 0;
   const estimatedContentBottom =
     150 + // start of metadata block
-    5 * 7 + // rows
+    (getOutputExtraLabel() ? 5 : 4) * 7 + // rows
     10 + // spacer after rows divider
     8 + // fases title
     3 * 7 + // fases rows
@@ -1796,7 +1808,7 @@ async function downloadPdf() {
     ["Mercado", getMarketById(state.selectedMarket).label],
     ["Cliente", getBrandTierById(state.selectedBrandTier).label],
     ["Complejidad", getComplexityById(state.selectedComplexity).label],
-    ["Output", getOutputTypeById(state.selectedOutputType).label],
+    ...(getOutputExtraLabel() ? [["Salida", getOutputExtraLabel()]] : []),
     ["Revisiones", getRevisionById(state.selectedRevision).label]
   ];
 
