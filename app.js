@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=39";
+} from "./currency.js?v=40";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=39";
-import { initAnalytics, track } from "./analytics.js?v=39";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=39";
-import { createResultFocus } from "./focus.js?v=39";
+} from "./pdf-fonts.js?v=40";
+import { initAnalytics, track } from "./analytics.js?v=40";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=40";
+import { createResultFocus } from "./focus.js?v=40";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -503,12 +503,24 @@ function getReadyTracks(category) {
 // un estudio se mide contra la tarifa de un freelance promedio y el presupuesto
 // de horas que sale es absurdo.
 function getProfileRateCoef() {
+  const reference = getExpertiseById("mid");
+  if (!reference || reference.coef <= 0) {
+    return 1;
+  }
+  return getProfileCoef() / reference.coef;
+}
+
+// El salto entre perfiles pesa distinto segun el servicio: en un proyecto de
+// marca se paga criterio y estrategia; en una pieza suelta, mucho menos.
+// expertise_weight lo modula alrededor de Mid, que queda fijo.
+function getProfileCoef() {
   const current = getExpertiseById(state.selectedExpertise);
   const reference = getExpertiseById("mid");
   if (!current || !reference || reference.coef <= 0) {
-    return 1;
+    return current?.coef ?? 1;
   }
-  return current.coef / reference.coef;
+  const weight = getCurrentService()?.expertise_weight ?? 1;
+  return reference.coef * (current.coef / reference.coef) ** weight;
 }
 
 // El precio manda: sale de la tabla ancla. Lo que devuelve esto es el
@@ -554,7 +566,6 @@ function evaluateBenchmark({ category, priceUsd, positioningCoef }) {
 
 function calculateQuote() {
   const { X_a, X_b, X_c, Y } = state.pricingData.config;
-  const expertise = getExpertiseById(state.selectedExpertise);
   const complexity = getComplexityById(state.selectedComplexity);
   const outputType = getOutputTypeById(state.selectedOutputType);
   const market = getMarketById(state.selectedMarket);
@@ -566,7 +577,7 @@ function calculateQuote() {
     c: baseHours.c + revisionHours.production
   };
   const tierCoefs = getBrandTierCoefs();
-  const multiplier = expertise.coef * complexity.coef * outputType.coef * market.coef * Y * tierCoefs.rate;
+  const multiplier = getProfileCoef() * complexity.coef * outputType.coef * market.coef * Y * tierCoefs.rate;
   // Estas horas no se muestran: son el mecanismo que reparte el precio entre
   // servicios y fases. Las horas que ve el usuario son el presupuesto que sale
   // del benchmark, mas abajo.
@@ -963,7 +974,7 @@ function renderProfileStep() {
     state.selectedExpertise = id;
     syncUI();
   });
-  fadeSwap(els.levelMeta, formatCoef(getExpertiseById(state.selectedExpertise).coef));
+  fadeSwap(els.levelMeta, formatCoef(getProfileCoef()));
 }
 
 function renderServiceSummary() {
