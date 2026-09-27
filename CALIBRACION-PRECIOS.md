@@ -64,10 +64,10 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Logo animado | 103 · 8.8 h | 175 · 8.8 h | 255 · 8.8 h | 419 · 8.8 h |
 | Presentación corporativa | 191 · 16.3 h | 323 · 16.3 h | 472 · 16.3 h | 774 · 16.3 h |
 | Plantillas Canva x5 | 103 · 8.8 h | 175 · 8.8 h | 255 · 8.8 h | 419 · 8.8 h |
-| Post animado | 65 · 5.6 h | 110 · 5.6 h | 161 · 5.6 h | 263 · 5.6 h |
+| Post animado | 52 · 4.4 h | 88 · 4.4 h | 128 · 4.4 h | 211 · 4.4 h |
 | Papelería básica | 65 · 5.6 h | 110 · 5.6 h | 161 · 5.6 h | 264 · 5.6 h |
-| Banner digital | 30 · 2.6 h | 51 · 2.6 h | 75 · 2.6 h | 122 · 2.6 h |
-| Pieza RRSS | 21 · 1.8 h | 35 · 1.8 h | 51 · 1.8 h | 84 · 1.8 h |
+| Banner digital | 21 · 1.8 h | 36 · 1.8 h | 52 · 1.8 h | 86 · 1.8 h |
+| Pieza RRSS | 17 · 1.4 h | 28 · 1.4 h | 41 · 1.4 h | 67 · 1.4 h |
 
 ### Startup
 
@@ -80,10 +80,10 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Logo animado | 143 · 8.8 h | 241 · 8.8 h | 352 · 8.8 h | 578 · 8.8 h |
 | Presentación corporativa | 264 · 16.3 h | 446 · 16.3 h | 652 · 16.3 h | 1068 · 16.3 h |
 | Plantillas Canva x5 | 143 · 8.8 h | 241 · 8.8 h | 352 · 8.8 h | 578 · 8.8 h |
-| Post animado | 90 · 5.6 h | 151 · 5.6 h | 222 · 5.6 h | 363 · 5.6 h |
+| Post animado | 72 · 4.4 h | 121 · 4.4 h | 177 · 4.4 h | 291 · 4.4 h |
 | Papelería básica | 90 · 5.6 h | 152 · 5.6 h | 223 · 5.6 h | 365 · 5.6 h |
-| Banner digital | 42 · 2.6 h | 70 · 2.6 h | 103 · 2.6 h | 169 · 2.6 h |
-| Pieza RRSS | 29 · 1.8 h | 48 · 1.8 h | 70 · 1.8 h | 115 · 1.8 h |
+| Banner digital | 29 · 1.8 h | 49 · 1.8 h | 72 · 1.8 h | 118 · 1.8 h |
+| Pieza RRSS | 23 · 1.4 h | 39 · 1.4 h | 56 · 1.4 h | 92 · 1.4 h |
 
 ### Empresa
 
@@ -96,21 +96,31 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Logo animado | 165 · 8.8 h | 278 · 8.8 h | 406 · 8.8 h | 666 · 8.8 h |
 | Presentación corporativa | 304 · 16.3 h | 514 · 16.3 h | 752 · 16.3 h | 1233 · 16.3 h |
 | Plantillas Canva x5 | 165 · 8.8 h | 278 · 8.8 h | 406 · 8.8 h | 666 · 8.8 h |
-| Post animado | 104 · 5.6 h | 175 · 5.6 h | 256 · 5.6 h | 419 · 5.6 h |
+| Post animado | 83 · 4.4 h | 140 · 4.4 h | 205 · 4.4 h | 335 · 4.4 h |
 | Papelería básica | 104 · 5.6 h | 176 · 5.6 h | 257 · 5.6 h | 421 · 5.6 h |
-| Banner digital | 48 · 2.6 h | 81 · 2.6 h | 119 · 2.6 h | 195 · 2.6 h |
-| Pieza RRSS | 33 · 1.8 h | 56 · 1.8 h | 81 · 1.8 h | 133 · 1.8 h |
+| Banner digital | 34 · 1.8 h | 57 · 1.8 h | 83 · 1.8 h | 136 · 1.8 h |
+| Pieza RRSS | 26 · 1.4 h | 44 · 1.4 h | 65 · 1.4 h | 107 · 1.4 h |
 
-## Último ajuste (2026-09-27): tipo de cliente en Identidad
+## Último ajuste (2026-09-27): nivel de piezas chicas
+
+- Pieza RRSS, Banner digital y Post animado estaban 40–57% arriba del típico de
+  la IA en el caso base y se salían del rango al sumar Empresa o USA. Se bajan las
+  horas manteniendo la proporción entre fases: RRSS ×0,8 (0/1,2/0,4), Banner ×0,7
+  (0/1,4/0,7) y Post animado ×0,8 (0/1,6/3,2). Es el cambio más chico que deja
+  todos sus casos dentro del rango de la IA, con algo de margen.
+- Mid/Emprendimiento: RRSS de USD 35 a 28 (IA 25), Banner de 51 a 36 (IA 35),
+  Post animado de 110 a 88 (IA 70).
+- `node scripts/check-ia.mjs`: 116 de 117 casos dentro del rango de la IA. El que
+  queda afuera es Identidad visual Junior, USD 0,30 arriba del máximo.
+
+## Ajuste de tipo de cliente en Identidad (2026-09-27)
 
 - `config.tier_hours_categories` se reemplaza por `tier_hours_weight` por
   servicio. Manual de marca sigue escalando entero; Logotipo e Identidad visual
   toman el 10% del scope. Es el peso que minimiza la peor brecha contra la IA
   (10% como máximo): Logotipo Mid para Empresa pasa de USD 1088 a 586 (IA 630) e
   Identidad visual de 2702 a 1457 (IA 1250).
-- `node scripts/check-ia.mjs`: 102 de 117 casos dentro del rango de la IA. Lo
-  que queda afuera son piezas chicas (banner, post animado, post) arriba del
-  típico, sobre todo con Empresa o USA.
+- `node scripts/check-ia.mjs`: 102 de 117 casos dentro del rango de la IA.
 - La guía `cuanto-cobrar-por-diseno` estaba desactualizada desde el ajuste de
   manual y piezas; se regeneraron sus rangos.
 
