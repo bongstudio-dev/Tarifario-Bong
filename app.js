@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=36";
+} from "./currency.js?v=37";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=36";
-import { initAnalytics, track } from "./analytics.js?v=36";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=36";
-import { createResultFocus } from "./focus.js?v=36";
+} from "./pdf-fonts.js?v=37";
+import { initAnalytics, track } from "./analytics.js?v=37";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=37";
+import { createResultFocus } from "./focus.js?v=37";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -1488,8 +1488,8 @@ function goToStep(stepIndex) {
   }
 
   const nextStep = Math.max(0, Math.min(stepIndex, STEP_META.length - 1));
-  // Avanzar entra desde la derecha, volver desde la izquierda: el mismo
-  // camino en las dos direcciones.
+  // Avanzar entra desde la izquierda y va hacia la derecha, como la flecha;
+  // volver, al reves.
   document.body.dataset.stepDirection = nextStep >= state.currentStep ? "forward" : "back";
   state.currentStep = nextStep;
   renderFlow();
