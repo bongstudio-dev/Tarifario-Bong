@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Sube el sufijo ?v= de los assets en index.html y en los imports de app.js
-// y motion.js (que importa sound.js: tiene que quedar en la misma version que
-// app.js o el navegador carga dos copias del modulo).
+// Sube el sufijo ?v= de los assets en index.html y en los imports de los
+// modulos. Todos tienen que quedar en la misma version: si un modulo importa
+// a otro con un ?v= distinto, el navegador carga dos copias.
 // Sin esto el navegador sigue sirviendo el CSS y el JS viejos y el cambio no
 // llega a quien ya uso el cotizador.
 //
@@ -18,7 +18,6 @@ const files = [
   "app.js",
   "motion.js",
   "focus.js",
-  "sonido-test.html",
   "cuanto-cobrar-por-diseno/index.html"
 ].map((name) => path.join(root, name));
 const pattern = /(\?v=)(\d+)/g;

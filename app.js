@@ -7,17 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=35";
+} from "./currency.js?v=36";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=35";
-import { initAnalytics, track } from "./analytics.js?v=35";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=35";
-import { Sound, initSound } from "./sound.js?v=35";
-import { createResultFocus } from "./focus.js?v=35";
+} from "./pdf-fonts.js?v=36";
+import { initAnalytics, track } from "./analytics.js?v=36";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=36";
+import { createResultFocus } from "./focus.js?v=36";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -165,16 +164,13 @@ function syncCompassMode() {
   }
 }
 
-function syncSoundToggle() {
-  const on = Sound.isEnabled();
-  els.soundToggle.dataset.sound = on ? "on" : "off";
-  els.soundToggle.setAttribute("aria-pressed", String(on));
-  els.soundToggle.setAttribute("aria-label", on ? "Silenciar sonidos" : "Activar sonidos");
-}
-
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  localStorage.setItem("bong-theme", theme);
+  try {
+    localStorage.setItem("bong-theme", theme);
+  } catch {
+    // Sin storage el tema elegido dura lo que dura la pestana.
+  }
   const themeColor = theme === "dark" ? "#004831" : "#f4f1ea";
   document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.content = themeColor);
 }
@@ -217,9 +213,14 @@ window.addEventListener('resize', () => {
 });
 
 function initTheme() {
-  const storedTheme = localStorage.getItem("bong-theme");
-  const preferredDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  applyTheme(storedTheme || (preferredDark ? "dark" : "light"));
+  // Oscuro por defecto. Si la persona eligio el claro alguna vez, se respeta.
+  let storedTheme = null;
+  try {
+    storedTheme = localStorage.getItem("bong-theme");
+  } catch {
+    // Safari en privado tira al leer localStorage: sigue en oscuro.
+  }
+  applyTheme(storedTheme === "light" ? "light" : "dark");
 }
 
 function cacheDom() {
@@ -266,7 +267,6 @@ function cacheDom() {
   els.copyFeedback = document.querySelector("#copy-feedback");
   els.masterclassBadge = document.querySelector(".masterclass-badge");
   els.themeToggle = document.querySelector("#theme-toggle");
-  els.soundToggle = document.querySelector("#sound-toggle");
   els.currencyToggle = document.querySelector("#currency-toggle");
   els.currencyFooter = document.querySelector("#currency-footer");
   els.dockStep = document.querySelector("#dock-step");
@@ -1003,9 +1003,6 @@ function renderDeliverables() {
 
   els.extrasGroup.hidden = extras.length === 0;
   renderToggleChips(els.deliverablesGrid, extras, selectedExtras, (id) => {
-    const turningOn = !selectedExtras.has(id);
-    // El doble blip suena cuando el verde termino de crecer o de vaciarse.
-    window.setTimeout(() => Sound.chip(turningOn), MOTION.fast);
     if (id.startsWith("output:")) {
       const outputId = id.slice("output:".length);
       state.selectedOutputType = state.selectedOutputType === outputId ? service.default_output_type : outputId;
@@ -1327,8 +1324,7 @@ function renderResult() {
   state.renderedCurrency = state.displayCurrency;
   rollText(els.resultPriceValue, formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency), {
     direction: currencyChanged ? state.currencyMotionDirection : 0,
-    delay: MOTION.instant,
-    sound: true
+    delay: MOTION.instant
   });
   els.resultRange.textContent = `Objetivo de tiempo: ${formatHours(quote.totalHours)} · ${getRevisionById(state.selectedRevision).label}`;
   renderConversion(quote);
@@ -1417,7 +1413,7 @@ function renderLiveBudget() {
   const price = formatMoney(convertUsd(quote.suggestedUsd, state.displayCurrency), state.displayCurrency);
   const hours = formatHours(quote.totalHours);
   // El precio arranca cuando la pastilla va por la mitad, no cuando llega.
-  els.livePrices.forEach((node) => rollText(node, price, { delay: MOTION.instant, sound: true }));
+  els.livePrices.forEach((node) => rollText(node, price, { delay: MOTION.instant }));
   els.liveHours.forEach((node) => fadeSwap(node, hours, MOTION.base));
 }
 
@@ -1492,9 +1488,6 @@ function goToStep(stepIndex) {
   }
 
   const nextStep = Math.max(0, Math.min(stepIndex, STEP_META.length - 1));
-  if (nextStep !== state.currentStep) {
-    Sound.step(nextStep > state.currentStep);
-  }
   // Avanzar entra desde la derecha, volver desde la izquierda: el mismo
   // camino en las dos direcciones.
   document.body.dataset.stepDirection = nextStep >= state.currentStep ? "forward" : "back";
@@ -1549,7 +1542,6 @@ async function copyBreakdown() {
     await navigator.clipboard.writeText(getQuoteText());
     track("copiar_desglose", getQuoteDimensions());
     els.copyFeedback.textContent = "✓ Copiado";
-    Sound.chip(true);
     window.setTimeout(() => {
       els.copyFeedback.textContent = "";
     }, 2000);
@@ -1863,10 +1855,7 @@ function bindEvents() {
     // Se registra despues de resolver, asi un PDF que fallo no cuenta como
     // exportado.
     downloadPdf()
-      .then(() => {
-        Sound.confirm();
-        track("exportar_pdf", getQuoteDimensions());
-      })
+      .then(() => track("exportar_pdf", getQuoteDimensions()))
       .catch((error) => {
         els.copyFeedback.textContent = "No se pudo generar el PDF.";
         console.error(error);
@@ -1881,11 +1870,6 @@ function bindEvents() {
     });
   });
   els.themeToggle.addEventListener("click", toggleThemeWithTransition);
-  els.soundToggle.addEventListener("click", () => {
-    Sound.setEnabled(!Sound.isEnabled());
-    syncSoundToggle();
-    Sound.chip(true);
-  });
   window.addEventListener("pointermove", updateCompassPointer);
   window.addEventListener("touchstart", updateCompassPointer, { passive: true });
   window.addEventListener("touchmove", updateCompassPointer, { passive: true });
@@ -1908,8 +1892,6 @@ function bindEvents() {
 async function init() {
   initTheme();
   cacheDom();
-  initSound();
-  syncSoundToggle();
   // En el telefono el resultado scrollea entero y, al bajar, el dock se
   // esconde para que la card gane ese alto.
   state.resultFocus = createResultFocus({
