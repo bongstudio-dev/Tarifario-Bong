@@ -1,47 +1,111 @@
-# Calibracion de precios Bong
+# Calibración de precios Bong
 
-Referencia de trabajo para ajustar el sistema sin seguir moviendo horas a ciegas.
+Referencia de trabajo para ajustar el modelo sin mover horas a ciegas.
+Números al 2026-09-27, salidos de `data/pricing.json`.
 
-Convencion usada en esta tabla:
-- complejidad: `Media`
-- output: el default de cada servicio
-- columnas: valores actuales del sistema y objetivo sugerido en `USD`
+Convención de todas las tablas:
 
-## Servicios ancla
+- complejidad `Media`, output default de cada servicio, mercado `LATAM`, 2 rondas, sin extras
+- cada celda es `USD · presupuesto de horas`
+- el presupuesto de horas **no** es cuánto tarda el trabajo: es el tiempo que deja
+  ese precio a tarifa de mercado (`horas = precio / tarifa de referencia`). Por eso
+  no cambia con el perfil.
 
-| Servicio | Junior actual | Mid actual | Estudio actual | Objetivo sugerido |
-| --- | ---: | ---: | ---: | --- |
-| Pieza RRSS | 32 | 44 | 63 | mantener |
-| Banner digital | 46 | 64 | 92 | mantener |
-| Presentacion corporativa | 266 | 372 | 532 | mantener o bajar levemente |
-| Logotipo | 311 | 436 | 622 | mantener |
-| Manual de marca | 238 | 333 | 476 | mantener |
-| Identidad visual | 703 | 984 | 1406 | mantener por ahora |
-| Branding completo | 1086 | 1520 | 2172 | mantener o bajar levemente |
-| Branding premium | 1277 | 1788 | 2554 | mantener, revisar si premium debe abrir aun mas brecha conceptual y no solo monetaria |
+## Cómo se arma el precio
 
-## Lectura
+1. **Tabla ancla** (`anchor.targets`): Branding completo × tipo de cliente × perfil.
+   Todo el modelo se calibra desde acá.
+2. **Horas por fase** (`H_a` estrategia, `H_b` diseño, `H_c` producción) de cada
+   servicio: definen cuánto vale cada uno respecto del ancla.
+3. **Tipo de cliente**, partido en dos:
+   - `hours_coef` (scope: más páginas de manual, más aplicaciones) — se aplica
+     **solo** a las categorías de `config.tier_hours_categories`: Branding e Identidad.
+   - `rate_coef` (posicionamiento: lo que vale la hora) — se aplica a todo.
 
-- El sistema ya no esta inflado de forma absurda.
-- La familia `logotipo -> identidad visual -> branding completo -> branding premium` ahora tiene una progresion bastante mas entendible.
-- `branding premium` sigue siendo el valor mas sensible del sistema: no parece disparatado, pero exige justificar bien el scope premium.
-- `presentacion corporativa` es el servicio de piezas que mas probablemente necesite una segunda mirada si queremos una herramienta mas conservadora.
+   Un post para una empresa es el mismo post que para un emprendimiento, así que
+   las piezas suben solo por tarifa: Startup ×1,38 y Empresa ×1,59. En Branding e
+   Identidad suben ×2,03 y ×3,26 porque el alcance crece de verdad.
 
-## Regla de calibracion
+La fórmula vive en `app.js` (`calculateQuote`, `getBasePhaseHours`,
+`getBrandTierCoefs`) y está replicada en `scripts/check-benchmark.mjs`.
+Si cambia una, hay que cambiar la otra.
+
+## Tabla ancla — Branding completo
+
+| Tipo de cliente | Junior | Mid | Senior | Estudio |
+| --- | ---: | ---: | ---: | ---: |
+| Emprendimiento | 742 (obj. 700) | 1253 (obj. 1250) | 1832 (obj. 1700) | 3004 (obj. 3000) |
+| Startup | 1505 (obj. 1400) | 2541 (obj. 2500) | 3717 (obj. 3600) | 6093 (obj. 6000) |
+| Empresa | 2421 (obj. 2500) | 4088 (obj. 3750) | 5980 (obj. 6000) | 9803 (obj. 9000) |
+
+Desvío máximo: 9,0% (tolerancia 10%).
+
+## Todos los servicios
+
+### Emprendimiento
+
+| Servicio | Junior | Mid | Senior | Estudio |
+| --- | ---: | ---: | ---: | ---: |
+| Branding completo | 742 · 54.1 h | 1253 · 54.1 h | 1832 · 54.1 h | 3004 · 54.1 h |
+| Identidad visual | 490 · 37.1 h | 828 · 37.1 h | 1211 · 37.1 h | 1986 · 37.1 h |
+| Manual de marca | 311 · 23.5 h | 525 · 23.5 h | 768 · 23.5 h | 1259 · 23.5 h |
+| Logotipo | 197 · 14.9 h | 333 · 14.9 h | 488 · 14.9 h | 799 · 14.9 h |
+| Logo animado | 103 · 7.8 h | 175 · 7.8 h | 255 · 7.8 h | 419 · 7.8 h |
+| Presentación corporativa | 191 · 16.3 h | 323 · 16.3 h | 472 · 16.3 h | 774 · 16.3 h |
+| Plantillas Canva x5 | 103 · 8.8 h | 175 · 8.8 h | 255 · 8.8 h | 419 · 8.8 h |
+| Post animado | 65 · 5.6 h | 110 · 5.6 h | 161 · 5.6 h | 263 · 5.6 h |
+| Papelería básica | 65 · 5.6 h | 110 · 5.6 h | 161 · 5.6 h | 264 · 5.6 h |
+| Banner digital | 30 · 2.6 h | 51 · 2.6 h | 75 · 2.6 h | 122 · 2.6 h |
+| Pieza RRSS | 21 · 1.8 h | 35 · 1.8 h | 51 · 1.8 h | 84 · 1.8 h |
+
+### Startup
+
+| Servicio | Junior | Mid | Senior | Estudio |
+| --- | ---: | ---: | ---: | ---: |
+| Branding completo | 1505 · 79.6 h | 2541 · 79.6 h | 3717 · 79.6 h | 6093 · 79.6 h |
+| Identidad visual | 995 · 54.6 h | 1680 · 54.6 h | 2457 · 54.6 h | 4028 · 54.6 h |
+| Manual de marca | 631 · 34.6 h | 1065 · 34.6 h | 1559 · 34.6 h | 2555 · 34.6 h |
+| Logotipo | 401 · 22.0 h | 676 · 22.0 h | 989 · 22.0 h | 1622 · 22.0 h |
+| Logo animado | 210 · 11.5 h | 354 · 11.5 h | 518 · 11.5 h | 849 · 11.5 h |
+| Presentación corporativa | 264 · 16.3 h | 446 · 16.3 h | 652 · 16.3 h | 1068 · 16.3 h |
+| Plantillas Canva x5 | 143 · 8.8 h | 241 · 8.8 h | 352 · 8.8 h | 578 · 8.8 h |
+| Post animado | 90 · 5.6 h | 151 · 5.6 h | 222 · 5.6 h | 363 · 5.6 h |
+| Papelería básica | 90 · 5.6 h | 152 · 5.6 h | 223 · 5.6 h | 365 · 5.6 h |
+| Banner digital | 42 · 2.6 h | 70 · 2.6 h | 103 · 2.6 h | 169 · 2.6 h |
+| Pieza RRSS | 29 · 1.8 h | 48 · 1.8 h | 70 · 1.8 h | 115 · 1.8 h |
+
+### Empresa
+
+| Servicio | Junior | Mid | Senior | Estudio |
+| --- | ---: | ---: | ---: | ---: |
+| Branding completo | 2421 · 111.0 h | 4088 · 111.0 h | 5980 · 111.0 h | 9803 · 111.0 h |
+| Identidad visual | 1601 · 76.1 h | 2702 · 76.1 h | 3953 · 76.1 h | 6480 · 76.1 h |
+| Manual de marca | 1015 · 48.3 h | 1714 · 48.3 h | 2507 · 48.3 h | 4110 · 48.3 h |
+| Logotipo | 644 · 30.6 h | 1088 · 30.6 h | 1592 · 30.6 h | 2609 · 30.6 h |
+| Logo animado | 337 · 16.0 h | 570 · 16.0 h | 833 · 16.0 h | 1366 · 16.0 h |
+| Presentación corporativa | 304 · 16.3 h | 514 · 16.3 h | 752 · 16.3 h | 1233 · 16.3 h |
+| Plantillas Canva x5 | 165 · 8.8 h | 278 · 8.8 h | 406 · 8.8 h | 666 · 8.8 h |
+| Post animado | 104 · 5.6 h | 175 · 5.6 h | 256 · 5.6 h | 419 · 5.6 h |
+| Papelería básica | 104 · 5.6 h | 176 · 5.6 h | 257 · 5.6 h | 421 · 5.6 h |
+| Banner digital | 48 · 2.6 h | 81 · 2.6 h | 119 · 2.6 h | 195 · 2.6 h |
+| Pieza RRSS | 33 · 1.8 h | 56 · 1.8 h | 81 · 1.8 h | 133 · 1.8 h |
+
+## Último ajuste (2026-09-27)
+
+- **Manual de marca**: fases de 1/5/10 a 2/10/20. Mid/Emprendimiento pasa de
+  USD 263 · 11,8 h a USD 525 · 23,5 h, por encima del Logotipo (USD 333).
+  Objetivo: USD 400–600, 20–30 h.
+- **Plantillas Canva x5**: fases de 0/1/4 a 0/2,4/9,6. Mid/Emprendimiento pasa de
+  USD 73 · 3,7 h a USD 175 · 8,8 h. Objetivo: USD 120–180, 8–10 h.
+- **Tipo de cliente en piezas**: `hours_coef` deja de aplicarse fuera de Branding e
+  Identidad. Pieza RRSS Mid para Empresa pasa de USD 114 · 3,6 h a USD 56 · 1,8 h.
+
+## Regla de calibración
 
 Antes de tocar horas:
 
-1. definir el precio objetivo `Mid / complejidad media`
+1. definir el precio objetivo `Mid / Emprendimiento / complejidad Media`
 2. verificar que `Junior` no quede irrealmente alto
 3. verificar que `Estudio` siga defendiendo posicionamiento
-4. recien despues repartir horas por fase
-
-## Siguiente ronda sugerida
-
-Si seguimos ajustando, conviene mirar solo estos tres:
-
-- `presentacion`
-- `branding_std`
-- `branding_premium`
-
-No tocaria por ahora `rrss`, `banner`, `logotipo`, `manual_marca` ni `identidad_visual`.
+4. recién después repartir horas por fase, manteniendo la proporción entre fases
+5. correr `node scripts/check-benchmark.mjs` y actualizar estas tablas
