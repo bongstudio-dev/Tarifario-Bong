@@ -4,12 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Prueba de sonido · Cotizador Bong</title>
+<title>Sonidos · Cotizador Bong</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Pagina de diagnostico del sonido del cotizador. Cada boton prueba un
-   camino distinto; segun cual suene se sabe por que el cotizador no suena
-   en un telefono puntual. No se linkea desde ningun lado. */
+/* Tablero de sonidos del cotizador (usa sound.js, el mismo modulo de la app)
+   y abajo un diagnostico: cada prueba va por un camino distinto y segun cual
+   suene se sabe por que el cotizador no suena en un telefono puntual. No se
+   linkea desde ningun lado. */
 :root {
   color-scheme: dark;
   --bg: #004831;
@@ -55,6 +56,10 @@ p { margin: 0; color: var(--text-2); line-height: 1.45; }
   cursor: pointer;
 }
 .test:active { transform: scale(0.98); }
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.board button { min-height: 52px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--raise); color: var(--text); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.board button:active { transform: scale(0.97); background: var(--fill); color: var(--on-fill); }
+.board .wide { grid-column: 1 / -1; }
 .test .n { width: 36px; height: 36px; border-radius: 999px; background: var(--fill); color: var(--on-fill); display: grid; place-items: center; font-family: var(--mono); font-weight: 700; }
 .test small { display: block; color: var(--text-2); font-size: 0.8rem; margin-top: 2px; }
 #log { font-family: var(--mono); font-size: 0.7rem; line-height: 1.6; color: var(--text-2); white-space: pre-wrap; word-break: break-word; }
@@ -62,9 +67,29 @@ p { margin: 0; color: var(--text-2); line-height: 1.45; }
 </head>
 <body>
 <main>
-  <p class="mono">Cotizador Bong · diagnóstico</p>
-  <h1>Prueba de sonido</h1>
-  <p>Tocá los cuatro botones <b>en orden</b>, con el volumen a la mitad, y anotá cuáles sonaron. Con eso sé por qué el cotizador no suena en tu teléfono.</p>
+  <p class="mono">Cotizador Bong · sonidos</p>
+  <h1>Sonidos</h1>
+  <p>Cada botón toca un sonido del cotizador tal cual suena en la app. Sacá el modo silencio y probá con auriculares y con el parlante.</p>
+
+  <div class="card">
+    <p class="mono">Del cotizador</p>
+    <div class="board" id="board">
+      <button type="button" data-sound="tick">Tocar un botón</button>
+      <button type="button" data-sound="chipOn">Prender un extra</button>
+      <button type="button" data-sound="toggleRight">Selector → derecha</button>
+      <button type="button" data-sound="toggleLeft">Selector ← izquierda</button>
+      <button type="button" data-sound="up">Precio sube</button>
+      <button type="button" data-sound="down">Precio baja</button>
+      <button type="button" data-sound="stepForward">Avanzar de paso</button>
+      <button type="button" data-sound="stepBack">Volver de paso</button>
+      <button type="button" data-sound="chipOff">Apagar un extra</button>
+      <button type="button" data-sound="confirm">Exportar PDF</button>
+      <button type="button" data-sound="sequence" class="wide">Secuencia: elegir una opción</button>
+    </div>
+  </div>
+
+  <p class="mono">Diagnóstico</p>
+  <p>Si el cotizador no suena, tocá estos cuatro <b>en orden</b> y anotá cuáles sonaron.</p>
 
   <div class="card status" id="status">Cargando…</div>
 
@@ -76,7 +101,39 @@ p { margin: 0; color: var(--text-2); line-height: 1.45; }
   <div class="card"><p class="mono">Registro</p><div id="log"></div></div>
 </main>
 
-<script>
+<script type="module">
+import { Sound, initSound } from "./sound.js?v=35";
+
+// Mismo modulo que la app. El primer toque destraba el audio; ese primer
+// sonido espera un instante a que el contexto arranque.
+initSound();
+Sound.setEnabled(true);
+let warmed = false;
+const board = {
+  tick: () => Sound.tick(),
+  chipOn: () => Sound.chip(true),
+  chipOff: () => Sound.chip(false),
+  toggleRight: () => Sound.toggle(true),
+  toggleLeft: () => Sound.toggle(false),
+  up: () => Sound.up(),
+  down: () => Sound.down(),
+  stepForward: () => Sound.step(true),
+  stepBack: () => Sound.step(false),
+  confirm: () => Sound.confirm(),
+  // Lo que se oye al elegir una opcion en un selector: tick, llega la
+  // pastilla a los 200ms, termina de rodar el precio a los ~530ms.
+  sequence: () => {
+    Sound.tick();
+    setTimeout(() => Sound.toggle(true), 200);
+    setTimeout(() => Sound.up(), 530);
+  }
+};
+document.querySelectorAll("[data-sound]").forEach((b) => b.addEventListener("click", () => {
+  const play = board[b.dataset.sound];
+  if (warmed) play();
+  else setTimeout(() => { warmed = true; play(); }, 120);
+}));
+
 (() => {
   const logEl = document.getElementById("log");
   const statusEl = document.getElementById("status");
