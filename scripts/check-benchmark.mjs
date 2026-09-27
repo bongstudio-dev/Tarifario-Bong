@@ -38,8 +38,14 @@ function blendedBand(category, expertise) {
   return { p25: blend("p25"), median: blend("median"), p90: blend("p90") };
 }
 
+// Espejo de getBrandTierCoefs() en app.js: el tipo de cliente suma horas solo
+// en las categorias donde el scope crece de verdad; el resto lleva solo tarifa.
+const scopeCategories = pricing.config.tier_hours_categories || [];
+const tierHoursFor = (service, tier) =>
+  scopeCategories.includes(service.category) ? tier.hours_coef : 1.0;
+
 function quote(service, expertise, complexity, output, market, revision, tier) {
-  const tierHours = tier.hours_coef;
+  const tierHours = tierHoursFor(service, tier);
   const base = {
     a: service.H_a * tierHours,
     b: service.H_b * tierHours,
@@ -140,9 +146,11 @@ function sweep(axis, values, build) {
 }
 
 const marketsAscending = [...pricing.markets].sort((a, b) => a.coef - b.coef);
-const tiersAscending = [...pricing.brand_tiers].sort(
-  (a, b) => a.hours_coef * a.rate_coef - b.hours_coef * b.rate_coef
-);
+const tiersAscendingFor = (service) =>
+  [...pricing.brand_tiers].sort(
+    (a, b) =>
+      tierHoursFor(service, a) * a.rate_coef - tierHoursFor(service, b) * b.rate_coef
+  );
 
 for (const service of pricing.services) {
   const outputs = outputsFor(service);
@@ -195,7 +203,7 @@ for (const service of pricing.services) {
           sweep("mercado", marketsAscending, (market) =>
             quote(service, expertise, complexity, output, market, revision, pricing.brand_tiers[0])
           );
-          sweep("tipo de cliente", tiersAscending, (tier) =>
+          sweep("tipo de cliente", tiersAscendingFor(service), (tier) =>
             quote(service, expertise, complexity, output, pricing.markets[0], revision, tier)
           );
         }

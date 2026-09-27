@@ -7,14 +7,14 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=16";
+} from "./currency.js?v=17";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=16";
-import { initAnalytics, track } from "./analytics.js?v=16";
+} from "./pdf-fonts.js?v=17";
+import { initAnalytics, track } from "./analytics.js?v=17";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -421,10 +421,14 @@ function getAllSelectedLineItems() {
 // El tipo de cliente se parte en dos: scope real (mas paginas de manual, mas
 // aplicaciones = mas horas) y posicionamiento (lo que vale esa hora). Meterlo
 // todo como precio dejaria el PDF diciendo 72h para un proyecto de USD 9.000.
+// El scope solo crece de verdad en Branding e Identidad: un post para una
+// empresa es el mismo post, asi que las piezas llevan solo posicionamiento.
 function getBrandTierCoefs() {
   const tier = getBrandTierById(state.selectedBrandTier);
+  const scopeCategories = state.pricingData.config.tier_hours_categories || [];
+  const scalesHours = scopeCategories.includes(getCurrentService()?.category);
   return {
-    hours: tier?.hours_coef ?? 1.0,
+    hours: scalesHours ? tier?.hours_coef ?? 1.0 : 1.0,
     rate: tier?.rate_coef ?? 1.0
   };
 }

@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "updated_at": "2026-08-10",
+  "updated_at": "2026-09-27",
   "author": "Bong Studio",
   "methodology": "Metodo Bong - formula por fases",
   "disclaimer": "Referencia orientativa basada en la metodologia propia de Bong Studio.",
@@ -18,7 +18,8 @@
     "X_a": 52.1,
     "X_b": 25.5,
     "X_c": 17.4,
-    "Y": 1.2
+    "Y": 1.2,
+    "tier_hours_categories": ["Branding", "Identidad"]
   },
   "brand_tiers": [
     {
@@ -202,7 +203,7 @@
       "name": "Plantillas Canva x5",
       "category": "Piezas",
       "caption": "Sistema editable para equipo o cliente.",
-      "H_a": 0, "H_b": 1, "H_c": 4,
+      "H_a": 0, "H_b": 2.4, "H_c": 9.6,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": [],
@@ -268,7 +269,7 @@
       "name": "Manual de marca",
       "category": "Identidad",
       "caption": "Sistema normativo y criterios de uso.",
-      "H_a": 1, "H_b": 5, "H_c": 10,
+      "H_a": 2, "H_b": 10, "H_c": 20,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["manual_extend"],
