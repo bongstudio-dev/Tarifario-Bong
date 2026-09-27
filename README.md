@@ -43,31 +43,6 @@ Corrélo después de tocar `pricing.json` o `benchmark.json`.
 La fórmula que usan los scripts vive en `scripts/lib/quote.mjs` y replica la de
 `app.js`: si cambia una, hay que cambiar la otra.
 
-## Contra el criterio de la IA
-
-```bash
-node scripts/check-ia.mjs          # reporte
-node scripts/check-ia.mjs --md     # en markdown, para pegar en un PR
-node scripts/check-ia.mjs --strict # falla si algún caso queda fuera de rango
-```
-
-Compara 117 casos contra `data/ia-reference.json`: rangos en USD (mín, típico,
-máx) y horas de trabajo que estimó la IA **sin ver el modelo**. Los casos mueven
-un eje por vez desde el default (perfil, tipo de cliente, mercado, complejidad,
-rondas, salida) y suman las esquinas caras (Estudio · Empresa · USA).
-
-Lo más útil es la tabla de forma: compara cuánto multiplica cada eje en el
-modelo y en la IA, por categoría. Así se ve qué coeficiente mirar. Como el
-benchmark, ubica y no decide.
-
-Para regenerar la referencia (si cambian servicios u opciones, el check avisa):
-
-1. `node scripts/build-ia-prompt.mjs > scripts/ia-reference-prompt.md`. El
-   prompt solo lleva nombres y descripciones: ni horas, ni coeficientes, ni
-   tabla ancla.
-2. Pasárselo a una IA en un contexto que no vea el repo y guardar su JSON en
-   `data/ia-reference.json`, con los metadatos del archivo actual.
-
 ## Referencia de mercado
 
 `data/benchmark.json` mezcla pistas ponderadas. Cada percentil lleva un campo
