@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=40";
+} from "./currency.js?v=41";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=40";
-import { initAnalytics, track } from "./analytics.js?v=40";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=40";
-import { createResultFocus } from "./focus.js?v=40";
+} from "./pdf-fonts.js?v=41";
+import { initAnalytics, track } from "./analytics.js?v=41";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=41";
+import { createResultFocus } from "./focus.js?v=41";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -257,6 +257,7 @@ function cacheDom() {
   els.benchInsight = document.querySelector("#bench-insight");
   els.benchFootnote = document.querySelector("#bench-footnote");
   els.resultRange = document.querySelector("#result-range");
+  els.resultPriceRange = document.querySelector("#result-price-range");
   els.conversion = document.querySelector("#conversion");
   els.breakdown = document.querySelector("#breakdown");
   els.resultPill = document.querySelector("#result-pill");
@@ -1055,6 +1056,23 @@ function renderDeliverables() {
 
 // Monto sin simbolo: en la conversion y en las filas el codigo de moneda ya
 // va al lado, y "$" solo no distingue USD de ARS.
+// El precio sugerido es un punto dentro de un rango: se muestran los dos. Los
+// extremos van a dos cifras significativas para que se lean como rango y no
+// como un numero exacto.
+function roundRangeValue(value) {
+  if (value <= 0) {
+    return 0;
+  }
+  const step = 10 ** Math.max(0, Math.floor(Math.log10(value)) - 1);
+  return Math.round(value / step) * step;
+}
+
+function formatPriceRange(usd, currency) {
+  const { low, high } = state.pricingData.config.price_range || { low: 1, high: 1 };
+  const amount = (factor) => formatAmount(roundRangeValue(convertUsd(usd * factor, currency)), currency);
+  return `${getCurrencyConfig(currency).label} ${amount(low)} – ${amount(high)}`;
+}
+
 function formatAmount(value, currency) {
   return new Intl.NumberFormat(getCurrencyConfig(currency).locale, {
     maximumFractionDigits: 0
@@ -1331,6 +1349,7 @@ function renderResult() {
     els.resultServiceTitle.textContent = "Selecciona un servicio";
     els.resultPriceValue.textContent = "ARS 0";
     els.resultPriceValue.dataset.rollValue = "ARS 0";
+    els.resultPriceRange.textContent = "";
     els.resultRange.textContent = "Elegí un servicio para calcular el presupuesto.";
     els.breakdown.innerHTML = "";
     els.conversion.innerHTML = "";
@@ -1350,6 +1369,7 @@ function renderResult() {
     direction: currencyChanged ? state.currencyMotionDirection : 0,
     delay: MOTION.instant
   });
+  fadeSwap(els.resultPriceRange, `Rango habitual: ${formatPriceRange(quote.suggestedUsd, state.displayCurrency)}`);
   els.resultRange.textContent = `Objetivo de tiempo: ${formatHours(quote.totalHours)} · ${getRevisionById(state.selectedRevision).label}`;
   renderConversion(quote);
   renderBreakdown(quote);
@@ -1539,6 +1559,7 @@ function getQuoteText() {
     `Output: ${getOutputTypeById(state.selectedOutputType).label}`,
     "",
     `Precio sugerido: ${formatMoney(quote.suggestedUsd, "usd")} / ${formatMoney(quote.suggestedArs, "ars")}`,
+    `Rango habitual: ${formatPriceRange(quote.suggestedUsd, "usd")}`,
     `Objetivo de horas: ${quote.totalHours.toFixed(1)}h`,
     ...(quote.benchmark
       ? [`Ventana de mercado: ${formatHours(quote.benchmark.budget.min)} a ${formatHours(quote.benchmark.budget.max)}`]
@@ -1686,7 +1707,8 @@ async function downloadPdf() {
     10 + // spacer after fases divider
     8 + // items title
     visibleLineItems.length * 6.5 +
-    benchmarkPdfLines * 6;
+    benchmarkPdfLines * 6 +
+    6; // rango
   const footerBlockHeight = 34;
   const calculatedHeight = Math.ceil(estimatedContentBottom + footerBlockHeight + 16);
   const pdfHeight = Math.max(250, calculatedHeight);
@@ -1822,6 +1844,9 @@ async function downloadPdf() {
 
   doc.setFont("SpaceMono", "normal");
   doc.setFontSize(8.5);
+  // Space Mono embebida no tiene raya: el rango va con guion.
+  doc.text(`RANGO ${formatPriceRange(quote.suggestedUsd, "usd").replace("–", "-")}`, pad, y);
+  y += 6;
   doc.text(`HORAS ${quote.totalHours.toFixed(1)}`, pad, y);
   y += 6;
   doc.text(`PERFIL ${getExpertiseById(state.selectedExpertise).label.toUpperCase()}`, pad, y);

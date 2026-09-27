@@ -1596,6 +1596,10 @@ button {
   font-size: 0.68rem;
 }
 
+.result-price-range + .result-range {
+  margin-top: 2px;
+}
+
 /* Desglose y benchmark comparten un solo contenedor scrolleable: si cada uno
    compite por el alto del card, el benchmark aplasta al desglose. */
 .result-scroll {

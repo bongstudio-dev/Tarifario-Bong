@@ -64,11 +64,11 @@ Si cambia una, hay que cambiar la otra.
 
 | Tipo de cliente | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Emprendimiento | 550 (obj. 550) | 1100 (obj. 1100) | 1999 (obj. 2000) | 3099 (obj. 3100) |
-| Startup | 874 (obj. 875) | 1748 (obj. 1750) | 3178 (obj. 3180) | 4927 (obj. 4930) |
-| Empresa | 1474 (obj. 1475) | 2948 (obj. 2950) | 5360 (obj. 5360) | 8308 (obj. 8300) |
+| Emprendimiento | 632 (obj. 630) | 1265 (obj. 1270) | 2299 (obj. 2300) | 3563 (obj. 3570) |
+| Startup | 1005 (obj. 1010) | 2011 (obj. 2010) | 3655 (obj. 3660) | 5665 (obj. 5670) |
+| Empresa | 1695 (obj. 1700) | 3391 (obj. 3390) | 6163 (obj. 6160) | 9554 (obj. 9550) |
 
-Desvío máximo: 0,1% (tolerancia 10%).
+Desvío máximo: 0,5% (tolerancia 10%).
 
 ## Todos los servicios
 
@@ -76,10 +76,10 @@ Desvío máximo: 0,1% (tolerancia 10%).
 
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Branding completo | 550 · 47.5 h | 1100 · 47.5 h | 1999 · 47.5 h | 3099 · 47.5 h |
-| Identidad visual | 363 · 31.4 h | 701 · 31.4 h | 1236 · 31.4 h | 1874 · 31.4 h |
-| Manual de marca | 300 · 25.1 h | 559 · 25.1 h | 957 · 25.1 h | 1420 · 25.1 h |
-| Logotipo | 179 · 16.0 h | 358 · 16.0 h | 651 · 16.0 h | 1009 · 16.0 h |
+| Branding completo | 632 · 54.6 h | 1265 · 54.6 h | 2299 · 54.6 h | 3563 · 54.6 h |
+| Identidad visual | 417 · 36.1 h | 806 · 36.1 h | 1422 · 36.1 h | 2156 · 36.1 h |
+| Manual de marca | 320 · 26.8 h | 598 · 26.8 h | 1024 · 26.8 h | 1519 · 26.8 h |
+| Logotipo | 206 · 18.4 h | 411 · 18.4 h | 748 · 18.4 h | 1159 · 18.4 h |
 | Logo animado | 102 · 9.3 h | 183 · 9.3 h | 305 · 9.3 h | 442 · 9.3 h |
 | Presentación corporativa | 143 · 13.5 h | 266 · 13.5 h | 456 · 13.5 h | 676 · 13.5 h |
 | Plantillas Canva x5 | 90 · 7.7 h | 152 · 7.7 h | 238 · 7.7 h | 331 · 7.7 h |
@@ -92,10 +92,10 @@ Desvío máximo: 0,1% (tolerancia 10%).
 
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Branding completo | 874 · 63.0 h | 1748 · 63.0 h | 3178 · 63.0 h | 4927 · 63.0 h |
-| Identidad visual | 492 · 35.5 h | 950 · 35.5 h | 1676 · 35.5 h | 2542 · 35.5 h |
-| Manual de marca | 500 · 34.8 h | 932 · 34.8 h | 1596 · 34.8 h | 2368 · 34.8 h |
-| Logotipo | 236 · 17.6 h | 471 · 17.6 h | 857 · 17.6 h | 1328 · 17.6 h |
+| Branding completo | 1005 · 72.4 h | 2011 · 72.4 h | 3655 · 72.4 h | 5665 · 72.4 h |
+| Identidad visual | 566 · 40.8 h | 1093 · 40.8 h | 1928 · 40.8 h | 2923 · 40.8 h |
+| Manual de marca | 534 · 37.3 h | 997 · 37.3 h | 1708 · 37.3 h | 2534 · 37.3 h |
+| Logotipo | 271 · 20.2 h | 542 · 20.2 h | 985 · 20.2 h | 1527 · 20.2 h |
 | Logo animado | 122 · 9.3 h | 220 · 9.3 h | 365 · 9.3 h | 530 · 9.3 h |
 | Presentación corporativa | 171 · 13.5 h | 319 · 13.5 h | 547 · 13.5 h | 811 · 13.5 h |
 | Plantillas Canva x5 | 108 · 7.7 h | 182 · 7.7 h | 286 · 7.7 h | 397 · 7.7 h |
@@ -108,10 +108,10 @@ Desvío máximo: 0,1% (tolerancia 10%).
 
 | Servicio | Junior | Mid | Senior | Estudio |
 | --- | ---: | ---: | ---: | ---: |
-| Branding completo | 1474 · 89.1 h | 2948 · 89.1 h | 5360 · 89.1 h | 8308 · 89.1 h |
-| Identidad visual | 700 · 42.4 h | 1352 · 42.4 h | 2386 · 42.4 h | 3618 · 42.4 h |
-| Manual de marca | 878 · 51.4 h | 1638 · 51.4 h | 2805 · 51.4 h | 4162 · 51.4 h |
-| Logotipo | 323 · 20.3 h | 646 · 20.3 h | 1175 · 20.3 h | 1821 · 20.3 h |
+| Branding completo | 1695 · 102.5 h | 3391 · 102.5 h | 6163 · 102.5 h | 9554 · 102.5 h |
+| Identidad visual | 805 · 48.8 h | 1555 · 48.8 h | 2744 · 48.8 h | 4162 · 48.8 h |
+| Manual de marca | 939 · 54.9 h | 1753 · 54.9 h | 3002 · 54.9 h | 4453 · 54.9 h |
+| Logotipo | 371 · 23.3 h | 743 · 23.3 h | 1350 · 23.3 h | 2093 · 23.3 h |
 | Logo animado | 145 · 9.3 h | 262 · 9.3 h | 436 · 9.3 h | 632 · 9.3 h |
 | Presentación corporativa | 204 · 13.5 h | 381 · 13.5 h | 652 · 13.5 h | 967 · 13.5 h |
 | Plantillas Canva x5 | 129 · 7.7 h | 217 · 7.7 h | 340 · 7.7 h | 473 · 7.7 h |
@@ -138,6 +138,14 @@ Desvío máximo: 0,1% (tolerancia 10%).
    Mid bajan, Senior sube y Estudio vuelve a 3.100 en Emprendimiento. Se suma el
    peso de perfil por servicio (`expertise_weight`) para que el salto entre
    perfiles de un branding no se traslade entero a las piezas.
+
+6. **Nivel de marca +15%**: tabla ancla Emprendimiento 630 / 1.270 / 2.300 /
+   3.570; Startup 1.010 / 2.010 / 3.660 / 5.670; Empresa 1.700 / 3.390 / 6.160 /
+   9.550. Identidad visual y Logotipo +15%, Manual +7% (sigue por debajo de USD
+   600 en Mid). Las piezas no cambian. Con esto el presupuesto de horas de un
+   branding Mid pasa de 47 a 55 h.
+7. **Rango en el resultado**: además del precio sugerido se muestra un rango
+   habitual (`config.price_range`, hoy ×0,8 a ×1,2), redondeado a dos cifras.
 
 ## Regla de calibración
 
