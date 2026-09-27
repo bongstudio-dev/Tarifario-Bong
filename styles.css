@@ -2526,15 +2526,16 @@ body.app-ready .dock-actions > *:nth-child(2) {
   }
 }
 
-/* Avanzar entra desde la derecha, volver desde la izquierda (app.js pone la
+/* Avanzar entra desde la izquierda y se mueve hacia la derecha, en la
+   direccion de la flecha y del progreso; volver, al reves (app.js pone la
    direccion). En la primera carga no hay direccion y sube desde abajo. */
 body[data-step-direction="forward"] {
-  --step-enter-x: 24px;
+  --step-enter-x: -24px;
   --step-enter-y: 0px;
 }
 
 body[data-step-direction="back"] {
-  --step-enter-x: -24px;
+  --step-enter-x: 24px;
   --step-enter-y: 0px;
 }
 

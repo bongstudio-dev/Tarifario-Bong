@@ -18,7 +18,7 @@ La sensación que buscamos mezcla dos escuelas:
 | Duraciones y curvas como tokens, siempre las mismas | Los objetos son fluidos: la pastilla elegida es una sola pieza que viaja y se estira, no dos que se apagan y se prenden |
 | Curvas que desaceleran: arranca rápido, llega suave | Todo es interrumpible y retoma desde la posición actual |
 | Press con escala: el botón se hunde al tocarlo | Estiramiento elástico en la dirección del movimiento, que se recompone al llegar |
-| Transiciones con eje: avanzar entra desde la derecha, volver desde la izquierda | Los bordes se desvanecen en vez de cortar (el carrusel de monedas) |
+| Transiciones con eje: avanzar se mueve hacia la derecha, como la flecha; volver, hacia la izquierda | Los bordes se desvanecen en vez de cortar (el carrusel de monedas) |
 | Primero el componente, después el contenido | Continuidad: lo que cambia se transforma en el lugar, no desaparece |
 
 De Liquid Glass tomamos el comportamiento, no el material. No hay vidrio,
@@ -130,7 +130,8 @@ la bajada es instantánea y la subida tiene rebote.
 ### Cambio de paso
 
 - `goToStep` marca `data-step-direction` en el `body`. El paso nuevo entra
-  24 px desde la derecha al avanzar y desde la izquierda al volver.
+  24 px desde la izquierda al avanzar y se mueve hacia la derecha, en la
+  dirección de la flecha y de los puntos del progreso. Al volver, al revés.
 - El contenido del paso sube escalonado cada 40 ms.
 - Al llegar al resultado, las filas del recibo entran de arriba hacia abajo,
   en el orden en que se leen. Solo al llegar: si se redibujan por un cambio
