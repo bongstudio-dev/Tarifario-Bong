@@ -197,6 +197,10 @@ title("RESUMEN");
 console.log(`Dentro del rango de la IA: ${inside} de ${results.length} (${Math.round((inside / results.length) * 100)}%)`);
 console.log(`Abajo: ${below} · Arriba: ${outside.length - below}`);
 console.log(`Modelo / IA tipico, mediana: ${x2(median(results.map((r) => r.ratio)))}`);
+const distance = (r) => Math.max(r.ratio, 1 / r.ratio) - 1;
+const near = results.filter((r) => distance(r) <= 0.15).length;
+console.log(`Distancia al tipico, mediana: ${Math.round(median(results.map(distance)) * 100)}%`);
+console.log(`A menos de 15% del tipico: ${near} de ${results.length} (${Math.round((near / results.length) * 100)}%)`);
 console.log(`Referencia: ${reference.generated_at} · ${reference.method}`);
 
 if (strict && outside.length > 0) {

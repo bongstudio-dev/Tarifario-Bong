@@ -9,9 +9,9 @@
     "conditions": "complejidad Media, output Estatico, mercado LATAM, 2 rondas",
     "note": "Todo el sistema se calibra desde esta tabla. Si cambia, correr scripts/check-benchmark.mjs.",
     "targets": {
-      "emprendimiento": { "jr": 700, "mid": 1250, "sr": 1700, "std": 3000 },
-      "startup":        { "jr": 1400, "mid": 2500, "sr": 3600, "std": 6000 },
-      "empresa":        { "jr": 2500, "mid": 3750, "sr": 6000, "std": 9000 }
+      "emprendimiento": { "jr": 700, "mid": 1250, "sr": 1700, "std": 2550 },
+      "startup":        { "jr": 1400, "mid": 2500, "sr": 3600, "std": 5100 },
+      "empresa":        { "jr": 2500, "mid": 3750, "sr": 6000, "std": 7650 }
     }
   },
   "config": {
@@ -32,15 +32,15 @@
       "id": "startup",
       "label": "Startup",
       "caption": "Estrategia, identidad completa, manual 70-80 páginas, 2 aplicaciones.",
-      "hours_coef": 1.47,
-      "rate_coef": 1.38
+      "hours_coef": 1.64,
+      "rate_coef": 1.2
     },
     {
       "id": "empresa",
       "label": "Empresa",
       "caption": "Estrategia profunda, sistema de marca, manual 100-130 páginas, aplicaciones.",
-      "hours_coef": 2.05,
-      "rate_coef": 1.592
+      "hours_coef": 2.17,
+      "rate_coef": 1.43
     }
   ],
   "markets": [
@@ -52,23 +52,23 @@
     { "id": "jr",  "label": "Junior",  "coef": 0.247 },
     { "id": "mid", "label": "Mid",     "coef": 0.417 },
     { "id": "sr",  "label": "Senior",  "coef": 0.610 },
-    { "id": "std", "label": "Estudio", "coef": 1.0 }
+    { "id": "std", "label": "Estudio", "coef": 0.85 }
   ],
   "complexity": [
     { "id": "low", "label": "Baja",  "coef": 1.0 },
     { "id": "mid", "label": "Media", "coef": 1.3 },
-    { "id": "high","label": "Alta",  "coef": 1.7 }
+    { "id": "high","label": "Alta",  "coef": 1.85 }
   ],
   "output_types": [
     { "id": "static",      "label": "Estático",       "coef": 1.0 },
-    { "id": "motion",      "label": "Motion",         "coef": 1.2 },
-    { "id": "interactive", "label": "Interactivo / 3D","coef": 1.4 }
+    { "id": "motion",      "label": "Motion",         "coef": 1.4 },
+    { "id": "interactive", "label": "Interactivo / 3D","coef": 1.9 }
   ],
   "revisions": [
     { "id": "1",    "label": "1 ronda",   "extra_hours_coef": 0.0 },
     { "id": "2",    "label": "2 rondas",  "extra_hours_coef": 0.15 },
-    { "id": "3",    "label": "3 rondas",  "extra_hours_coef": 0.3 },
-    { "id": "plus", "label": "+3 rondas", "extra_hours_coef": 0.5 }
+    { "id": "3",    "label": "3 rondas",  "extra_hours_coef": 0.35 },
+    { "id": "plus", "label": "+3 rondas", "extra_hours_coef": 0.6 }
   ],
   "addons": [
     {
@@ -170,8 +170,8 @@
       "name": "Identidad visual",
       "category": "Identidad",
       "caption": "Sistema visual con estrategia y piezas base.",
-      "H_a": 4, "H_b": 29, "H_c": 11,
-      "tier_hours_weight": 0.1,
+      "H_a": 3.38, "H_b": 24.54, "H_c": 9.31,
+      "tier_hours_weight": 0.25,
       "default_output_type": "static",
       "allowed_output_types": ["static", "motion"],
       "included_addons": ["logo", "palette", "typography"],
@@ -182,7 +182,7 @@
       "name": "Pieza RRSS",
       "category": "Piezas",
       "caption": "Post estático de respuesta rápida.",
-      "H_a": 0, "H_b": 1.2, "H_c": 0.4,
+      "H_a": 0, "H_b": 1.07, "H_c": 0.36,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": [],
@@ -193,7 +193,7 @@
       "name": "Banner digital",
       "category": "Piezas",
       "caption": "Pieza puntual para ads o web.",
-      "H_a": 0, "H_b": 1.4, "H_c": 0.7,
+      "H_a": 0, "H_b": 1.31, "H_c": 0.65,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": [],
@@ -204,7 +204,7 @@
       "name": "Plantillas Canva x5",
       "category": "Piezas",
       "caption": "Sistema editable para equipo o cliente.",
-      "H_a": 0, "H_b": 2.4, "H_c": 9.6,
+      "H_a": 0, "H_b": 2.09, "H_c": 8.36,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": [],
@@ -215,7 +215,7 @@
       "name": "Post animado",
       "category": "Piezas",
       "caption": "Pieza en movimiento para redes.",
-      "H_a": 0, "H_b": 1.6, "H_c": 3.2,
+      "H_a": 0, "H_b": 1.09, "H_c": 2.18,
       "default_output_type": "motion",
       "allowed_output_types": ["motion"],
       "included_addons": [],
@@ -226,7 +226,7 @@
       "name": "Papelería básica",
       "category": "Piezas",
       "caption": "Tarjeta, membretada y sobre.",
-      "H_a": 0, "H_b": 3, "H_c": 4,
+      "H_a": 0, "H_b": 2.95, "H_c": 3.93,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["stationery"],
@@ -237,7 +237,7 @@
       "name": "Presentación corporativa",
       "category": "Piezas",
       "caption": "Deck para ventas, marca o inversores.",
-      "H_a": 2, "H_b": 10, "H_c": 5,
+      "H_a": 1.65, "H_b": 8.24, "H_c": 4.12,
       "default_output_type": "static",
       "allowed_output_types": ["static", "interactive"],
       "included_addons": [],
@@ -248,7 +248,7 @@
       "name": "Logo animado",
       "category": "Piezas",
       "caption": "Animación de un logo existente.",
-      "H_a": 0, "H_b": 2, "H_c": 8,
+      "H_a": 0, "H_b": 1.8, "H_c": 7.2,
       "default_output_type": "motion",
       "allowed_output_types": ["motion"],
       "included_addons": ["motion_system"],
@@ -259,8 +259,8 @@
       "name": "Logotipo",
       "category": "Identidad",
       "caption": "Solo logo, sin sistema completo.",
-      "H_a": 2, "H_b": 12, "H_c": 3,
-      "tier_hours_weight": 0.1,
+      "H_a": 2.15, "H_b": 12.88, "H_c": 3.22,
+      "tier_hours_weight": 0.2,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["logo"],
@@ -271,8 +271,8 @@
       "name": "Manual de marca",
       "category": "Identidad",
       "caption": "Sistema normativo y criterios de uso.",
-      "H_a": 2, "H_b": 10, "H_c": 20,
-      "tier_hours_weight": 1.0,
+      "H_a": 2.13, "H_b": 10.64, "H_c": 21.28,
+      "tier_hours_weight": 0.8,
       "default_output_type": "static",
       "allowed_output_types": ["static"],
       "included_addons": ["manual_extend"],
