@@ -82,6 +82,9 @@ Primero el dato, después el porqué.
 - `watchSegThumb` la reubica sin animar cuando el selector cambia de tamaño o
   aparece. Por ejemplo, al entrar a un paso: mientras el paso está oculto, los
   botones miden 0.
+- Si no había nada elegido (la pregunta "¿Qué te parece este precio?" arranca
+  vacía), la pastilla no viene de ningún lado: aparece en su lugar con fade,
+  sin viajar desde el borde.
 
 ### Dígitos que ruedan
 

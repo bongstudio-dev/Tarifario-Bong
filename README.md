@@ -64,8 +64,13 @@ todo interrumpible, nada que haga esperar. Están documentadas en
 GA4 en `analytics.js`. Si el Measurement ID queda vacío no se carga ningún
 script externo ni se envía nada. Respeta Do Not Track.
 
+Después del resultado se pregunta "¿Qué te parece este precio?" (Barato, Justo,
+Caro). Cada respuesta llega como evento `opinion_precio`, con la configuración
+de la cotización y el parámetro `opinion` (y `opinion_previa` si la persona
+cambió de respuesta). Es la fuente para recalibrar precios con uso real.
+
 Los parámetros de los eventos (`servicio`, `tipo_cliente`, `perfil`,
-`precio_usd`, `horas_objetivo`, etc.) no se ven en los reportes de GA4 hasta
+`precio_usd`, `horas_objetivo`, `opinion`, etc.) no se ven en los reportes de GA4 hasta
 registrarlos como dimensiones personalizadas en Admin.
 
 ## Imagen de preview

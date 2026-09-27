@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=43";
+} from "./currency.js?v=44";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=43";
-import { initAnalytics, track } from "./analytics.js?v=43";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=43";
-import { createResultFocus } from "./focus.js?v=43";
+} from "./pdf-fonts.js?v=44";
+import { initAnalytics, track } from "./analytics.js?v=44";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=44";
+import { createResultFocus } from "./focus.js?v=44";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -59,7 +59,10 @@ const state = {
   currentStep: 0,
   hasTouchedService: false,
   trackedStep: null,
-  trackedQuote: false
+  trackedQuote: false,
+  // Respuesta a "que te parece este precio", atada a la cotizacion que la
+  // genero: si cambia la configuracion, la pregunta vuelve a quedar abierta.
+  priceOpinion: { key: null, value: null }
 };
 
 const els = {};
@@ -258,6 +261,9 @@ function cacheDom() {
   els.benchFootnote = document.querySelector("#bench-footnote");
   els.resultRange = document.querySelector("#result-range");
   els.resultPriceRange = document.querySelector("#result-price-range");
+  els.priceOpinion = document.querySelector("#price-opinion");
+  els.priceOpinionSeg = document.querySelector("#price-opinion-seg");
+  els.priceOpinionMeta = document.querySelector("#price-opinion-meta");
   els.conversion = document.querySelector("#conversion");
   els.breakdown = document.querySelector("#breakdown");
   els.resultPill = document.querySelector("#result-pill");
@@ -1362,6 +1368,7 @@ function renderResult() {
     els.resultPriceValue.textContent = "ARS 0";
     els.resultPriceValue.dataset.rollValue = "ARS 0";
     els.resultPriceRange.textContent = "";
+    els.priceOpinion.hidden = true;
     els.resultRange.textContent = "Elegí un servicio para calcular el presupuesto.";
     els.breakdown.innerHTML = "";
     els.conversion.innerHTML = "";
@@ -1383,6 +1390,7 @@ function renderResult() {
   });
   fadeSwap(els.resultPriceRange, `Rango habitual: ${formatPriceRange(quote.suggestedUsd, state.displayCurrency)}`);
   els.resultRange.textContent = `Objetivo de tiempo: ${formatHours(quote.totalHours)} · ${getRevisionById(state.selectedRevision).label}`;
+  renderPriceOpinion();
   renderConversion(quote);
   renderBreakdown(quote);
   renderResultPill();
@@ -1390,6 +1398,38 @@ function renderResult() {
   renderCurrencyToggle();
   els.copyButton.disabled = false;
   els.pdfButton.disabled = false;
+}
+
+const PRICE_OPINIONS = [
+  { id: "barato", label: "Barato" },
+  { id: "justo", label: "Justo" },
+  { id: "caro", label: "Caro" }
+];
+
+// La pregunta post-resultado: que le parece el precio a quien cotiza. Va a
+// analytics con la configuracion completa para poder recalibrar con uso real.
+function renderPriceOpinion() {
+  els.priceOpinion.hidden = false;
+  const key = JSON.stringify(getQuoteDimensions());
+  if (state.priceOpinion.key !== key) {
+    state.priceOpinion = { key, value: null };
+  }
+  renderSeg(els.priceOpinionSeg, PRICE_OPINIONS, state.priceOpinion.value, pickPriceOpinion);
+  fadeSwap(els.priceOpinionMeta, state.priceOpinion.value ? "Gracias" : "");
+}
+
+function pickPriceOpinion(id) {
+  const previous = state.priceOpinion.value;
+  if (previous === id) {
+    return;
+  }
+  state.priceOpinion.value = id;
+  track("opinion_precio", {
+    ...getQuoteDimensions(),
+    opinion: id,
+    ...(previous ? { opinion_previa: previous } : {})
+  });
+  renderPriceOpinion();
 }
 
 function getDialConfig(kind) {

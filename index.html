@@ -46,7 +46,7 @@
        archivos viejos y el cambio no llega al usuario. Para bumpear todo junto
        corre el comando que esta en el README, no lo escribo aca porque el
        propio sed se lo comeria. -->
-  <link rel="stylesheet" href="./styles.css?v=43">
+  <link rel="stylesheet" href="./styles.css?v=44">
 
   <script type="application/ld+json">
 {
@@ -306,6 +306,13 @@
               </div>
               <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
               <div class="result-scroll">
+                <section class="dial price-opinion" id="price-opinion" aria-labelledby="price-opinion-title" hidden>
+                  <div class="dial-head">
+                    <h3 class="dial-name" id="price-opinion-title">¿Qué te parece este precio?</h3>
+                    <span class="dial-meta" id="price-opinion-meta" aria-live="polite"></span>
+                  </div>
+                  <div class="dial-seg" id="price-opinion-seg" role="group" aria-labelledby="price-opinion-title"></div>
+                </section>
                 <div class="conversion" id="conversion"></div>
                 <div class="breakdown" id="breakdown"></div>
                 <p class="info-pill" id="result-pill" hidden></p>
@@ -339,7 +346,7 @@
             >
               <img
                 class="masterclass-art"
-                src="./assets/img/masterclass.png?v=43"
+                src="./assets/img/masterclass.png?v=44"
                 alt=""
                 width="256"
                 height="256"
@@ -377,6 +384,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script type="module" src="./app.js?v=43"></script>
+  <script type="module" src="./app.js?v=44"></script>
 </body>
 </html>
