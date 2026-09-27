@@ -24,11 +24,11 @@ export function createQuoter(pricing, benchmark) {
     return { p25: blend("p25"), median: blend("median"), p90: blend("p90") };
   }
 
-  // Espejo de getBrandTierCoefs() en app.js: el tipo de cliente suma horas solo
-  // en las categorias donde el scope crece de verdad; el resto lleva solo tarifa.
-  const scopeCategories = pricing.config.tier_hours_categories || [];
+  // Espejo de getBrandTierCoefs() en app.js: cada servicio toma una parte
+  // (tier_hours_weight) del scope que suma el tipo de cliente; el resto de la
+  // suba es solo tarifa.
   const tierHoursFor = (service, tier) =>
-    scopeCategories.includes(service.category) ? tier.hours_coef : 1.0;
+    1 + (service.tier_hours_weight ?? 0) * (tier.hours_coef - 1);
 
   function quote(service, expertise, complexity, output, market, revision, tier) {
     const tierHours = tierHoursFor(service, tier);

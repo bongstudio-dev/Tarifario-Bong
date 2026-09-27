@@ -7,16 +7,16 @@ import {
   getFxMeta,
   initCurrency,
   usdToArs
-} from "./currency.js?v=38";
+} from "./currency.js?v=39";
 import {
   SATOSHI_BOLD_BASE64,
   SATOSHI_REGULAR_BASE64,
   SPACE_MONO_BOLD_BASE64,
   SPACE_MONO_REGULAR_BASE64
-} from "./pdf-fonts.js?v=38";
-import { initAnalytics, track } from "./analytics.js?v=38";
-import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=38";
-import { createResultFocus } from "./focus.js?v=38";
+} from "./pdf-fonts.js?v=39";
+import { initAnalytics, track } from "./analytics.js?v=39";
+import { MOTION, fadeSwap, placeSegThumb, rollText, watchSegThumb } from "./motion.js?v=39";
+import { createResultFocus } from "./focus.js?v=39";
 
 const STEP_META = [
   { title: "Servicio" },
@@ -448,17 +448,17 @@ function getAllSelectedLineItems() {
 // El tipo de cliente se parte en dos: scope real (mas paginas de manual, mas
 // aplicaciones = mas horas) y posicionamiento (lo que vale esa hora). Meterlo
 // todo como precio dejaria el PDF diciendo 72h para un proyecto de USD 9.000.
-// El scope solo crece de verdad en Branding e Identidad: un post para una
-// empresa es el mismo post, asi que las piezas llevan solo posicionamiento.
-function tierScalesHours() {
-  const scopeCategories = state.pricingData.config.tier_hours_categories || [];
-  return scopeCategories.includes(getCurrentService()?.category);
+// Cuanto de ese scope toma cada servicio lo dice tier_hours_weight: 1 en
+// branding y manual (el manual pasa de 40 a 100 paginas), poco en logo e
+// identidad, 0 en piezas (un post para una empresa es el mismo post).
+function getTierHoursWeight() {
+  return getCurrentService()?.tier_hours_weight ?? 0;
 }
 
 function getBrandTierCoefs() {
   const tier = getBrandTierById(state.selectedBrandTier);
   return {
-    hours: tierScalesHours() ? tier?.hours_coef ?? 1.0 : 1.0,
+    hours: 1 + getTierHoursWeight() * ((tier?.hours_coef ?? 1.0) - 1),
     rate: tier?.rate_coef ?? 1.0
   };
 }
@@ -1033,9 +1033,10 @@ function renderDeliverables() {
   });
   // En piezas el tipo de cliente no suma horas, solo tarifa: la etiqueta
   // muestra lo que efectivamente mueve.
+  const tierCoefs = getBrandTierCoefs();
   fadeSwap(
     els.brandTierMeta,
-    tierScalesHours() ? `${formatCoef(tier.hours_coef)} horas` : `${formatCoef(tier.rate_coef)} tarifa`
+    getTierHoursWeight() > 0 ? `${formatCoef(tierCoefs.hours)} horas` : `${formatCoef(tierCoefs.rate)} tarifa`
   );
   fadeSwap(els.brandTierCaption, tier.caption || "", MOTION.fast + MOTION.stagger);
 }
