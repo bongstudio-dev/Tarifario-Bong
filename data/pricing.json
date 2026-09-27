@@ -46,8 +46,8 @@
   ],
   "markets": [
     { "id": "latam", "label": "LATAM", "coef": 1.0 },
-    { "id": "usa",   "label": "USA",   "coef": 1.35 },
-    { "id": "europa","label": "Europa","coef": 1.25 }
+    { "id": "usa",   "label": "USA",   "coef": 2.0 },
+    { "id": "europa","label": "Europa","coef": 1.7 }
   ],
   "expertise": [
     { "id": "jr",  "label": "Junior",  "coef": 0.247 },
@@ -245,12 +245,12 @@
     {
       "id": "logo_animado",
       "name": "Logo animado",
-      "category": "Identidad",
-      "caption": "Identidad breve con salida motion.",
+      "category": "Piezas",
+      "caption": "Animación de un logo existente.",
       "H_a": 0, "H_b": 2, "H_c": 8,
       "default_output_type": "motion",
       "allowed_output_types": ["motion"],
-      "included_addons": ["logo", "motion_system"],
+      "included_addons": ["motion_system"],
       "optional_addons": ["variantes_logo"]
     },
     {

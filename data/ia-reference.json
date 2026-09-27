@@ -1,13 +1,13 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "generated_at": "2026-09-27",
   "source": "Claude, en un contexto limpio: solo vio scripts/ia-reference-prompt.md, sin horas, coeficientes ni tabla ancla.",
   "prompt": "scripts/ia-reference-prompt.md",
-  "method": "Tabla base por servicio (Mid, Emprendimiento, LATAM) y multiplicadores por eje elegidos a criterio para cada servicio. Los 11 casos Estudio + Empresa + USA se fijaron a mano, sin componer.",
+  "method": "Tabla base por servicio (Mid, Emprendimiento, LATAM) y multiplicadores por eje elegidos a criterio para cada servicio. v1.1: USA y Europa reestimados como perfil latino cobrando afuera, y Logo animado como solo animar un logo existente; el resto igual a v1.0.",
   "role": "lectura",
   "role_note": "No es dato de mercado: es el criterio de la IA. Sirve para ver donde el modelo se aparta y en que eje, no para corregir el precio automaticamente.",
   "currency": "usd",
-  "criterios": "Niveles tomados de lo que cobran hoy freelancers y estudios por proyecto cerrado (no por hora) en cada mercado; LATAM convertido desde moneda local al tipo de cambio de mercado, con tarifa implícita de ~12-18 USD/h para un Mid. Perfil: Junior ~0.5-0.6x del Mid y Senior ~1.5-1.9x; Estudio ~2.2-2.8x. El salto pesa más en branding/logo (se paga estrategia y criterio) que en piezas sueltas, donde el mercado está commoditizado; Junior usa más horas, Senior menos, Estudio más por proceso y dirección. Cliente: en branding y manual escala fuerte por alcance (manual 40 -> 75 -> 115 páginas: hasta ~2.7-2.8x en Empresa); en logo/identidad ~1.3-1.9x; en piezas solo 1.15-1.4x por aprobaciones y exigencia de marca. Mercado: USA ~3-3.6x LATAM y Europa ~2.5-2.9x; el multiplicador es menor en piezas (competencia global de plataformas) y mayor en branding/logo. Complejidad Baja ~0.75-0.8x y Alta ~1.4-1.45x; rondas: 1 ronda ~0.85-0.92x, 3 rondas ~1.12-1.2x, +3 ~1.3-1.45x, pesando más en piezas chicas donde cada ronda es proporcionalmente cara. Motion suma ~35-45% a branding/identidad; Interactivo/3D casi duplica una presentación. Estudio · Empresa · USA se fijó por criterio directo (no compuesto) con rangos amplios, porque ahí la dispersión real del mercado es muy grande.",
+  "criterios": "Niveles tomados de lo que cobran hoy freelancers y estudios por proyecto cerrado (no por hora); LATAM convertido desde moneda local al tipo de cambio de mercado, con tarifa implícita de ~12-18 USD/h para un Mid. Perfil: Junior ~0.5-0.6x del Mid y Senior ~1.5-1.9x; Estudio ~2.2-2.8x. El salto pesa más en branding/logo (se paga estrategia y criterio) que en piezas sueltas, donde el mercado está commoditizado; Junior usa más horas, Senior menos, Estudio más por proceso y dirección. Cliente: en branding y manual escala fuerte por alcance (manual 40 -> 75 -> 115 páginas: hasta ~2.7-2.8x en Empresa); en logo/identidad ~1.3-1.9x; en piezas y logo animado solo 1.15-1.45x por aprobaciones, versiones y exigencia de marca. Mercado: USA y Europa son el mismo perfil latino trabajando desde LATAM y cobrando en dólares o euros, no la tarifa local de allá; ese perfil sube a ~25-40 USD/h, así que USA ~1.7-2.2x LATAM y Europa ~1.5-1.9x (~0.85-0.9 de USA, porque buena parte del cliente europeo accesible es España/sur de Europa y paga menos). El multiplicador es menor en piezas sueltas (compiten con Fiverr/Upwork y con todo el mundo) y mayor en branding, identidad y logo, donde el cliente de afuera valora proceso y presentación; las horas suben apenas (~5%) en proyectos de marca por comunicación en otro idioma y huso horario. Logo animado es solo animar un logo existente (reveal de 5-10 s con variantes de formato, sin diseñar el logo): queda entre Post animado y Logotipo, ~2.5x un post animado y ~0.5x un logotipo. Complejidad Baja ~0.75-0.8x y Alta ~1.4-1.45x; rondas: 1 ronda ~0.85-0.92x, 3 rondas ~1.12-1.2x, +3 ~1.3-1.45x, pesando más en piezas chicas donde cada ronda es proporcionalmente cara. Motion suma ~35-45% a branding/identidad (sistema de motion, no solo el logo animado); Interactivo/3D casi duplica una presentación. Estudio · Empresa · USA es un estudio latinoamericano con cliente corporativo de EE.UU.: compuesto como Estudio × Empresa × factor USA de cada servicio, con rangos más amplios porque ahí la dispersión real es muy grande.",
   "casos": {
     "branding_std|jr|emprendimiento|latam|mid|2|static": {
       "min": 360,
@@ -204,29 +204,29 @@
       "horas": 18
     },
     "logo_animado|jr|emprendimiento|latam|mid|2|motion": {
-      "min": 160,
-      "tipico": 250,
-      "max": 380,
-      "horas": 36
+      "min": 60,
+      "tipico": 100,
+      "max": 150,
+      "horas": 15
     },
     "logo_animado|mid|emprendimiento|latam|mid|2|motion": {
-      "min": 330,
-      "tipico": 500,
-      "max": 750,
-      "horas": 30,
-      "nota": "Asumo que incluye diseñar el logo y animarlo; animar solo un logo existente sería ~40% de esto."
+      "min": 120,
+      "tipico": 180,
+      "max": 280,
+      "horas": 11,
+      "nota": "Solo animación de un logo existente: reveal de 5-10 s con variantes de formato; no incluye diseñar el logo."
     },
     "logo_animado|sr|emprendimiento|latam|mid|2|motion": {
-      "min": 590,
-      "tipico": 900,
-      "max": 1450,
-      "horas": 29
+      "min": 190,
+      "tipico": 300,
+      "max": 480,
+      "horas": 9
     },
     "logo_animado|std|emprendimiento|latam|mid|2|motion": {
-      "min": 810,
-      "tipico": 1350,
-      "max": 2300,
-      "horas": 39
+      "min": 260,
+      "tipico": 420,
+      "max": 750,
+      "horas": 14
     },
     "logotipo|jr|emprendimiento|latam|mid|2|static": {
       "min": 110,
@@ -373,16 +373,16 @@
       "horas": 20
     },
     "logo_animado|mid|startup|latam|mid|2|motion": {
-      "min": 420,
-      "tipico": 650,
-      "max": 980,
-      "horas": 36
+      "min": 140,
+      "tipico": 220,
+      "max": 340,
+      "horas": 13
     },
     "logo_animado|mid|empresa|latam|mid|2|motion": {
-      "min": 550,
-      "tipico": 850,
-      "max": 1300,
-      "horas": 44
+      "min": 170,
+      "tipico": 260,
+      "max": 410,
+      "horas": 15
     },
     "logotipo|mid|startup|latam|mid|2|static": {
       "min": 270,
@@ -410,136 +410,136 @@
       "nota": "Manual de 100-130 páginas: el precio escala casi con el volumen de páginas y casos de uso."
     },
     "branding_std|mid|emprendimiento|usa|mid|2|static": {
-      "min": 2550,
-      "tipico": 3950,
-      "max": 5950,
+      "min": 1500,
+      "tipico": 2400,
+      "max": 3700,
       "horas": 84
     },
     "branding_std|mid|emprendimiento|europa|mid|2|static": {
-      "min": 2050,
-      "tipico": 3200,
-      "max": 4800,
+      "min": 1300,
+      "tipico": 2100,
+      "max": 3200,
       "horas": 84
     },
     "identidad_visual|mid|emprendimiento|usa|mid|2|static": {
-      "min": 1500,
-      "tipico": 2350,
-      "max": 3500,
+      "min": 900,
+      "tipico": 1450,
+      "max": 2250,
       "horas": 47
     },
     "identidad_visual|mid|emprendimiento|europa|mid|2|static": {
-      "min": 1250,
-      "tipico": 1900,
-      "max": 2850,
+      "min": 780,
+      "tipico": 1250,
+      "max": 1950,
       "horas": 47
     },
     "rrss_post|mid|emprendimiento|usa|mid|2|static": {
-      "min": 45,
-      "tipico": 75,
-      "max": 120,
+      "min": 30,
+      "tipico": 45,
+      "max": 70,
       "horas": 1.5
     },
     "rrss_post|mid|emprendimiento|europa|mid|2|static": {
-      "min": 40,
-      "tipico": 65,
-      "max": 100,
+      "min": 25,
+      "tipico": 40,
+      "max": 60,
       "horas": 1.5
     },
     "banner|mid|emprendimiento|usa|mid|2|static": {
-      "min": 65,
-      "tipico": 110,
-      "max": 170,
+      "min": 40,
+      "tipico": 60,
+      "max": 95,
       "horas": 2
     },
     "banner|mid|emprendimiento|europa|mid|2|static": {
-      "min": 55,
-      "tipico": 90,
-      "max": 140,
+      "min": 35,
+      "tipico": 52,
+      "max": 80,
       "horas": 2
     },
     "canva_pack|mid|emprendimiento|usa|mid|2|static": {
-      "min": 290,
-      "tipico": 450,
-      "max": 680,
+      "min": 180,
+      "tipico": 280,
+      "max": 440,
       "horas": 8
     },
     "canva_pack|mid|emprendimiento|europa|mid|2|static": {
-      "min": 240,
-      "tipico": 380,
-      "max": 560,
+      "min": 160,
+      "tipico": 250,
+      "max": 390,
       "horas": 8
     },
     "post_animado|mid|emprendimiento|usa|mid|2|motion": {
-      "min": 130,
-      "tipico": 220,
-      "max": 360,
+      "min": 85,
+      "tipico": 130,
+      "max": 210,
       "horas": 4
     },
     "post_animado|mid|emprendimiento|europa|mid|2|motion": {
-      "min": 110,
-      "tipico": 180,
-      "max": 290,
+      "min": 75,
+      "tipico": 115,
+      "max": 180,
       "horas": 4
     },
     "papeleria|mid|emprendimiento|usa|mid|2|static": {
-      "min": 230,
-      "tipico": 350,
-      "max": 530,
+      "min": 135,
+      "tipico": 210,
+      "max": 330,
       "horas": 6
     },
     "papeleria|mid|emprendimiento|europa|mid|2|static": {
-      "min": 190,
-      "tipico": 290,
-      "max": 430,
+      "min": 115,
+      "tipico": 180,
+      "max": 280,
       "horas": 6
     },
     "presentacion|mid|emprendimiento|usa|mid|2|static": {
-      "min": 510,
-      "tipico": 850,
-      "max": 1350,
+      "min": 320,
+      "tipico": 500,
+      "max": 780,
       "horas": 14
     },
     "presentacion|mid|emprendimiento|europa|mid|2|static": {
-      "min": 420,
-      "tipico": 700,
-      "max": 1100,
+      "min": 270,
+      "tipico": 420,
+      "max": 660,
       "horas": 14
     },
     "logo_animado|mid|emprendimiento|usa|mid|2|motion": {
-      "min": 1150,
-      "tipico": 1750,
-      "max": 2650,
-      "horas": 30
+      "min": 230,
+      "tipico": 360,
+      "max": 560,
+      "horas": 11
     },
     "logo_animado|mid|emprendimiento|europa|mid|2|motion": {
-      "min": 910,
-      "tipico": 1400,
-      "max": 2100,
-      "horas": 30
+      "min": 200,
+      "tipico": 320,
+      "max": 490,
+      "horas": 11
     },
     "logotipo|mid|emprendimiento|usa|mid|2|static": {
-      "min": 760,
-      "tipico": 1250,
-      "max": 1900,
-      "horas": 22
+      "min": 480,
+      "tipico": 750,
+      "max": 1180,
+      "horas": 23
     },
     "logotipo|mid|emprendimiento|europa|mid|2|static": {
-      "min": 610,
-      "tipico": 1000,
-      "max": 1500,
-      "horas": 22
+      "min": 420,
+      "tipico": 650,
+      "max": 1020,
+      "horas": 23
     },
     "manual_marca|mid|emprendimiento|usa|mid|2|static": {
-      "min": 1250,
-      "tipico": 1950,
-      "max": 2900,
-      "horas": 40
+      "min": 700,
+      "tipico": 1100,
+      "max": 1700,
+      "horas": 42
     },
     "manual_marca|mid|emprendimiento|europa|mid|2|static": {
-      "min": 1000,
-      "tipico": 1550,
-      "max": 2300,
-      "horas": 40
+      "min": 610,
+      "tipico": 950,
+      "max": 1480,
+      "horas": 42
     },
     "branding_std|mid|emprendimiento|latam|low|2|static": {
       "min": 570,
@@ -652,71 +652,71 @@
       "nota": "Interactivo/3D es muy variable según herramienta (web, Pitch animado, 3D real)."
     },
     "branding_std|std|empresa|usa|mid|2|static": {
-      "min": 18000,
-      "tipico": 30000,
-      "max": 55000,
-      "horas": 320
+      "min": 11000,
+      "tipico": 18000,
+      "max": 32000,
+      "horas": 290
     },
     "identidad_visual|std|empresa|usa|mid|2|static": {
-      "min": 8000,
-      "tipico": 13000,
-      "max": 24000,
-      "horas": 150
+      "min": 4500,
+      "tipico": 7200,
+      "max": 12500,
+      "horas": 110
     },
     "rrss_post|std|empresa|usa|mid|2|static": {
-      "min": 150,
-      "tipico": 250,
-      "max": 450,
-      "horas": 4,
+      "min": 80,
+      "tipico": 140,
+      "max": 250,
+      "horas": 2,
       "nota": "Pieza suelta de estudio: en la práctica va dentro de un retainer; esto es el precio unitario equivalente."
     },
     "banner|std|empresa|usa|mid|2|static": {
-      "min": 200,
-      "tipico": 350,
-      "max": 600,
-      "horas": 5
+      "min": 95,
+      "tipico": 160,
+      "max": 280,
+      "horas": 2.5
     },
     "canva_pack|std|empresa|usa|mid|2|static": {
-      "min": 1000,
-      "tipico": 1600,
-      "max": 2800,
-      "horas": 20
+      "min": 580,
+      "tipico": 950,
+      "max": 1600,
+      "horas": 12
     },
     "post_animado|std|empresa|usa|mid|2|motion": {
-      "min": 450,
-      "tipico": 800,
-      "max": 1400,
-      "horas": 9
+      "min": 260,
+      "tipico": 440,
+      "max": 750,
+      "horas": 5.5
     },
     "papeleria|std|empresa|usa|mid|2|static": {
-      "min": 800,
-      "tipico": 1400,
-      "max": 2500,
-      "horas": 14
+      "min": 400,
+      "tipico": 680,
+      "max": 1150,
+      "horas": 8
     },
     "presentacion|std|empresa|usa|mid|2|static": {
-      "min": 2500,
-      "tipico": 4500,
-      "max": 8500,
-      "horas": 45
+      "min": 1200,
+      "tipico": 2000,
+      "max": 3500,
+      "horas": 27
     },
     "logo_animado|std|empresa|usa|mid|2|motion": {
-      "min": 5500,
-      "tipico": 9000,
-      "max": 16000,
-      "horas": 90
+      "min": 700,
+      "tipico": 1200,
+      "max": 2100,
+      "horas": 20
     },
     "logotipo|std|empresa|usa|mid|2|static": {
-      "min": 4500,
-      "tipico": 8000,
-      "max": 15000,
-      "horas": 75
+      "min": 2300,
+      "tipico": 3800,
+      "max": 6500,
+      "horas": 45
     },
     "manual_marca|std|empresa|usa|mid|2|static": {
-      "min": 8000,
-      "tipico": 14000,
-      "max": 25000,
-      "horas": 150
+      "min": 4800,
+      "tipico": 7900,
+      "max": 13500,
+      "horas": 155
     }
   }
 }

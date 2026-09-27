@@ -26,8 +26,12 @@ Convención de todas las tablas:
    las piezas suben solo por tarifa: Startup ×1,38 y Empresa ×1,59. En Branding e
    Identidad suben ×2,03 y ×3,26 porque el alcance crece de verdad.
 
+4. **Mercado**: USA ×2,0 y Europa ×1,7 sobre LATAM. No es la tarifa de un
+   diseñador que vive allá: es el mismo perfil latino cobrándole a un cliente de
+   afuera. No mueve el presupuesto de horas.
+
 La fórmula vive en `app.js` (`calculateQuote`, `getBasePhaseHours`,
-`getBrandTierCoefs`) y está replicada en `scripts/check-benchmark.mjs`.
+`getBrandTierCoefs`) y está replicada en `scripts/lib/quote.mjs`.
 Si cambia una, hay que cambiar la otra.
 
 ## Tabla ancla — Branding completo
@@ -50,7 +54,7 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Identidad visual | 490 · 37.1 h | 828 · 37.1 h | 1211 · 37.1 h | 1986 · 37.1 h |
 | Manual de marca | 311 · 23.5 h | 525 · 23.5 h | 768 · 23.5 h | 1259 · 23.5 h |
 | Logotipo | 197 · 14.9 h | 333 · 14.9 h | 488 · 14.9 h | 799 · 14.9 h |
-| Logo animado | 103 · 7.8 h | 175 · 7.8 h | 255 · 7.8 h | 419 · 7.8 h |
+| Logo animado | 103 · 8.8 h | 175 · 8.8 h | 255 · 8.8 h | 419 · 8.8 h |
 | Presentación corporativa | 191 · 16.3 h | 323 · 16.3 h | 472 · 16.3 h | 774 · 16.3 h |
 | Plantillas Canva x5 | 103 · 8.8 h | 175 · 8.8 h | 255 · 8.8 h | 419 · 8.8 h |
 | Post animado | 65 · 5.6 h | 110 · 5.6 h | 161 · 5.6 h | 263 · 5.6 h |
@@ -66,7 +70,7 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Identidad visual | 995 · 54.6 h | 1680 · 54.6 h | 2457 · 54.6 h | 4028 · 54.6 h |
 | Manual de marca | 631 · 34.6 h | 1065 · 34.6 h | 1559 · 34.6 h | 2555 · 34.6 h |
 | Logotipo | 401 · 22.0 h | 676 · 22.0 h | 989 · 22.0 h | 1622 · 22.0 h |
-| Logo animado | 210 · 11.5 h | 354 · 11.5 h | 518 · 11.5 h | 849 · 11.5 h |
+| Logo animado | 143 · 8.8 h | 241 · 8.8 h | 352 · 8.8 h | 578 · 8.8 h |
 | Presentación corporativa | 264 · 16.3 h | 446 · 16.3 h | 652 · 16.3 h | 1068 · 16.3 h |
 | Plantillas Canva x5 | 143 · 8.8 h | 241 · 8.8 h | 352 · 8.8 h | 578 · 8.8 h |
 | Post animado | 90 · 5.6 h | 151 · 5.6 h | 222 · 5.6 h | 363 · 5.6 h |
@@ -82,7 +86,7 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Identidad visual | 1601 · 76.1 h | 2702 · 76.1 h | 3953 · 76.1 h | 6480 · 76.1 h |
 | Manual de marca | 1015 · 48.3 h | 1714 · 48.3 h | 2507 · 48.3 h | 4110 · 48.3 h |
 | Logotipo | 644 · 30.6 h | 1088 · 30.6 h | 1592 · 30.6 h | 2609 · 30.6 h |
-| Logo animado | 337 · 16.0 h | 570 · 16.0 h | 833 · 16.0 h | 1366 · 16.0 h |
+| Logo animado | 165 · 8.8 h | 278 · 8.8 h | 406 · 8.8 h | 666 · 8.8 h |
 | Presentación corporativa | 304 · 16.3 h | 514 · 16.3 h | 752 · 16.3 h | 1233 · 16.3 h |
 | Plantillas Canva x5 | 165 · 8.8 h | 278 · 8.8 h | 406 · 8.8 h | 666 · 8.8 h |
 | Post animado | 104 · 5.6 h | 175 · 5.6 h | 256 · 5.6 h | 419 · 5.6 h |
@@ -90,7 +94,21 @@ Desvío máximo: 9,0% (tolerancia 10%).
 | Banner digital | 48 · 2.6 h | 81 · 2.6 h | 119 · 2.6 h | 195 · 2.6 h |
 | Pieza RRSS | 33 · 1.8 h | 56 · 1.8 h | 81 · 1.8 h | 133 · 1.8 h |
 
-## Último ajuste (2026-09-27)
+## Último ajuste (2026-09-27, contra el criterio de la IA)
+
+- **Mercado**: USA de ×1,35 a ×2,0 y Europa de ×1,25 a ×1,7. Es la mediana por
+  servicio que dio la IA para un perfil latino cobrando afuera (USA ×1,7–2,2,
+  Europa ×1,5–1,9).
+- **Logo animado**: ahora es solo animar un logo existente. Pasa a la categoría
+  Piezas, así que el tipo de cliente le sube solo la tarifa. Mid/Emprendimiento
+  sigue en USD 175 (la IA dice 180).
+
+`node scripts/check-ia.mjs`: 98 de 117 casos dentro del rango de la IA. Lo que
+queda afuera es, sobre todo, el tipo de cliente en Identidad (Logotipo e
+Identidad visual heredan el alcance de un branding) y las piezas chicas, que
+están arriba del típico.
+
+## Ajuste anterior (2026-09-27)
 
 - **Manual de marca**: fases de 1/5/10 a 2/10/20. Mid/Emprendimiento pasa de
   USD 263 · 11,8 h a USD 525 · 23,5 h, por encima del Logotipo (USD 333).
