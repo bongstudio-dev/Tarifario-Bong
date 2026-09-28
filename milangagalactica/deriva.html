@@ -45,6 +45,9 @@
   .pad button { min-width: 72px; min-height: 60px; padding: 0 16px; font-size: 18px; }
   /* Con mouse y teclado no hacen falta botones en pantalla. */
   @media (hover: hover) and (pointer: fine) { .pad { display: none; } }
+  .pad button.tool { min-width: 0; min-height: 44px; font-size: 12px; letter-spacing: .04em; }
+  .pad button.tool[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  body.gyro #pad-left, body.gyro #pad-right { display: none; }
   .pad button[data-down="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; border-block: 1px solid var(--line); width: 100%; }
   .ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -58,6 +61,15 @@
   @media (hover: hover) { .opts button:hover, .pad button:hover { border-color: var(--muted); } }
 
   .nogl { padding: 16px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+  /* Celu horizontal: el juego ocupa la pantalla y los controles van al costado. */
+  @media (orientation: landscape) and (max-height: 540px) {
+    body { padding-block: 6px; padding-inline: 12px; }
+    header, .opts { display: none; }
+    .stage { flex-direction: row; align-items: center; justify-content: center; gap: 10px; }
+    .pad { width: auto; flex-direction: column; flex-wrap: nowrap; align-self: stretch; justify-content: space-between; }
+    .pad-group { flex-direction: column; }
+  }
+  .stage:fullscreen { background: var(--bg); padding: 8px; }
 </style>
 
 <div class="wrap">
@@ -72,6 +84,10 @@
       <div class="pad-group">
         <button type="button" id="pad-left" data-key="left" aria-label="Doblar a la izquierda">◀</button>
         <button type="button" id="pad-right" data-key="right" aria-label="Doblar a la derecha">▶</button>
+      </div>
+      <div class="pad-group pad-tools">
+        <button type="button" id="pad-gyro" class="tool" aria-pressed="false">Giroscopio</button>
+        <button type="button" id="pad-full" class="tool">Pantalla completa</button>
       </div>
       <div class="pad-group">
         <button type="button" id="pad-brake" data-key="down" aria-label="Frenar">▼</button>
@@ -282,7 +298,8 @@
 
 
   // --- Estado ------------------------------------------------------------------
-  const state = { density: window.innerWidth < 700 ? "Baja" : "Media", mode: "Color", view: "Atrás", map: false };
+  const touchDevice = window.matchMedia("(pointer: coarse)").matches;
+  const state = { density: window.innerWidth < 700 || touchDevice ? "Baja" : "Media", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
   // --- WebGL -------------------------------------------------------------------
@@ -716,7 +733,8 @@
     along -= along * (keys.up || keys.down ? 0.25 : 0.9) * dt * traction;
     if (keys.hand) along -= Math.sign(along) * Math.min(Math.abs(along), 14 * dt);
 
-    const want = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
+    const keySteer = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
+    const want = keySteer || (gyro.on ? gyro.steer : 0);
     player.steer += (want - player.steer) * Math.min(1, dt * 7);
     const offroad = currentZone === T.FOREST;
     const grip = player.air ? 0.2 : keys.hand ? 1.2 : offroad ? 3.2 : 9;
@@ -1274,8 +1292,10 @@
     CH = new Array(N); COL = new Array(N);
     camera.aspect = ratio;
     camera.updateProjectionMatrix();
-    const avail = canvas.parentElement.clientWidth || 800;
-    const maxH = Math.max(260, window.innerHeight * (narrow ? 0.62 : 0.72));
+    const phoneLandscape = window.matchMedia("(orientation: landscape) and (max-height: 540px)").matches;
+    const padW = phoneLandscape && !window.matchMedia("(hover: hover) and (pointer: fine)").matches ? 150 : 0;
+    const avail = phoneLandscape ? window.innerWidth - padW - 34 : (canvas.parentElement.clientWidth || 800);
+    const maxH = phoneLandscape ? window.innerHeight - 16 : Math.max(260, window.innerHeight * (narrow ? 0.62 : 0.72));
     const w = Math.min(avail, maxH * ratio);
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.style.width = w + "px";
@@ -1469,6 +1489,66 @@
   window.addEventListener("keyup", e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
   window.addEventListener("blur", () => Object.keys(keys).forEach(k => { keys[k] = false; }));
   canvas.addEventListener("pointerdown", () => { engaged = true; canvas.focus(); });
+
+  // Giroscopio: el celu horizontal es el volante. Se mide hacia dónde cae la gravedad sobre
+  // la pantalla, así no importa cuánto lo inclines hacia atrás.
+  const gyro = { on: false, steer: 0, heard: 0 };
+  const gyroBtn = document.getElementById("pad-gyro");
+  function onOrient(e) {
+    if (e.beta == null || e.gamma == null) return;
+    gyro.heard = performance.now();
+    const b = e.beta * Math.PI / 180, g = e.gamma * Math.PI / 180;
+    const ux = -Math.sin(g) * Math.cos(b), uy = Math.sin(b); // "arriba" del mundo visto en el celu
+    const th = ((screen.orientation && screen.orientation.angle) || window.orientation || 0) * Math.PI / 180;
+    const sx = ux * Math.cos(th) - uy * Math.sin(th), sy = ux * Math.sin(th) + uy * Math.cos(th);
+    let a = Math.atan2(sx, sy) * 180 / Math.PI; // inclinación como volante, en grados
+    a = Math.abs(a) < 3 ? 0 : a - Math.sign(a) * 3;
+    gyro.steer = clamp(a / 22, -1, 1);
+  }
+  function setGyro(on) {
+    gyro.on = on;
+    document.body.classList.toggle("gyro", on);
+    gyroBtn.setAttribute("aria-pressed", String(on));
+    gyroBtn.textContent = on ? "Giroscopio" : gyroBtn.dataset.failed ? "Sin giroscopio" : "Giroscopio";
+  }
+  gyroBtn.addEventListener("click", async () => {
+    if (gyro.on) { setGyro(false); return; }
+    started = true;
+    try {
+      if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+        const r = await DeviceOrientationEvent.requestPermission();
+        if (r !== "granted") throw new Error("denegado");
+      }
+      window.addEventListener("deviceorientation", onOrient);
+      setGyro(true);
+      // Si en un segundo y medio no llega nada, este navegador (o el marco) no lo deja.
+      setTimeout(() => { if (performance.now() - gyro.heard > 1400) { gyroBtn.dataset.failed = "1"; setGyro(false); } }, 1500);
+    } catch (err) { gyroBtn.dataset.failed = "1"; setGyro(false); }
+  });
+
+  // Con el giroscopio, la pantalla es el pedal: derecha acelera, izquierda frena.
+  const pedal = e => {
+    if (!gyro.on) return;
+    const r = canvas.getBoundingClientRect();
+    const right = e.clientX - r.left > r.width * 0.4;
+    keys.up = right; keys.down = !right; started = true;
+  };
+  canvas.addEventListener("pointerdown", e => { pedal(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ } });
+  canvas.addEventListener("pointermove", e => { if (gyro.on && (keys.up || keys.down)) pedal(e); });
+  const release = () => { if (gyro.on) { keys.up = keys.down = false; } };
+  canvas.addEventListener("pointerup", release);
+  canvas.addEventListener("pointercancel", release);
+
+  // Pantalla completa y horizontal, donde se pueda.
+  document.getElementById("pad-full").addEventListener("click", async () => {
+    const stage = document.querySelector(".stage");
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else { await stage.requestFullscreen(); try { await screen.orientation.lock("landscape"); } catch (e) { /* no se puede bloquear */ } }
+    } catch (e) { /* sin pantalla completa */ }
+    setTimeout(layout, 200);
+  });
+  document.addEventListener("fullscreenchange", () => setTimeout(layout, 200));
   canvas.addEventListener("focus", () => { engaged = true; });
   canvas.addEventListener("blur", () => { engaged = false; });
 
