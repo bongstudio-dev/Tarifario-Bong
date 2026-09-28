@@ -200,9 +200,14 @@ Manejar el Arlequín de noche por una ciudad que no se termina, sin destino.
   auto (encendidos, la que tenés; apagados, lo que te falta). Sin luz,
   el limbo llega a cualquier lado: aparecen los ojos aunque estés en la
   ciudad.
-- **La ruta de noche:** líneas pintadas al borde de las calles y mojones
-  que brillan apenas, como los ojos de gato. Aunque esté oscuro se ve por
-  dónde sigue el camino. En la nada no hay: ahí perderse es la idea.
+- **La ruta de noche:** tachas ámbar en los bordes y blancas en el centro,
+  como las de la ruta, que dibujan la calle hasta el horizonte aunque esté
+  oscuro. En la nada no hay: ahí perderse es la idea.
+- **Referencia de experiencia:** "Starry Ride" (hellopersonality): manejar
+  de noche en primera persona, paleta violeta con acentos ámbar, el tablero
+  que brilla, las tachas, el cielo que se mueve. De ahí salen la noche
+  violeta, la cámara de adentro con relojes ámbar (velocidad y luz, como la
+  nafta) y las estrellas que se estiran al acelerar.
 - **Sin explicaciones:** nada de textos ni contadores. El arranque enseña:
   un farol al lado, un orbe justo adelante y una flecha que titila hasta
   que te movés.
