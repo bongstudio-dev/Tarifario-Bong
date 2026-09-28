@@ -26,15 +26,73 @@ La lógica de la serie nace de pasar dos veces por el mismo lugar: la misma
 calle y dos fotos distintas. Es lo mismo que dice la génesis del Arlequín:
 algo se fue, pero sigue ahí.
 
-### Fotografía
+## Moments of Transition (la serie de fotografía)
 
-- **Moments of Transition** (Behance):
-  https://www.behance.net/gallery/177476025/Moments-of-Transition
-- **Exposición de fotografía** en el Museo Mulazzi (Tres Arroyos):
-  https://museomulazzi.tresarroyos.gov.ar/agenda/fotografs-marcos-cousseau/
+La foto de Moreno forma parte de esta serie. Se expuso en el **Museo Mulazzi
+de Tres Arroyos** (Buenos Aires, Argentina) en septiembre, octubre y noviembre
+de 2021.
 
-Pendiente: no pude abrir esos dos links desde acá. Faltan el texto de la
-muestra, las fechas y la lista de obras.
+- Behance: https://www.behance.net/gallery/177476025/Moments-of-Transition
+- Muestra: https://museomulazzi.tresarroyos.gov.ar/agenda/fotografs-marcos-cousseau/
+- Referencia de la portada: `fotos/moments-of-transition-portada.jpg`
+
+### Texto (original)
+
+> We could say that light gives life to everything, that it makes things
+> appear and disappear. Day and night, like photography, are a matter of
+> light. Over time, I discovered that there are very brief moments of the day
+> that, due to physical aspects of light, are exceptional.
+>
+> When I walk my dog, I usually go through the same places at different times
+> of the day, partly by chance and partly on purpose. The thing is, I see the
+> same places constantly changing, solely because of the light that makes
+> them visible.
+>
+> I enjoy observing the moment of transition between the light given by the
+> sky and the light provided by people.
+> That moment where everything is light, but it's still not clear if it's
+> daytime; however, one thing is certain: night is coming.
+>
+> This *luminous darkness* makes me feel that everything becomes one, that the
+> sky and civilization blend together, and for a short period of time, it's
+> neither night nor day, and nothing else matters.
+>
+> This work was exhibited at the Mulazzi Museum in the city of Tres Arroyos,
+> Buenos Aires, Argentina during the months of September, October, and
+> November of the year 2021.
+
+### Las fotos (grilla de portada en Behance)
+
+Todas están tomadas en hora azul, con un color lavado hacia el violeta.
+
+1. Hatchback azul bajo un árbol, frente a una casa de ladrillo rojo.
+2. **Moreno:** la enredadera gigante con el coupé beige.
+3. Utilitario amarillo bajo un árbol.
+4. Galpón de chapa amarilla con chimeneas, un banco y un farol.
+5. Casa de piedra y ladrillo con un sedán blanco.
+6. La ciudad desde arriba, con las luces que se empiezan a prender.
+7. Edificio de esquina ornamentado con el neón de la pizzería Banchero.
+8. Torre con carteles de neón y un farol.
+
+### Las ideas que quedan
+
+- **La luz hace aparecer y desaparecer las cosas.**
+- **El mismo lugar, otra luz.** Pasear al perro por los mismos lugares a
+  distintas horas. De ahí salen las dos fotos de Moreno.
+- **La transición:** el cielo todavía alumbra, las luces de la gente ya se
+  prenden. No es de día ni de noche.
+- **Oscuridad luminosa** (*luminous darkness*): el cielo y la civilización se
+  funden en uno.
+- **Autos quietos como testigos.** En casi todas las fotos hay un auto
+  estacionado: una presencia en la escena. Es el antecedente directo del
+  Arlequín.
+
+### Puente con la técnica ASCII
+
+La técnica ASCII funciona igual que esta serie. El umbral de negro decide qué
+celda aparece y cuál desaparece: la luz hace aparecer las cosas, literalmente.
+Los conceptos "Luz que revela" y "Fases" del README son *Moments of
+Transition* traducido a la grilla.
 
 ## El personaje: el Arlequín
 
