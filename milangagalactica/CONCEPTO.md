@@ -7,6 +7,35 @@ esto es el marco artístico.
 
 Arte exploratorio de **objetos en lugares donde no deberían estar**.
 
+## El origen: la calle Moreno
+
+**Moreno es una calle.** Ahí empezó todo.
+
+1. Una foto en la calle Moreno: `fotos/moreno-origen.jpg`.
+2. Otra vez que pasé por ahí saqué una foto parecida, pero distinta.
+3. Con esas dos fotos construí un concepto artístico y una colección.
+4. Después vinieron los NFT (*Ideas of Moreno*, *Moreno 700*).
+
+La foto de origen: un coupé beige de los 70 estacionado frente a una masa de
+enredadera del tamaño de una casa, entre un techo de tejas rojas y una
+fachada rosada. Cielo azul de hora azul, color lavado hacia el violeta. La
+enredadera ya es un objeto fuera de lugar: un volumen que ocupa lugar donde
+no debería.
+
+La lógica de la serie nace de pasar dos veces por el mismo lugar: la misma
+calle y dos fotos distintas. Es lo mismo que dice la génesis del Arlequín:
+algo se fue, pero sigue ahí.
+
+### Fotografía
+
+- **Moments of Transition** (Behance):
+  https://www.behance.net/gallery/177476025/Moments-of-Transition
+- **Exposición de fotografía** en el Museo Mulazzi (Tres Arroyos):
+  https://museomulazzi.tresarroyos.gov.ar/agenda/fotografs-marcos-cousseau/
+
+Pendiente: no pude abrir esos dos links desde acá. Faltan el texto de la
+muestra, las fechas y la lista de obras.
+
 ## El personaje: el Arlequín
 
 Un Golf GT arlequín (el de los paneles de colores). Aparecía en distintas
@@ -72,7 +101,8 @@ vacío.
 
 ## Para charlar
 
-- ¿Moreno es el lugar (el partido de Buenos Aires), una persona, o las dos
-  cosas?
+- ¿La calle Moreno es de Tres Arroyos? ¿Dónde está la segunda foto?
+- ¿Qué relación hay entre la foto de Moreno y el Arlequín? ¿El Golf estuvo
+  en esa calle?
 - ¿El Arlequín entra en la serie ASCII o queda como línea aparte?
 - ¿Formato 2000×2000 (el de la génesis) o 4:5 (el de Instagram)?
