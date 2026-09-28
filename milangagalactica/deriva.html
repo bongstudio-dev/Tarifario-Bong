@@ -260,15 +260,17 @@
     const parts = readGolf();
     if (!parts) return null;
     const car = new THREE.Group();
-    const headMat = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, emissive: 0xfff4e0, emissiveIntensity: 0, roughness: 0.2 });
-    const tailMat = new THREE.MeshStandardMaterial({ color: 0x5a0a10, emissive: 0xff2a20, emissiveIntensity: 0, roughness: 0.3 });
+    // Luces: emisoras siempre. Los stops se encienden más al frenar.
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff6e8, emissiveIntensity: 1.4, roughness: 0.2 });
+    const tailMat = new THREE.MeshStandardMaterial({ color: 0xff2a20, emissive: 0xff1a10, emissiveIntensity: 1.0, roughness: 0.3 });
     const mats = {};
     const matFor = name => {
       if (name === "FARO") return headMat;
       if (name === "STOP") return tailMat;
       if (mats[name]) return mats[name];
-      if (name === "VIDRIO") return (mats[name] = new THREE.MeshStandardMaterial({ color: 0x401820, emissive: 0xff5a70, emissiveIntensity: 0.18, roughness: 0.15 }));
-      if (name === "GIRO") return (mats[name] = new THREE.MeshStandardMaterial({ color: 0x805010, emissive: 0xffa640, emissiveIntensity: 0.25, roughness: 0.3 }));
+      // Los vidrios dejan ver el interior iluminado, rojo rosado como en los renders.
+      if (name === "VIDRIO") return (mats[name] = new THREE.MeshStandardMaterial({ color: 0x5a2030, emissive: 0xff5a6a, emissiveIntensity: 0.85, roughness: 0.15 }));
+      if (name === "GIRO") return (mats[name] = new THREE.MeshStandardMaterial({ color: 0xffa640, emissive: 0xff9a30, emissiveIntensity: 0.9, roughness: 0.3 }));
       const c = GOLF_COLORS[name] || GOLF_COLORS.PLASTICO;
       const metal = name === "CROMO" || name === "LLANTA";
       return (mats[name] = new THREE.MeshStandardMaterial({ color: new THREE.Color(c[0], c[1], c[2]), roughness: metal ? 0.3 : 0.4, metalness: metal ? 0.5 : 0.05 }));
@@ -289,7 +291,37 @@
       car.add(w);
       return w;
     });
+    // Halo alrededor de faros y stops: en la grilla, una luz chica necesita un poco de aura para leerse.
+    if (!buildGolfReal.glow) {
+      const c = document.createElement("canvas"); c.width = c.height = 64;
+      const g = c.getContext("2d"), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.35, "rgba(255,255,255,0.55)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+      buildGolfReal.glow = new THREE.CanvasTexture(c);
+    }
+    const halo = (name, color, w, h) => {
+      const p = parts.find(q => q.name === name);
+      if (!p) return [];
+      const pos = p.geo.attributes.position, sides = [[], []];
+      for (let i = 0; i < pos.count; i++) sides[pos.getZ(i) > 0 ? 1 : 0].push(new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)));
+      return sides.filter(v => v.length).map(v => {
+        const c = v.reduce((a, b) => a.add(b), new THREE.Vector3()).multiplyScalar(1 / v.length);
+        const front = c.x > 0;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color, map: buildGolfReal.glow, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+        m.position.set(c.x + (front ? 0.06 : -0.06), c.y, c.z);
+        m.rotation.y = front ? Math.PI / 2 : -Math.PI / 2;
+        car.add(m);
+        return m;
+      });
+    };
+    const headHalos = halo("FARO", 0xfff4e0, 0.9, 0.6), tailHalos = halo("STOP", 0xff2a20, 0.7, 0.85);
     car.userData = { headMat, tailMat, wheels };
+    // Los halos siguen la intensidad de sus luces (el juego sube los stops al frenar).
+    car.userData.syncHalos = () => {
+      headHalos.forEach(m => { m.material.opacity = Math.min(1, 0.6 * headMat.emissiveIntensity); });
+      tailHalos.forEach(m => { m.material.opacity = Math.min(1, 0.45 * tailMat.emissiveIntensity); });
+    };
+    car.userData.syncHalos();
     return car;
   }
 
@@ -424,7 +456,7 @@
   scene.add(car);
   const { tailMat, wheels } = car.userData;
   car.userData.headMat.emissiveIntensity = 1.3;
-  tailMat.emissiveIntensity = 0.5;
+  tailMat.emissiveIntensity = 1.0;
   const headBeams = [-0.55, 0.55].map(z => {
     const beam = new THREE.SpotLight(0xfff2dc, 2.1, 44, 0.42, 0.6, 1.3);
     beam.position.set(2.0, 0.7, z);
@@ -1058,7 +1090,8 @@
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const along = player.vx * fx + player.vz * fz;
     wheels.forEach((w, i) => { w.rotation.z -= along * 0.016; if (i < 2) w.rotation.y = player.steer * 0.4; });
-    tailMat.emissiveIntensity = keys.down ? 2.2 : 0.5;
+    tailMat.emissiveIntensity = keys.down ? 2.6 : 1.0;
+    if (car.userData.syncHalos) car.userData.syncHalos();
     const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
     hemi.intensity += (z[0] - hemi.intensity) * k;
     moonLight.intensity += (z[1] - moonLight.intensity) * k;
