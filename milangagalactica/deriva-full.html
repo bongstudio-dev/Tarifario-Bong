@@ -1891,6 +1891,10 @@
   const text = (r, c, str, color) => { for (let k = 0; k < str.length; k++) put(r, c + k, str[k] === " " ? null : str[k], color); };
   // Cajas: el botón del menú arriba a la derecha y el freno abajo a la derecha.
   const MENU_BOX = () => ({ top: 1, left: cols - 9, h: 3, w: 7 });
+  // Otro mundo, al lado del menú: siempre a mano para cambiar de ciudad de un toque.
+  const WORLD_BOX = () => ({ top: 1, left: cols - 17, h: 3, w: 7 });
+  const world = { tapBtn: false, flash: -9 };
+  const otherWorld = () => { newWorld((Math.random() * 1e9) | 0); world.flash = clock; };
   const BRAKE_BOX = () => ({ top: rows - 8, left: cols - 14, h: 6, w: 12 });
   // Sin autoavance aparece el acelerador, arriba del freno.
   const GAS_BOX = () => ({ top: rows - 15, left: cols - 14, h: 6, w: 12 });
@@ -1915,7 +1919,7 @@
       { label: "GIROSCOPIO", value: gyro.on ? "SÍ" : gyroBtn.dataset.failed ? "NO HAY" : "NO", act: () => gyroBtn.click() },
       { label: "MAPA", value: state.map ? "SÍ" : "NO", act: () => setOpt("map", !state.map) },
       { label: "PANTALLA", value: document.fullscreenElement ? "COMPLETA" : "NORMAL", act: () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (err) { /* sin pantalla completa */ } } },
-      { label: "OTRA CIUDAD", value: "", act: () => { newWorld((Math.random() * 1e9) | 0); menu.open = false; } },
+      { label: "OTRA CIUDAD", value: "", act: () => { otherWorld(); menu.open = false; } },
       { label: "SEGUIR", value: "", act: () => { menu.open = false; } }
     ];
   }
@@ -1925,6 +1929,9 @@
       const m = MENU_BOX();
       drawBox(m, MUTED);
       text(m.top + 1, m.left + 3, "≡", AMBER);
+      const w = WORLD_BOX(), lit = clock - world.flash < 0.4 || world.tapBtn;
+      drawBox(w, lit ? AMBER : MUTED, lit ? "░" : null);
+      text(w.top + 1, w.left + 3, "↻", lit ? "#fff1c4" : AMBER);
     }
     if (menu.open || state.map) { if (!menu.open) return; }
     else {
@@ -2017,6 +2024,7 @@
     if (title) { if (inside(cellOf(e), PLAY_BOX(), 3)) startGame(); return; }
     const p = cellOf(e);
     if (!menu.open && inside(p, MENU_BOX(), 1)) { menu.tapBtn = true; return; }
+    if (!menu.open && inside(p, WORLD_BOX(), 0)) { world.tapBtn = true; return; }
     if (menu.open) return;
     started = true;
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
@@ -2032,6 +2040,7 @@
   });
   const endTouch = e => {
     if (menu.tapBtn) { menu.tapBtn = false; if (inside(cellOf(e), MENU_BOX(), 1)) menu.open = true; return; }
+    if (world.tapBtn) { world.tapBtn = false; if (inside(cellOf(e), WORLD_BOX(), 1)) otherWorld(); return; }
     if (menu.open) {
       const p = cellOf(e), bx = menu.box;
       if (!bx || p.r < bx.top || p.r > bx.bottom || p.c < bx.left || p.c > bx.right) { menu.open = false; return; }
@@ -2045,6 +2054,7 @@
   };
   canvas.addEventListener("pointerup", endTouch);
   canvas.addEventListener("pointercancel", e => {
+    menu.tapBtn = false; world.tapBtn = false;
     if (e.pointerId === brake.id) { brake.held = false; brake.id = null; }
     if (e.pointerId === gas.id) { gas.held = false; gas.id = null; }
     if (e.pointerId === steerT.id) { steerT.active = false; steerT.x = 0; steerT.id = null; }
@@ -2058,7 +2068,7 @@
     if (k) { keys[k] = true; started = true; if (engaged) e.preventDefault(); return; }
     if (e.code === "KeyC") setOpt("view", VIEWS[(VIEWS.indexOf(state.view) + 1) % VIEWS.length]);
     if (e.code === "KeyM") setOpt("map", !state.map);
-    if (e.code === "KeyR") newWorld((Math.random() * 1e9) | 0);
+    if (e.code === "KeyR") otherWorld();
   });
   window.addEventListener("keyup", e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
   window.addEventListener("blur", () => Object.keys(keys).forEach(k => { keys[k] = false; }));
