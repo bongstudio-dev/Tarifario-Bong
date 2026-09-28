@@ -285,8 +285,8 @@
       if (name === "FARO") return headMat;
       if (name === "STOP") return tailMat;
       if (mats[name]) return mats[name];
-      // Los vidrios dejan ver el interior iluminado, rojo rosado como en los renders.
-      if (name === "VIDRIO") return (mats[name] = new THREE.MeshStandardMaterial({ color: 0x5a2030, emissive: 0xff5a6a, emissiveIntensity: 0.85, roughness: 0.15 }));
+      // Los vidrios dejan ver el interior iluminado, naranja rojizo y luminoso.
+      if (name === "VIDRIO") return (mats[name] = new THREE.MeshStandardMaterial({ color: 0x6a2a10, emissive: 0xff6a28, emissiveIntensity: 1.35, roughness: 0.15 }));
       if (name === "GIRO") return (mats[name] = new THREE.MeshStandardMaterial({ color: 0xffa640, emissive: 0xff9a30, emissiveIntensity: 0.9, roughness: 0.3 }));
       const c = GOLF_COLORS[name] || GOLF_COLORS.PLASTICO;
       const metal = name === "CROMO" || name === "LLANTA";
