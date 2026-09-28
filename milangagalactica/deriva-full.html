@@ -1631,8 +1631,8 @@
     CH = new Array(N); COL = new Array(N);
     // En vertical se abre el campo y la cámara se aleja, para que el auto no tape todo.
     baseFov = ratio < 1 ? 56 + (1 - ratio) * 36 : 56;
-    camBack = ratio < 1 ? 9 : 6.8;
-    camLift = ratio < 1 ? 1.2 : 0;
+    camBack = ratio < 1 ? 6.4 : 5.2;
+    camLift = ratio < 1 ? 0.7 : 0;
     camera.aspect = ratio;
     camera.fov = baseFov;
     camera.updateProjectionMatrix();
@@ -1928,10 +1928,13 @@
     }
     if (menu.open || state.map) { if (!menu.open) return; }
     else {
+      // Los botones de pedal solo en pantallas táctiles; en la compu están las flechas.
       const b = BRAKE_BOX();
-      drawBox(b, brake.held ? AMBER : DIM, brake.held ? "░" : null);
-      text(b.top + Math.floor(b.h / 2) - 1, b.left + Math.floor(b.w / 2) - 1, "▼", brake.held ? "#fff1c4" : AMBER);
-      if (!state.auto) {
+      if (touchDevice) {
+        drawBox(b, brake.held ? AMBER : DIM, brake.held ? "░" : null);
+        text(b.top + Math.floor(b.h / 2) - 1, b.left + Math.floor(b.w / 2) - 1, "▼", brake.held ? "#fff1c4" : AMBER);
+      }
+      if (!state.auto && touchDevice) {
         const g = GAS_BOX();
         drawBox(g, gas.held ? AMBER : DIM, gas.held ? "░" : null);
         text(g.top + Math.floor(g.h / 2) - 1, g.left + Math.floor(g.w / 2) - 1, "▲", gas.held ? "#fff1c4" : AMBER);

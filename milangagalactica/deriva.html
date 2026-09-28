@@ -8,110 +8,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  /* Un solo tema a propósito: el juego pasa de noche. */
-  :root {
-    color-scheme: dark;
-    --bg: #0b0d19;
-    --ink: #e9e5f0;
-    --muted: #8d8ca6;
-    --line: #262a40;
-    --sun: #ffb45c;
-    --plate: #000000;
+  /* Pantalla llena desde el arranque: solo el juego, de noche. */
+  :root { color-scheme: dark; --bg: #000000; --ink: #e9e5f0; --muted: #8d8ca6; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); overflow: hidden; overscroll-behavior: none; }
+  body { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #screen {
+    position: fixed; inset: 0; background: var(--bg);
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.55;
-    padding-inline: clamp(16px, 4vw, 48px);
-    padding-block: 28px 48px;
-  }
-  .wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
-  header { display: flex; flex-direction: column; gap: 8px; max-width: 68ch; }
-  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--sun); margin: 0; }
-  h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 500; line-height: 1.1; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
-
-  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  canvas#game { display: block; max-width: 100%; border-radius: 3px; background: var(--plate); touch-action: none; outline: none; }
-  canvas#game:focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
-
-  .pad { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .pad-group { display: flex; gap: 10px; }
-  .pad button, .opts button {
-    font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
-    -webkit-user-select: none; user-select: none; touch-action: none;
-  }
-  .pad button { min-width: 72px; min-height: 60px; padding: 0 16px; font-size: 18px; }
-  /* Con mouse y teclado no hacen falta botones en pantalla. */
-  @media (hover: hover) and (pointer: fine) { .pad { display: none; } }
-  .pad button.tool { min-width: 0; min-height: 44px; font-size: 12px; letter-spacing: .04em; }
-  .pad button.tool[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
-  body.gyro #pad-left, body.gyro #pad-right { display: none; }
-  .pad button[data-down="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; border-block: 1px solid var(--line); width: 100%; }
-  .ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .ctl-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .opts .seg button { border: 0; border-radius: 0; font-size: 12px; padding: 6px 10px; color: var(--muted); }
-  .opts .seg button + button { border-left: 1px solid var(--line); }
-  .opts .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
-  .opts > button { font-size: 12px; padding: 6px 10px; }
-  .pad button:focus-visible, .opts button:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
-  @media (hover: hover) { .opts button:hover, .pad button:hover { border-color: var(--muted); } }
-
-  .nogl { padding: 16px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
-  /* Celu horizontal: el juego ocupa la pantalla y los controles van al costado. */
-  @media (orientation: landscape) and (max-height: 540px) {
-    body { padding-block: 6px; padding-inline: 12px; }
-    header, .opts { display: none; }
-    .stage { flex-direction: row; align-items: center; justify-content: center; gap: 10px; }
-    .pad { width: auto; flex-direction: column; flex-wrap: nowrap; align-self: stretch; justify-content: space-between; }
-    .pad-group { flex-direction: column; }
-  }
-  .stage:fullscreen { background: var(--bg); padding: 8px; }
-  /* Pantalla llena propia: sirve aunque el navegador no tenga pantalla completa (iPhone). */
-  body.full { overflow: hidden; }
-  body.full header, body.full .opts { display: none; }
-  body.full .stage {
-    position: fixed; inset: 0; z-index: 10; background: var(--bg);
-    flex-direction: row; justify-content: center; align-items: center; gap: 10px;
-    padding: max(6px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
-  }
-  body.full .pad { display: flex; width: auto; flex-direction: column; flex-wrap: nowrap; align-self: stretch; justify-content: space-between; }
-  body.full .pad-group { flex-direction: column; }
-  @media (orientation: portrait) {
-    body.full .stage { flex-direction: column; }
-    body.full .pad { flex-direction: row; flex-wrap: wrap; width: 100%; align-self: auto; }
-    body.full .pad-group { flex-direction: row; }
-  }
+  canvas#game { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+  .nogl { padding: 24px 16px; color: var(--muted); font-size: 14px; max-width: 60ch; }
+  .legacy { display: none; }
 </style>
 
-<div class="wrap">
-  <header>
-    <p class="eyebrow">milangagalactica</p>
-    <h1>Deriva</h1>
-  </header>
-
-  <div class="stage">
-    <canvas id="game" tabindex="0" role="img" aria-label="Deriva: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
-    <div class="pad" id="pad">
-      <div class="pad-group">
-        <button type="button" id="pad-left" data-key="left" aria-label="Doblar a la izquierda">◀</button>
-        <button type="button" id="pad-right" data-key="right" aria-label="Doblar a la derecha">▶</button>
-      </div>
-      <div class="pad-group pad-tools">
-        <button type="button" id="pad-gyro" class="tool" aria-pressed="false">Giroscopio</button>
-        <button type="button" id="pad-full" class="tool">Pantalla completa</button>
-      </div>
-      <div class="pad-group">
-        <button type="button" id="pad-brake" data-key="down" aria-label="Frenar">▼</button>
-        <button type="button" id="pad-gas" data-key="up" aria-label="Acelerar">▲</button>
-      </div>
-    </div>
-    <div class="opts" id="opts"></div>
-  </div>
-
+<div id="screen" class="stage">
+  <canvas id="game" tabindex="0" role="img" aria-label="Deriva: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
+</div>
+<!-- Controles del juego base que acá se manejan desde el menú ASCII. -->
+<div class="legacy" aria-hidden="true">
+  <div id="pad"><button type="button" id="pad-gyro">Giroscopio</button><button type="button" id="pad-full">Pantalla completa</button></div>
+  <div id="opts"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -420,7 +336,7 @@
 
   // --- Estado ------------------------------------------------------------------
   const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-  const state = { dist: "Media", assist: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
+  const state = { dist: "Media", assist: true, auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
   // --- WebGL -------------------------------------------------------------------
@@ -1101,6 +1017,12 @@
     let acc = 0;
     if (keys.up) acc = along < MAX_FWD ? 16 * traction : 0;
     if (keys.down) acc = along > 0.5 ? -30 : (along > -MAX_REV ? -9 : 0);
+    // Autoavance: una vez que arrancaste, el auto va solo a velocidad crucero.
+    // El botón de freno frena y, si seguís apretando con el auto quieto, va marcha atrás.
+    const braking = keys.down || brake.held;
+    if (brake.held) acc = along > 0.5 ? -30 * traction : (along > -MAX_REV ? -9 : 0);
+    else if (gas.held) acc = along < MAX_FWD ? 16 * traction : 0;
+    else if (state.auto && started && !keys.up && !keys.down && along < CRUISE) acc = 12 * traction;
     // Asistencia arcade: si hay algo adelante, frena suave para no chocar.
     player.assist = false;
     if (state.assist && along > 1 && !player.air) {
@@ -1109,11 +1031,11 @@
     }
     if (keys.down && player.air) acc = 0;
     along += acc * dt - 9.8 * Math.sin(player.pitch) * dt;
-    along -= along * (keys.up || keys.down ? 0.25 : 0.9) * dt * traction;
+    along -= along * (keys.up || braking || gas.held || (state.auto && started) ? 0.25 : 0.9) * dt * traction;
     if (keys.hand) along -= Math.sign(along) * Math.min(Math.abs(along), 14 * dt);
 
     const keySteer = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
-    const want = keySteer || (gyro.on ? gyro.steer : 0);
+    const want = keySteer || (steerT.active ? steerT.x : gyro.on ? gyro.steer : 0);
     player.steer += (want - player.steer) * Math.min(1, dt * 7);
     const here = cellType(toCell(player.x), toCell(player.z)), offroad = here === T.FOREST || here === T.MOUNTAIN;
     const grip = player.air ? 0.2 : keys.hand ? 1.2 : offroad ? 3.2 : 9;
@@ -1199,12 +1121,12 @@
     } else {
       camera.up.set(0, 1, 0);
       // La cámara va atrás del auto, pero nunca adentro de una manzana.
-      let back = 6.8;
-      for (let s = 0.5; s <= 6.8; s += 0.5) {
+      let back = camBack;
+      for (let s = 0.5; s <= camBack; s += 0.5) {
         if (blocksCam(toCell(player.x - fx * s), toCell(player.z - fz * s))) { back = Math.max(1.5, s - 1); break; }
       }
       const wx = player.x - fx * back, wz = player.z - fz * back;
-      want.set(wx, Math.max(player.y + 2.1 + back * 0.12, groundAt(wx, wz) + 1.6), wz);
+      want.set(wx, Math.max(player.y + 2.1 + camLift + back * 0.12, groundAt(wx, wz) + 1.6), wz);
       look.set(player.x + fx * 6, player.y + 1.0, player.z + fz * 6);
     }
     const inside = state.view === "Adentro";
@@ -1288,7 +1210,7 @@
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const along = player.vx * fx + player.vz * fz;
     wheels.forEach((w, i) => { w.rotation.z -= along * 0.016; if (i < 2) w.rotation.y = player.steer * 0.4; });
-    tailMat.emissiveIntensity = keys.down || player.assist ? 2.6 : 1.0;
+    tailMat.emissiveIntensity = keys.down || brake.held || player.assist ? 2.6 : 1.0;
     if (car.userData.syncHalos) car.userData.syncHalos();
     const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
     hemi.intensity += (z[0] - hemi.intensity) * k;
@@ -1498,6 +1420,15 @@
     endCam.position.set(0, 2.4, 9.5);
     endCam.lookAt(0, 0, 0);
   })();
+  // Encuadra el auto entero: en vertical la cámara se aleja para que entre de punta a punta.
+  function frameEndCam(lift) {
+    const hfov = Math.atan(Math.tan(17.5 * Math.PI / 180) * ratio);
+    const d = Math.max(ratio > 1 ? 10.5 : 9.5, 2.35 / Math.tan(Math.min(hfov, 17.5 * Math.PI / 180)));
+    endCam.aspect = ratio;
+    endCam.position.set(0, 2.4 * d / 9.5, d);
+    endCam.lookAt(0, lift || 0, 0);
+    endCam.updateProjectionMatrix();
+  }
   function startEnding() {
     ending = { t: 0 };
     keys.up = keys.down = keys.left = keys.right = keys.hand = false;
@@ -1507,7 +1438,7 @@
     ending.t += dt;
     player.vx *= Math.exp(-3 * dt); player.vz *= Math.exp(-3 * dt);
     endTurn.rotation.y = ending.t * 0.35;
-    endCam.aspect = ratio; endCam.updateProjectionMatrix();
+    frameEndCam(0);
     if (ending.t > 14) {
       ending = null;
       newWorld((Math.random() * 1e9) | 0);
@@ -1613,7 +1544,7 @@
     headBeams.forEach(b => { b.intensity = flicker * (light < 0.01 ? 0 : 2.3 * (0.12 + 0.88 * l1)); b.angle = 0.3 + 0.14 * l1 + 0.04 * (light - l1); b.distance = 36 + 14 * light; });
     carGlow.intensity = 0.5 + 1.1 * l1;
     carGlow.distance = 9 + 5 * light;
-    camera.fov = 56 + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
+    camera.fov = baseFov + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
     camera.updateProjectionMatrix();
     // Susurros: frases sueltas que aparecen en cualquier lugar de la grilla.
     if (inVoid && voidTime > 6 && clock > nextWhisper) {
@@ -1681,11 +1612,16 @@
   // --- Grilla ---------------------------------------------------------------------------------
   let cols = 0, rows = 0, ratio = 16 / 9, rt = null, buf = null;
   let L, RGB, A, Q, CH, COL;
+  let baseFov = 56, camBack = 6.8, camLift = 0;
   function layout() {
-    const narrow = window.innerWidth < 700;
-    ratio = narrow ? 4 / 5 : 16 / 9;
-    cols = DENSITY[state.density];
-    rows = Math.max(12, Math.round(cols * 0.6 / ratio));
+    const box = canvas.getBoundingClientRect();
+    const bw = Math.max(200, box.width || window.innerWidth), bh = Math.max(200, box.height || window.innerHeight);
+    ratio = bw / bh;
+    // La densidad es cuántos módulos entran en el lado corto de la pantalla. Así el carácter
+    // tiene el mismo tamaño en vertical y en horizontal: al rotar entra más, no cambia la escala.
+    const cellW = Math.min(bw, bh) / DENSITY[state.density];
+    cols = Math.max(12, Math.round(bw / cellW));
+    rows = Math.max(12, Math.round(bh / (cellW / 0.6)));
     const W = cols * SS, H = rows * SS;
     if (rt) rt.dispose();
     rt = new THREE.WebGLRenderTarget(W, H);
@@ -1693,20 +1629,16 @@
     const N = cols * rows;
     L = new Float32Array(N); RGB = new Float32Array(N * 3); A = new Uint8Array(N); Q = new Int16Array(N);
     CH = new Array(N); COL = new Array(N);
+    // En vertical se abre el campo y la cámara se aleja, para que el auto no tape todo.
+    baseFov = ratio < 1 ? 56 + (1 - ratio) * 36 : 56;
+    camBack = ratio < 1 ? 6.4 : 5.2;
+    camLift = ratio < 1 ? 0.7 : 0;
     camera.aspect = ratio;
+    camera.fov = baseFov;
     camera.updateProjectionMatrix();
-    const full = document.body.classList.contains("full");
-    const landscape = window.innerWidth > window.innerHeight;
-    const phoneLandscape = full ? landscape : window.matchMedia("(orientation: landscape) and (max-height: 540px)").matches;
-    const padW = (phoneLandscape && !window.matchMedia("(hover: hover) and (pointer: fine)").matches) || (full && landscape) ? 150 : 0;
-    const avail = full && !landscape ? window.innerWidth - 16 : phoneLandscape ? window.innerWidth - padW - 34 : (canvas.parentElement.clientWidth || 800);
-    const maxH = full ? window.innerHeight - (landscape ? 16 : 220) : phoneLandscape ? window.innerHeight - 16 : Math.max(260, window.innerHeight * (narrow ? 0.62 : 0.72));
-    const w = Math.min(avail, maxH * ratio);
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.style.width = w + "px";
-    canvas.style.aspectRatio = String(ratio);
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round((w / ratio) * dpr);
+    canvas.width = Math.round(bw * dpr);
+    canvas.height = Math.round(bh * dpr);
     fontFor = { w: 0, px: 0 };
   }
 
@@ -1753,13 +1685,13 @@
   };
   let exposureNow = ADJ.exposure;
   function shade() {
-    exposureNow = ending && ending.t > 5 ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
+    exposureNow = title || (ending && ending.t > 5) ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
     const W = cols * SS, H = rows * SS;
     cullChunks();
     renderer.setRenderTarget(rt);
     renderer.clear();
     // En el final se ve solo el Arlequín girando en el negro.
-    if (ending && ending.t > 5) renderer.render(endScene, endCam); else renderer.render(scene, camera);
+    if (title || (ending && ending.t > 5)) renderer.render(endScene, endCam); else renderer.render(scene, camera);
     readPixelsAsync(W, H);
     renderer.setRenderTarget(null);
     const steps = RAMP.length - 1, ink = MODES[state.mode];
@@ -1868,7 +1800,12 @@
   }
 
   function hud() {
+    if (title) { titleScreen(); return; }
     if (ending) return;
+    hudBase();
+    overlay();
+  }
+  function hudBase() {
     if (state.view === "Adentro" && !state.map) dashboard();
     const write = (text, r, align) => {
       const c0 = align === "right" ? cols - text.length - 1 : align === "center" ? Math.floor((cols - text.length) / 2) : 1;
@@ -1939,7 +1876,184 @@
   // --- Controles ---------------------------------------------------------------------------------
   const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", Space: "hand" };
   let engaged = false;
+  // --- Controles hechos de caracteres: volante, freno y menú -----------------------------------
+  // Deslizás el dedo de costado para doblar; el botón de abajo a la derecha frena.
+  const CRUISE = 17.5;
+  const steerT = { active: false, id: null, x0: 0, y0: 0, px: 0, x: 0 };
+  const brake = { held: false, id: null }, gas = { held: false, id: null };
+  const menu = { open: false, rows: [], box: null };
+  const AMBER = "#ff9a3c", DIM = "#6e3c1c", MUTED = "#8d8ca6";
+  const cellOf = e => {
+    const r = canvas.getBoundingClientRect();
+    return { c: Math.floor((e.clientX - r.left) / r.width * cols), r: Math.floor((e.clientY - r.top) / r.height * rows), px: e.clientX - r.left, py: e.clientY - r.top, w: r.width, h: r.height };
+  };
+  const put = (r, c, ch, color) => { if (r >= 0 && r < rows && c >= 0 && c < cols) { CH[r * cols + c] = ch; COL[r * cols + c] = color; } };
+  const text = (r, c, str, color) => { for (let k = 0; k < str.length; k++) put(r, c + k, str[k] === " " ? null : str[k], color); };
+  // Cajas: el botón del menú arriba a la derecha y el freno abajo a la derecha.
+  const MENU_BOX = () => ({ top: 1, left: cols - 9, h: 3, w: 7 });
+  const BRAKE_BOX = () => ({ top: rows - 8, left: cols - 14, h: 6, w: 12 });
+  // Sin autoavance aparece el acelerador, arriba del freno.
+  const GAS_BOX = () => ({ top: rows - 15, left: cols - 14, h: 6, w: 12 });
+  const inside = (p, b, pad) => p.r >= b.top - pad && p.r < b.top + b.h + pad && p.c >= b.left - pad && p.c < b.left + b.w + pad;
+  function drawBox(b, color, fill) {
+    for (let r = b.top; r < b.top + b.h; r++) for (let c = b.left; c < b.left + b.w; c++) put(r, c, fill || null, color);
+    const R = b.top + b.h - 1, C = b.left + b.w - 1;
+    put(b.top, b.left, "╭", color); put(b.top, C, "╮", color); put(R, b.left, "╰", color); put(R, C, "╯", color);
+    for (let c = b.left + 1; c < C; c++) { put(b.top, c, "─", color); put(R, c, "─", color); }
+    for (let r = b.top + 1; r < R; r++) { put(r, b.left, "│", color); put(r, C, "│", color); }
+  }
+
+  function menuItems() {
+    const cyc = (list, v) => list[(list.indexOf(v) + 1) % list.length];
+    return [
+      { label: "AUTOAVANCE", value: state.auto ? "SÍ" : "NO", act: () => { state.auto = !state.auto; } },
+      { label: "FRENO AUTO", value: state.assist ? "SÍ" : "NO", act: () => { state.assist = !state.assist; } },
+      { label: "CÁMARA", value: state.view.toUpperCase(), act: () => setOpt("view", cyc(VIEWS, state.view)) },
+      { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(Object.keys(DENSITY), state.density)) },
+      { label: "DISTANCIA", value: state.dist.toUpperCase(), act: () => { state.dist = cyc(Object.keys(DIST), state.dist); } },
+      { label: "MODO", value: state.mode.toUpperCase(), act: () => setOpt("mode", cyc(Object.keys(MODES), state.mode)) },
+      { label: "GIROSCOPIO", value: gyro.on ? "SÍ" : gyroBtn.dataset.failed ? "NO HAY" : "NO", act: () => gyroBtn.click() },
+      { label: "MAPA", value: state.map ? "SÍ" : "NO", act: () => setOpt("map", !state.map) },
+      { label: "PANTALLA", value: document.fullscreenElement ? "COMPLETA" : "NORMAL", act: () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (err) { /* sin pantalla completa */ } } },
+      { label: "OTRA CIUDAD", value: "", act: () => { newWorld((Math.random() * 1e9) | 0); menu.open = false; } },
+      { label: "SEGUIR", value: "", act: () => { menu.open = false; } }
+    ];
+  }
+
+  function overlay() {
+    if (!menu.open) {
+      const m = MENU_BOX();
+      drawBox(m, MUTED);
+      text(m.top + 1, m.left + 3, "≡", AMBER);
+    }
+    if (menu.open || state.map) { if (!menu.open) return; }
+    else {
+      // Los botones de pedal solo en pantallas táctiles; en la compu están las flechas.
+      const b = BRAKE_BOX();
+      if (touchDevice) {
+        drawBox(b, brake.held ? AMBER : DIM, brake.held ? "░" : null);
+        text(b.top + Math.floor(b.h / 2) - 1, b.left + Math.floor(b.w / 2) - 1, "▼", brake.held ? "#fff1c4" : AMBER);
+      }
+      if (!state.auto && touchDevice) {
+        const g = GAS_BOX();
+        drawBox(g, gas.held ? AMBER : DIM, gas.held ? "░" : null);
+        text(g.top + Math.floor(g.h / 2) - 1, g.left + Math.floor(g.w / 2) - 1, "▲", gas.held ? "#fff1c4" : AMBER);
+      }
+      // Volante: una barra con la perilla donde está el dedo. Antes del primer toque, un fantasma que va y viene.
+      const ghost = !started && touchDevice;
+      if (steerT.active || ghost) {
+        const rect = canvas.getBoundingClientRect(), cw = rect.width / cols, chh = rect.height / rows;
+        const R = Math.min(rect.width, rect.height) * 0.22;
+        const x0 = steerT.active ? steerT.x0 : rect.width * 0.4, y0 = steerT.active ? steerT.y0 : rect.height * 0.82;
+        const kx = steerT.active ? -steerT.x : Math.sin(clock * 2.4) * 0.8;
+        const row = Math.round(y0 / chh - 0.5), c0 = Math.round((x0 - R) / cw), c1 = Math.round((x0 + R) / cw);
+        for (let c = c0; c <= c1; c++) put(row, c, "─", ghost ? DIM : "#a0582a");
+        put(row, c0 - 1, "‹", ghost ? DIM : AMBER); put(row, c1 + 1, "›", ghost ? DIM : AMBER);
+        const kc = Math.round((x0 + kx * R) / cw - 0.5);
+        put(row, kc - 1, "(", AMBER); put(row, kc, "@", AMBER); put(row, kc + 1, ")", AMBER);
+      }
+      return;
+    }
+    if (!menu.open) return;
+    // Menú: una caja de líneas en el centro de la grilla.
+    const items = menuItems();
+    const inner = Math.min(cols - 4, Math.max(26, ...items.map(it => it.label.length + it.value.length + 6)));
+    const h = items.length + 4, top = Math.max(1, Math.floor((rows - h) / 2)), left = Math.floor((cols - inner - 2) / 2);
+    for (let r = top; r < top + h; r++) for (let c = left; c < left + inner + 2; c++) put(r, c, null, AMBER);
+    put(top, left, "┌", DIM); put(top, left + inner + 1, "┐", DIM); put(top + h - 1, left, "└", DIM); put(top + h - 1, left + inner + 1, "┘", DIM);
+    for (let c = left + 1; c <= left + inner; c++) { put(top, c, "─", DIM); put(top + h - 1, c, "─", DIM); }
+    for (let r = top + 1; r < top + h - 1; r++) { put(r, left, "│", DIM); put(r, left + inner + 1, "│", DIM); }
+    text(top, left + 2, " DERIVA ", AMBER);
+    menu.rows = [];
+    items.forEach((it, k) => {
+      const r = top + 2 + k;
+      text(r, left + 2, it.label, it.value ? MUTED : AMBER);
+      if (it.value) text(r, left + inner - it.value.length - 3, "‹" + it.value + "›", AMBER);
+      menu.rows.push({ r, act: it.act });
+    });
+    menu.box = { top, left, bottom: top + h - 1, right: left + inner + 1 };
+  }
+
+  // --- Pantalla de título -------------------------------------------------------------------
+  let title = true;
+  const BIG = {
+    D: ["████ ", "█   █", "█   █", "█   █", "████ "],
+    E: ["█████", "█    ", "████ ", "█    ", "█████"],
+    R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
+    I: ["█████", "  █  ", "  █  ", "  █  ", "█████"],
+    V: ["█   █", "█   █", "█   █", " █ █ ", "  █  "],
+    A: [" ███ ", "█   █", "█████", "█   █", "█   █"]
+  };
+  const CAR_COLORS = ["#ff2a3a", "#3c6bff", "#ffc21a", "#2fe0d0"];
+  const PLAY_BOX = () => { const w = 15; return { top: Math.min(rows - 4, Math.round(rows * 0.85)), left: Math.floor((cols - w) / 2), h: 3, w }; };
+  function titleScreen() {
+    const center = (r, str, color) => text(r, Math.floor((cols - str.length) / 2), str, color);
+    // Leyenda arriba.
+    center(Math.round(rows * 0.1), "la luz da vida a todo", "#c9b98e");
+    // DERIVA en letras grandes: cada bloque es un carácter denso, con un brillo que baja.
+    const sc = (cols >= 72 && rows >= 60) || cols >= 110 ? 2 : 1, word = "DERIVA", lw = 6 * sc, top = Math.round(rows * (sc === 2 ? 0.15 : 0.16));
+    const left = Math.floor((cols - word.length * lw + sc) / 2);
+    for (let k = 0; k < word.length; k++) BIG[word[k]].forEach((line, y) => {
+      for (let yy = 0; yy < sc; yy++) for (let x = 0; x < line.length; x++) for (let xx = 0; xx < sc; xx++) {
+        if (line[x] === " ") continue;
+        const r = top + y * sc + yy, c = left + k * lw + x * sc + xx;
+        // Todos caracteres densos; el brillo baja como una luz que recorre las letras.
+        const glow = 0.5 + 0.5 * Math.sin(clock * 1.6 - r * 0.45 - c * 0.06);
+        put(r, c, glow > 0.66 ? "$" : glow > 0.33 ? "@" : "B", glow > 0.8 ? "#fff6e0" : glow > 0.45 ? "#e9e5f0" : "#b8b4c8");
+      }
+    });
+    // milangagalactica con los colores del auto, con una ola de brillo que la recorre.
+    const name = "milangagalactica", nr = Math.round(rows * (rows >= 60 ? 0.74 : 0.8)), nc = Math.floor((cols - name.length) / 2);
+    for (let k = 0; k < name.length; k++) put(nr, nc + k, name[k], Math.sin(clock * 2.2 - k * 0.45) > 0.85 ? "#fff6e0" : CAR_COLORS[k % 4]);
+    // Botón de jugar que late.
+    const b = PLAY_BOX(), on = Math.sin(clock * 3) > -0.3;
+    drawBox(b, on ? AMBER : DIM);
+    text(b.top + 1, b.left + 4, "▶ JUGAR", on ? "#fff1c4" : AMBER);
+  }
+  function startGame() { title = false; camSnap = true; }
+
+  canvas.addEventListener("pointerdown", e => {
+    engaged = true;
+    if (title) { if (inside(cellOf(e), PLAY_BOX(), 3)) startGame(); return; }
+    const p = cellOf(e);
+    if (!menu.open && inside(p, MENU_BOX(), 1)) { menu.tapBtn = true; return; }
+    if (menu.open) return;
+    started = true;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
+    if (inside(p, BRAKE_BOX(), 1)) { brake.held = true; brake.id = e.pointerId; return; }
+    if (!state.auto && inside(p, GAS_BOX(), 0)) { gas.held = true; gas.id = e.pointerId; return; }
+    if (!steerT.active) { steerT.active = true; steerT.id = e.pointerId; steerT.x0 = p.px; steerT.y0 = p.py; steerT.x = 0; }
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!steerT.active || e.pointerId !== steerT.id) return;
+    const p = cellOf(e), R = Math.min(p.w, p.h) * 0.22;
+    // Dedo a la derecha, dobla a la derecha (en el juego, derecha es negativo).
+    steerT.x = -clamp((p.px - steerT.x0) / R, -1, 1);
+  });
+  const endTouch = e => {
+    if (menu.tapBtn) { menu.tapBtn = false; if (inside(cellOf(e), MENU_BOX(), 1)) menu.open = true; return; }
+    if (menu.open) {
+      const p = cellOf(e), bx = menu.box;
+      if (!bx || p.r < bx.top || p.r > bx.bottom || p.c < bx.left || p.c > bx.right) { menu.open = false; return; }
+      const row = menu.rows.find(x => x.r === p.r);
+      if (row) row.act();
+      return;
+    }
+    if (e.pointerId === brake.id) { brake.held = false; brake.id = null; }
+    if (e.pointerId === gas.id) { gas.held = false; gas.id = null; }
+    if (e.pointerId === steerT.id) { steerT.active = false; steerT.x = 0; steerT.id = null; }
+  };
+  canvas.addEventListener("pointerup", endTouch);
+  canvas.addEventListener("pointercancel", e => {
+    if (e.pointerId === brake.id) { brake.held = false; brake.id = null; }
+    if (e.pointerId === gas.id) { gas.held = false; gas.id = null; }
+    if (e.pointerId === steerT.id) { steerT.active = false; steerT.x = 0; steerT.id = null; }
+  });
+  canvas.addEventListener("contextmenu", e => e.preventDefault());
+
   window.addEventListener("keydown", e => {
+    if (title) { if (e.code === "Enter" || e.code === "Space") { startGame(); e.preventDefault(); } return; }
+    if (e.code === "Escape") { menu.open = !menu.open; return; }
     const k = KEYMAP[e.code];
     if (k) { keys[k] = true; started = true; if (engaged) e.preventDefault(); return; }
     if (e.code === "KeyC") setOpt("view", VIEWS[(VIEWS.indexOf(state.view) + 1) % VIEWS.length]);
@@ -1988,7 +2102,7 @@
 
   // Con el giroscopio, la pantalla es el pedal: derecha acelera, izquierda frena.
   const pedal = e => {
-    if (!gyro.on) return;
+    return;
     const r = canvas.getBoundingClientRect();
     const right = e.clientX - r.left > r.width * 0.4;
     keys.up = right; keys.down = !right; started = true;
@@ -2053,7 +2167,6 @@
   const VIEWS = ["Atrás", "Adentro", "Arriba"];
   addSeg("Cámara", "view", VIEWS);
   addSeg("Densidad", "density", Object.keys(DENSITY));
-  addSeg("Distancia", "dist", ["Corta", "Media", "Larga"]);
   addSeg("Modo", "mode", Object.keys(MODES));
   const mapBtn = document.createElement("button");
   mapBtn.type = "button"; mapBtn.id = "btn-map";
@@ -2081,7 +2194,8 @@
     lastTs = ts;
     clock += dt;
     water.uniforms.uTime.value = clock;
-    if (!state.map) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
+    if (title) { endTurn.rotation.y = clock * 0.35; frameEndCam(ratio > 1 ? 0.9 : 0.25); }
+    if (!title && !state.map && !menu.open) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
     tickHorizon();
     tickEnding(dt);
     tickLight(dt);
