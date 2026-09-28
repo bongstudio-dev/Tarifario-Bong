@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>milangagalactica 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Diseño de un solo tema a propósito: todo pasa en el espacio. */
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d19;
+    --ink: #e9e5f0;
+    --muted: #8d8ca6;
+    --line: #262a40;
+    --sun: #ffb45c;
+    --plate: #000000;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.55;
+    padding-inline: clamp(16px, 4vw, 48px);
+    padding-block: 40px 64px;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  header { display: flex; flex-direction: column; gap: 10px; max-width: 68ch; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--sun); margin: 0; }
+  h1 { font-size: clamp(28px, 4.2vw, 44px); font-weight: 500; line-height: 1.1; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+  header p { margin: 0; color: var(--muted); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 14px 28px; padding-block: 14px; border-block: 1px solid var(--line); }
+  .ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ctl-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg button { font: inherit; font-size: 12px; background: transparent; color: var(--muted); border: 0; padding: 6px 10px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button:hover { color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .seg button:focus-visible, .copy:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 36px 28px; }
+  @media (min-width: 820px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 560px) { .grid.tall { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 960px) { .grid.tall { grid-template-columns: repeat(3, 1fr); } }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  canvas.plate { display: block; width: 100%; max-width: 100%; border-radius: 3px; background: var(--plate); touch-action: pan-y; cursor: crosshair; }
+  canvas.plate:active { cursor: grabbing; }
+  figcaption { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .cap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .cap-name { font-weight: 500; }
+  .cap-note { font-size: 12px; color: var(--muted); }
+  .swatches { display: flex; gap: 4px; margin-top: 6px; }
+  .swatches span { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line); }
+  .copy { font: inherit; font-size: 12px; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+  .copy:hover { border-color: var(--muted); }
+  .fallback { width: 100%; height: 120px; font: 10px/1.1 "IBM Plex Mono", ui-monospace, monospace; background: var(--plate); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; }
+  .tuning { display: flex; flex-direction: column; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .tuning-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+  .sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px 28px; }
+  .slider { display: flex; flex-direction: column; gap: 6px; }
+  .slider-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .slider output { font-size: 12px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .slider input { width: 100%; accent-color: var(--sun); margin: 0; }
+  .slider input:focus-visible { outline: 2px solid var(--sun); outline-offset: 4px; }
+  .nogl { padding: 16px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+
+  footer { color: var(--muted); font-size: 12px; max-width: 68ch; display: flex; flex-direction: column; gap: 8px; }
+  footer p { margin: 0; }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">milangagalactica · pruebas 3D</p>
+    <h1>ASCII con volumen</h1>
+    <p>Objetos 3D reales que giran en WebGL y se dibujan con caracteres: cada celda toma la luz que recibe esa parte del objeto. Pasá el cursor o tocá una lámina para alumbrarla con una linterna: la luz es 3D y recorre el volumen, pero las letras no se mueven de su lugar, solo cambian. Arrastrá de costado para girar el objeto.</p>
+  </header>
+
+  <div class="controls" id="controls"></div>
+  <div class="tuning" id="tuning"></div>
+  <div class="grid tall" id="grid"></div>
+
+  <footer>
+    <p>Cómo funciona: la escena se renderiza en WebGL a una resolución mínima, del tamaño de la grilla de caracteres (el doble, para suavizar bordes). Cada píxel se lee, se convierte en luz y la luz elige el carácter. Lo oscuro queda vacío.</p>
+    <p>Toroide es un guiño al donut.c de Andy Sloane (2006), el clásico donut ASCII que gira.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // --- Opciones ------------------------------------------------------------
+  const RAMPS = {
+    "Clásico": " .:-=+*#%@",
+    "Fino": " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
+    "Bloques": " ░▒▓█",
+    "Mínimo": " ·•"
+  };
+  const STAR_CHARS = { "Clásico": ".+*", "Fino": ".+*", "Bloques": "░▒▓", "Mínimo": "··•" };
+  const FORMATS = { "16:9": 16 / 9, "4:5": 4 / 5, "9:16": 9 / 16 };
+  const DENSITY = { "Baja": 60, "Media": 90, "Alta": 130 };
+  const MODES = {
+    "Color": { bg: "#000000", ink: null },
+    "Tinta": { bg: "#000000", ink: "#e9e5f0" },
+    "Papel": { bg: "#ece8df", ink: "#1b1a26" }
+  };
+  const state = { format: "4:5", density: "Baja", ramp: "Fino", mode: "Tinta" };
+  const SS = 2; // supermuestreo: 2 × 2 píxeles por carácter
+  const TAU = Math.PI * 2;
+
+  // --- Utilidades ----------------------------------------------------------
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  function hash(x, y) {
+    let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const h3 = (x, y, z) => hash(x + Math.imul(z, 7919), y + Math.imul(z, 104729));
+  function noise3(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+    const xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+    let r = 0;
+    for (let dz = 0; dz < 2; dz++) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      r += (dx ? u : 1 - u) * (dy ? v : 1 - v) * (dz ? w : 1 - w) * h3(xi + dx, yi + dy, zi + dz);
+    }
+    return r;
+  }
+  const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+
+  // Estrellas quietas de fondo, pocas.
+  function star(ci, ri, t, seed, amount) {
+    const h = hash(ci * 7 + seed, ri * 13 + seed * 3);
+    if (amount <= 0 || h <= 1 - 0.012 * amount) return -1;
+    const tw = 0.5 + 0.5 * Math.sin(t * (0.8 + h * 2.5) + h * 50);
+    return 0.3 + 0.55 * hash(ci + seed, ri + 99) * (0.55 + 0.45 * tw);
+  }
+
+  // --- Escenas 3D ------------------------------------------------------------
+  const FOV = 35, TANH = Math.tan((FOV / 2) * Math.PI / 180);
+
+  // Escena base: cámara a la distancia justa para que el objeto entre en cualquier formato.
+  function base(A, radius, dir) {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    const camera = new THREE.PerspectiveCamera(FOV, A, 0.1, 200);
+    const d = (radius * 1.1) / (TANH * Math.min(1, A));
+    const v = new THREE.Vector3(...(dir || [0, 0, 1])).normalize().multiplyScalar(d);
+    camera.position.copy(v);
+    camera.lookAt(0, 0, 0);
+    const root = new THREE.Group();
+    scene.add(root);
+    // Linterna: sale de la cámara y apunta hacia donde está el cursor.
+    const spot = new THREE.SpotLight(0xfff2dc, 0, 0, 0.16, 0.55);
+    spot.position.copy(camera.position);
+    scene.add(spot, spot.target);
+    return { scene, camera, root, spot, d };
+  }
+  function keyLight(scene, intensity) {
+    const l = new THREE.DirectionalLight(0xffffff, intensity);
+    l.position.set(-3, 2, 4);
+    scene.add(l);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.03));
+    return l;
+  }
+  const mat = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.9, metalness: 0 }, extra || {}));
+
+  function bandTexture() {
+    const c = document.createElement("canvas");
+    c.width = 512; c.height = 256;
+    const g = c.getContext("2d");
+    for (let y = 0; y < 256; y++) {
+      const n = 0.5 + 0.5 * Math.sin(y * 0.19 + Math.sin(y * 0.047) * 3);
+      const l = Math.round(110 + 120 * n);
+      g.fillStyle = "rgb(" + l + "," + Math.round(l * 0.78) + "," + Math.round(l * 0.62) + ")";
+      g.fillRect(0, y, 512, 1);
+    }
+    // Dos tormentas para que se note el giro.
+    g.fillStyle = "rgb(255,240,220)";
+    g.beginPath(); g.ellipse(150, 165, 40, 15, 0, 0, TAU); g.fill();
+    g.fillStyle = "rgb(40,28,30)";
+    g.beginPath(); g.ellipse(390, 92, 30, 10, 0, 0, TAU); g.fill();
+    return new THREE.CanvasTexture(c);
+  }
+
+  const SCENES = [
+    {
+      name: "Planeta con anillos",
+      note: "Gira sobre su eje. El anillo pasa por delante y por detrás, y el planeta le proyecta sombra.",
+      palette: ["#000000", "#e8b58c", "#e2cfa4"],
+      build(A) {
+        const b = base(A, 2.3, [0, 0.12, 1]);
+        const light = keyLight(b.scene, 1.1);
+        light.castShadow = true;
+        light.shadow.bias = -0.003;
+        light.shadow.mapSize.set(1024, 1024);
+        Object.assign(light.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 });
+        const tilt = new THREE.Group();
+        tilt.rotation.set(0.32, 0, 0.38);
+        b.root.add(tilt);
+        const planet = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 32), mat(0xffffff, { map: bandTexture(), roughness: 1 }));
+        planet.castShadow = true;
+        tilt.add(planet);
+        [[1.35, 1.72], [1.82, 2.25]].forEach(([a, c], i) => {
+          const ring = new THREE.Mesh(new THREE.RingGeometry(a, c, 160, 1), mat(i ? 0xd8c69e : 0xece0bf, { side: THREE.DoubleSide, roughness: 1 }));
+          ring.rotation.x = -Math.PI / 2;
+          ring.receiveShadow = true;
+          tilt.add(ring);
+        });
+        return Object.assign(b, { update(t) { planet.rotation.y = t * 0.3; } });
+      }
+    },
+    {
+      name: "Toroide",
+      note: "El donut que gira en dos ejes. Un clásico del ASCII en movimiento.",
+      palette: ["#000000", "#7fd6ff"],
+      build(A) {
+        const b = base(A, 1.6);
+        keyLight(b.scene, 1.05);
+        const m = new THREE.Mesh(new THREE.TorusGeometry(1.08, 0.46, 48, 120), mat(0x7fd6ff, { roughness: 0.55 }));
+        b.root.add(m);
+        return Object.assign(b, { update(t) { m.rotation.x = t * 0.55; m.rotation.z = t * 0.3; } });
+      }
+    },
+    {
+      name: "Nudo",
+      note: "Un tubo que se anuda tres veces sobre sí mismo.",
+      palette: ["#000000", "#c9a8ff"],
+      build(A) {
+        const b = base(A, 1.55);
+        keyLight(b.scene, 1.05);
+        const m = new THREE.Mesh(new THREE.TorusKnotGeometry(0.88, 0.27, 260, 28, 2, 3), mat(0xc9a8ff, { roughness: 0.6 }));
+        b.root.add(m);
+        return Object.assign(b, { update(t) { m.rotation.y = t * 0.35; m.rotation.x = t * 0.18; } });
+      }
+    },
+    {
+      name: "Asteroide",
+      note: "Una roca irregular que da tumbos. Las caras planas se leen como facetas de caracteres.",
+      palette: ["#000000", "#c8b49a"],
+      build(A) {
+        const b = base(A, 1.55);
+        keyLight(b.scene, 1.15);
+        const geo = new THREE.IcosahedronGeometry(1.15, 3);
+        const pos = geo.attributes.position, v = new THREE.Vector3();
+        for (let i = 0; i < pos.count; i++) {
+          v.fromBufferAttribute(pos, i).normalize();
+          const k = 1 + 0.38 * (noise3(v.x * 1.8 + 5, v.y * 1.8, v.z * 1.8) - 0.5) + 0.14 * (noise3(v.x * 5, v.y * 5 + 3, v.z * 5) - 0.5);
+          v.multiplyScalar(1.15 * k * (v.x > 0.55 ? 0.93 : 1));
+          pos.setXYZ(i, v.x, v.y, v.z);
+        }
+        geo.computeVertexNormals();
+        const m = new THREE.Mesh(geo, mat(0xc8b49a, { flatShading: true, roughness: 1 }));
+        b.root.add(m);
+        return Object.assign(b, { update(t) { m.rotation.x = t * 0.21; m.rotation.y = t * 0.34; m.rotation.z = t * 0.08; } });
+      }
+    },
+    {
+      name: "Giroscopio",
+      note: "Tres anillos anidados, cada uno gira en su eje. Una estrella quieta en el centro.",
+      palette: ["#000000", "#e9ecf5", "#fff0c8"],
+      build(A) {
+        const b = base(A, 1.65, [0, 0.2, 1]);
+        keyLight(b.scene, 1.05);
+        const ringMat = mat(0xe9ecf5, { roughness: 0.45 });
+        const outerG = new THREE.Group(), midG = new THREE.Group(), innerG = new THREE.Group();
+        const outer = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.075, 16, 160), ringMat);
+        const mid = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.075, 16, 140), ringMat);
+        const inner = new THREE.Mesh(new THREE.TorusGeometry(0.86, 0.075, 16, 120), ringMat);
+        mid.rotation.y = Math.PI / 2;
+        inner.rotation.x = Math.PI / 2;
+        outerG.add(outer, midG);
+        midG.add(mid, innerG);
+        innerG.add(inner);
+        b.root.add(outerG);
+        const core = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff0c8 }));
+        b.root.add(core);
+        return Object.assign(b, { update(t) { outerG.rotation.y = t * 0.4; midG.rotation.z = t * 0.65; innerG.rotation.x = t * 1.0; } });
+      }
+    },
+    {
+      name: "Sistema",
+      note: "Un sol que ilumina de verdad: cada planeta muestra su fase según dónde está.",
+      palette: ["#000000", "#ffd98a", "#f3a07a", "#7fd6ff", "#c9a8ff"],
+      build(A) {
+        const b = base(A, 2.35, [0, 0.42, 1]);
+        b.scene.add(new THREE.AmbientLight(0xffffff, 0.02));
+        const sunLight = new THREE.PointLight(0xffffff, 1.3, 0);
+        b.root.add(sunLight);
+        b.root.add(new THREE.Mesh(new THREE.SphereGeometry(0.46, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffd98a })));
+        const orbitMat = new THREE.LineBasicMaterial({ color: 0x252c5c });
+        const planets = [
+          { r: 0.14, R: 0.95, s: 0.9, c: 0xf3a07a, p: 0.5 },
+          { r: 0.24, R: 1.55, s: 0.5, c: 0x7fd6ff, p: 2.6 },
+          { r: 0.18, R: 2.15, s: 0.3, c: 0xc9a8ff, p: 4.4 }
+        ].map(o => {
+          const pts = [];
+          for (let k = 0; k <= 128; k++) pts.push(new THREE.Vector3(Math.cos((k / 128) * TAU) * o.R, 0, Math.sin((k / 128) * TAU) * o.R));
+          b.root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), orbitMat));
+          o.mesh = new THREE.Mesh(new THREE.SphereGeometry(o.r, 32, 20), mat(o.c, { roughness: 1 }));
+          b.root.add(o.mesh);
+          return o;
+        });
+        const moon = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 10), mat(0xe9ecf5, { roughness: 1 }));
+        b.root.add(moon);
+        b.root.rotation.z = 0.1;
+        return Object.assign(b, {
+          update(t) {
+            planets.forEach(o => { const a = t * o.s + o.p; o.mesh.position.set(Math.cos(a) * o.R, 0, Math.sin(a) * o.R); });
+            const e = planets[1].mesh.position, a = t * 1.6;
+            moon.position.set(e.x + Math.cos(a) * 0.4, 0.03, e.z + Math.sin(a) * 0.4);
+          }
+        });
+      }
+    }
+  ];
+
+  // --- WebGL -----------------------------------------------------------------
+  const grid = document.getElementById("grid");
+  let renderer = null;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: false });
+    renderer.setPixelRatio(1);
+    renderer.setSize(1, 1, false);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  } catch (e) {
+    renderer = null;
+  }
+  if (!renderer) {
+    grid.innerHTML = '<p class="nogl">Este navegador no tiene WebGL activado, así que las escenas 3D no se pueden dibujar acá. Probá desde Chrome, Safari o Firefox actualizados.</p>';
+    return;
+  }
+
+  // --- Controles -------------------------------------------------------------
+  const controlsEl = document.getElementById("controls");
+  function addControl(label, key, options) {
+    const wrap = document.createElement("div");
+    wrap.className = "ctl";
+    const id = "ctl-" + key;
+    wrap.innerHTML = '<span class="ctl-label" id="' + id + '">' + label + "</span>";
+    const seg = document.createElement("div");
+    seg.className = "seg";
+    seg.setAttribute("role", "group");
+    seg.setAttribute("aria-labelledby", id);
+    Object.keys(options).forEach(name => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.id = key + "-" + name;
+      btn.textContent = name;
+      btn.setAttribute("aria-pressed", String(state[key] === name));
+      btn.addEventListener("click", () => {
+        state[key] = name;
+        seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === btn)));
+        if (key === "format") rebuild();
+        if (key === "format" || key === "density") layout();
+        drawAll(now());
+      });
+      seg.appendChild(btn);
+    });
+    wrap.appendChild(seg);
+    controlsEl.appendChild(wrap);
+  }
+  addControl("Formato", "format", FORMATS);
+  addControl("Densidad", "density", DENSITY);
+  addControl("Caracteres", "ramp", RAMPS);
+  addControl("Modo", "mode", MODES);
+
+
+  // --- Ajustes finos -----------------------------------------------------------
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const DEFAULTS = { dither: "Ruido", amount: 0.6, contrast: 1.8, exposure: 0.9, gamma: 2, threshold: 0.17, speed: reduce.matches ? 0 : 2.55, stars: 2.1, lamp: 1.2, beam: 0.16 };
+  const adj = Object.assign({}, DEFAULTS);
+  try {
+    const saved = JSON.parse(localStorage.getItem("mg3d-ajustes") || "null");
+    if (saved) Object.keys(DEFAULTS).forEach(k => { if (k !== "speed" && saved[k] !== undefined) adj[k] = saved[k]; });
+  } catch (e) { /* sin almacenamiento */ }
+  const save = () => { try { localStorage.setItem("mg3d-ajustes", JSON.stringify(adj)); } catch (e) { /* sin almacenamiento */ } };
+
+  const SLIDERS = [
+    { key: "amount", label: "Intensidad del dither", min: 0, max: 2, step: 0.05, fmt: v => Math.round(v * 100) + "%" },
+    { key: "contrast", label: "Contraste", min: 0.5, max: 3, step: 0.05, fmt: v => v.toFixed(2) },
+    { key: "exposure", label: "Exposición", min: 0.3, max: 2.5, step: 0.05, fmt: v => v.toFixed(2) },
+    { key: "gamma", label: "Gamma", min: 0.4, max: 2.5, step: 0.05, fmt: v => v.toFixed(2) },
+    { key: "threshold", label: "Umbral de negro", min: 0, max: 0.5, step: 0.01, fmt: v => Math.round(v * 100) + "%" },
+    { key: "speed", label: "Velocidad", min: 0, max: 3, step: 0.05, fmt: v => v === 0 ? "quieto" : v.toFixed(2) + "×" },
+    { key: "stars", label: "Estrellas", min: 0, max: 4, step: 0.1, fmt: v => v === 0 ? "ninguna" : v.toFixed(1) + "×" },
+    { key: "lamp", label: "Linterna", min: 0, max: 3, step: 0.05, fmt: v => v === 0 ? "apagada" : v.toFixed(2) + "×" },
+    { key: "beam", label: "Apertura de la linterna", min: 0.06, max: 0.5, step: 0.01, fmt: v => Math.round((v * 180) / Math.PI) + "°" }
+  ];
+  const tuning = document.getElementById("tuning");
+  const redraw = () => { save(); drawAll(now()); };
+
+  const ditherRow = document.createElement("div");
+  ditherRow.className = "ctl";
+  ditherRow.innerHTML = '<span class="ctl-label" id="lbl-dither">Dither</span>';
+  const dseg = document.createElement("div");
+  dseg.className = "seg";
+  dseg.setAttribute("role", "group");
+  dseg.setAttribute("aria-labelledby", "lbl-dither");
+  ["Ninguno", "Bayer", "Ruido", "Difusión"].forEach(name => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.id = "dither-" + name;
+    b.textContent = name;
+    b.addEventListener("click", () => { adj.dither = name; syncUI(); redraw(); });
+    dseg.appendChild(b);
+  });
+  ditherRow.appendChild(dseg);
+  const reset = document.createElement("button");
+  reset.type = "button";
+  reset.className = "copy";
+  reset.textContent = "Restablecer";
+  reset.addEventListener("click", () => { Object.assign(adj, DEFAULTS); syncUI(); redraw(); });
+  const head = document.createElement("div");
+  head.className = "tuning-head";
+  head.append(ditherRow, reset);
+  tuning.appendChild(head);
+
+  const sliderGrid = document.createElement("div");
+  sliderGrid.className = "sliders";
+  const outputs = {}, inputs = {};
+  SLIDERS.forEach(sl => {
+    const wrap = document.createElement("label");
+    wrap.className = "slider";
+    wrap.setAttribute("for", "adj-" + sl.key);
+    const top = document.createElement("span");
+    top.className = "slider-top";
+    const name = document.createElement("span");
+    name.className = "ctl-label";
+    name.textContent = sl.label;
+    const out = document.createElement("output");
+    out.htmlFor = "adj-" + sl.key;
+    top.append(name, out);
+    const input = document.createElement("input");
+    input.type = "range";
+    input.id = "adj-" + sl.key;
+    input.min = sl.min; input.max = sl.max; input.step = sl.step;
+    input.addEventListener("input", () => { adj[sl.key] = parseFloat(input.value); out.textContent = sl.fmt(adj[sl.key]); redraw(); });
+    wrap.append(top, input);
+    sliderGrid.appendChild(wrap);
+    outputs[sl.key] = out; inputs[sl.key] = input;
+  });
+  tuning.appendChild(sliderGrid);
+  function syncUI() {
+    dseg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.textContent === adj.dither)));
+    SLIDERS.forEach(sl => { inputs[sl.key].value = adj[sl.key]; outputs[sl.key].textContent = sl.fmt(adj[sl.key]); });
+  }
+  syncUI();
+
+  // --- Láminas ---------------------------------------------------------------
+  const plates = SCENES.map((scene, i) => {
+    const fig = document.createElement("figure");
+    const canvas = document.createElement("canvas");
+    canvas.className = "plate";
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute("aria-label", "Arte ASCII en 3D: " + scene.name);
+    const cap = document.createElement("figcaption");
+    const info = document.createElement("div");
+    info.className = "cap";
+    const name = document.createElement("span");
+    name.className = "cap-name";
+    name.textContent = scene.name;
+    const note = document.createElement("span");
+    note.className = "cap-note";
+    note.textContent = scene.note;
+    const meta = document.createElement("span");
+    meta.className = "cap-note";
+    const sw = document.createElement("div");
+    sw.className = "swatches";
+    scene.palette.forEach(h => { const s = document.createElement("span"); s.style.background = h; s.title = h; sw.appendChild(s); });
+    info.append(name, note, meta, sw);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy";
+    btn.textContent = "Copiar texto";
+    cap.append(info, btn);
+    fig.append(canvas, cap);
+    grid.appendChild(fig);
+    const plate = { scene, fig, canvas, ctx: canvas.getContext("2d"), meta, text: "", visible: true, cols: 0, rows: 0, yaw: 0, drag: null, world: null, rt: null, buf: null, seed: i + 1, last: 0,
+      lamp: { active: false, x: 0, y: 0, tx: 0, ty: 0, power: 0, releaseAt: 0 } };
+    btn.addEventListener("click", () => copyPlate(plate, btn));
+
+    // Arrastrar de costado gira el objeto.
+    canvas.addEventListener("pointerdown", e => {
+      plate.drag = { x: e.clientX, yaw: plate.yaw };
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
+    });
+    canvas.addEventListener("pointermove", e => {
+      if (!plate.drag) return;
+      plate.yaw = plate.drag.yaw + (e.clientX - plate.drag.x) * 0.012;
+      if (adj.speed <= 0) draw(plate, now());
+    });
+    // La linterna sigue al cursor; con el dedo queda prendida un momento después de soltar.
+    const aim = e => {
+      const r = canvas.getBoundingClientRect(), l = plate.lamp;
+      l.tx = ((e.clientX - r.left) / r.width) * ratio();
+      l.ty = (e.clientY - r.top) / r.height;
+      if (!l.active && l.power === 0) { l.x = l.tx; l.y = l.ty; }
+      l.active = true;
+      l.releaseAt = 0;
+    };
+    canvas.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") aim(e); });
+    canvas.addEventListener("pointermove", e => { if (e.pointerType === "mouse" || plate.lamp.active) aim(e); });
+    canvas.addEventListener("pointerdown", aim);
+    canvas.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") plate.lamp.active = false; });
+    const lift = e => { if (e.pointerType !== "mouse") plate.lamp.releaseAt = performance.now() + 1400; };
+    canvas.addEventListener("pointerup", lift);
+    canvas.addEventListener("pointercancel", lift);
+    const end = () => { plate.drag = null; };
+    canvas.addEventListener("pointerup", end);
+    canvas.addEventListener("pointercancel", end);
+    return plate;
+  });
+
+  function copyPlate(plate, btn) {
+    const done = () => { btn.textContent = "Copiado"; setTimeout(() => { btn.textContent = "Copiar texto"; }, 1500); };
+    const fallback = () => {
+      let ta = plate.fig.querySelector("textarea");
+      if (!ta) {
+        ta = document.createElement("textarea");
+        ta.className = "fallback";
+        ta.readOnly = true;
+        ta.setAttribute("aria-label", "Texto ASCII de " + plate.scene.name);
+        plate.fig.appendChild(ta);
+      }
+      ta.value = plate.text;
+      ta.focus();
+      ta.select();
+      btn.textContent = "Seleccionado: copialo";
+    };
+    try { navigator.clipboard.writeText(plate.text).then(done, fallback); } catch (e) { fallback(); }
+  }
+
+  const ratio = () => FORMATS[state.format];
+  function dispose(world) {
+    if (!world) return;
+    world.scene.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+    });
+  }
+  function rebuild() {
+    plates.forEach(p => { dispose(p.world); p.world = p.scene.build(ratio()); });
+  }
+  function layout() {
+    grid.classList.toggle("tall", state.format !== "16:9");
+    const cols = DENSITY[state.density];
+    const rows = Math.max(8, Math.round(cols * 0.6 / ratio()));
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    plates.forEach(p => {
+      p.cols = cols;
+      p.rows = rows;
+      const w = p.canvas.clientWidth || p.fig.clientWidth || 400;
+      p.canvas.style.aspectRatio = String(ratio());
+      p.canvas.width = Math.round(w * dpr);
+      p.canvas.height = Math.round((w / ratio()) * dpr);
+      p.meta.textContent = cols + " × " + rows + " caracteres · " + state.format;
+    });
+  }
+
+  const _ray = new THREE.Vector3();
+  function draw(p, t, dt) {
+    dt = dt || 0;
+    const { ctx, canvas, cols, rows } = p;
+    const W = cols * SS, H = rows * SS;
+    if (!p.rt || p.rt.width !== W || p.rt.height !== H) {
+      if (p.rt) p.rt.dispose();
+      p.rt = new THREE.WebGLRenderTarget(W, H);
+      p.buf = new Uint8Array(W * H * 4);
+    }
+    p.world.update(t);
+    p.world.root.rotation.y = p.yaw;
+    const lamp = p.lamp, w = p.world;
+    lamp.power += ((lamp.active ? 1 : 0) - lamp.power) * Math.min(1, dt * 8);
+    if (!lamp.active && lamp.power < 0.01) lamp.power = 0;
+    const k = Math.min(1, dt * 16);
+    lamp.x += (lamp.tx - lamp.x) * k;
+    lamp.y += (lamp.ty - lamp.y) * k;
+    w.spot.intensity = 2.4 * adj.lamp * lamp.power;
+    w.spot.angle = adj.beam;
+    if (w.spot.intensity > 0) {
+      _ray.set((lamp.x / ratio()) * 2 - 1, 1 - lamp.y * 2, 0.5).unproject(w.camera).sub(w.camera.position).normalize();
+      w.spot.target.position.copy(w.camera.position).addScaledVector(_ray, w.d);
+      w.spot.target.updateMatrixWorld();
+    }
+    renderer.setRenderTarget(p.rt);
+    renderer.render(p.world.scene, p.world.camera);
+    renderer.readRenderTargetPixels(p.rt, 0, 0, W, H, p.buf);
+    renderer.setRenderTarget(null);
+
+    // 1. Luz de cada celda con exposición, contraste, gamma y umbral de negro.
+    const N = cols * rows;
+    if (!p.L || p.L.length !== N) { p.L = new Float32Array(N); p.RGB = new Float32Array(N * 3); }
+    const L = p.L, RGB = p.RGB, buf = p.buf;
+    for (let ri = 0; ri < rows; ri++) {
+      const y0 = (rows - 1 - ri) * SS; // WebGL lee de abajo hacia arriba
+      for (let ci = 0; ci < cols; ci++) {
+        let r = 0, g = 0, b = 0;
+        for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+          const k = ((y0 + sy) * W + ci * SS + sx) * 4;
+          r += buf[k]; g += buf[k + 1]; b += buf[k + 2];
+        }
+        r /= SS * SS; g /= SS * SS; b /= SS * SS;
+        const i = ri * cols + ci;
+        RGB[i * 3] = r; RGB[i * 3 + 1] = g; RGB[i * 3 + 2] = b;
+        // La luz sale del canal más fuerte, así los colores saturados no quedan apagados.
+        const raw = Math.max(r, g, b) / 255;
+        if (raw < 0.004) { L[i] = -1; continue; }
+        let l = clamp((raw * adj.exposure - 0.5) * adj.contrast + 0.5, 0, 1);
+        l = Math.pow(l, adj.gamma);
+        L[i] = l < adj.threshold ? -1 : l;
+      }
+    }
+
+    // 2. Cuantizar a caracteres con el dither elegido.
+    const ramp = RAMPS[state.ramp], n = ramp.length, steps = n - 1, amt = adj.amount;
+    if (!p.Q || p.Q.length !== N) p.Q = new Int16Array(N);
+    const Q = p.Q;
+    if (adj.dither === "Difusión") {
+      for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) {
+        const i = ri * cols + ci, old = L[i];
+        if (old < 0) { Q[i] = -1; continue; }
+        const idx = clamp(Math.round(old * steps), 0, steps);
+        Q[i] = idx;
+        const err = (old - idx / steps) * amt;
+        const push = (c, r, w) => {
+          if (c < 0 || c >= cols || r >= rows) return;
+          const j = r * cols + c;
+          if (L[j] >= 0) L[j] += err * w;
+        };
+        push(ci + 1, ri, 7 / 16); push(ci - 1, ri + 1, 3 / 16); push(ci, ri + 1, 5 / 16); push(ci + 1, ri + 1, 1 / 16);
+      }
+    } else {
+      for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) {
+        const i = ri * cols + ci, l = L[i];
+        if (l < 0) { Q[i] = -1; continue; }
+        let off = 0;
+        if (adj.dither === "Bayer") off = BAYER[ri & 3][ci & 3] / 16 - 0.47;
+        else if (adj.dither === "Ruido") off = hash(ci * 3 + 11, ri * 5 + 7) - 0.5;
+        Q[i] = clamp(Math.round((l + (off * amt) / steps) * steps), 0, steps);
+      }
+    }
+
+    // 3. Dibujar.
+    const cw = canvas.width / cols, ch = canvas.height / rows;
+    const mode = MODES[state.mode], sc = STAR_CHARS[state.ramp];
+    ctx.fillStyle = mode.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = ch.toFixed(2) + 'px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    if (mode.ink) ctx.fillStyle = mode.ink;
+    const lines = [];
+    for (let ri = 0; ri < rows; ri++) {
+      let line = "";
+      for (let ci = 0; ci < cols; ci++) {
+        const i = ri * cols + ci;
+        let ch1, col = null;
+        if (Q[i] < 0) {
+          const s = star(ci, ri, t, p.seed, adj.stars);
+          ch1 = s < 0 ? " " : sc[clamp(Math.floor(s * sc.length), 0, sc.length - 1)];
+          col = "#dfe6ff";
+        } else {
+          ch1 = ramp[Q[i]];
+          if (!mode.ink) {
+            const r = RGB[i * 3], g = RGB[i * 3 + 1], b = RGB[i * 3 + 2];
+            const m = Math.max(r, g, b) || 1, k = (150 + 105 * (Q[i] / steps)) / m;
+            col = "rgb(" + Math.min(255, r * k | 0) + "," + Math.min(255, g * k | 0) + "," + Math.min(255, b * k | 0) + ")";
+          }
+        }
+        line += ch1;
+        if (ch1 === " ") continue;
+        if (!mode.ink) ctx.fillStyle = col;
+        ctx.fillText(ch1, (ci + 0.5) * cw, (ri + 0.5) * ch);
+      }
+      lines.push(line.replace(/\s+$/, ""));
+    }
+    p.text = lines.join("\n");
+  }
+
+  // Reloj propio: la velocidad se ajusta en vivo y en 0 la escena queda quieta.
+  const T_START = 4;
+  let tSim = T_START, lastDraw = 0;
+  const now = () => tSim;
+  function drawAll(t) { plates.forEach(p => draw(p, t)); }
+
+  // Solo se animan las láminas visibles, a unos 12 cuadros por segundo.
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        const p = plates.find(x => x.canvas === e.target);
+        if (p) p.visible = e.isIntersecting;
+      });
+    });
+    plates.forEach(p => io.observe(p.canvas));
+  }
+  // Las láminas se redibujan a ~12 cuadros; la que tiene la linterna prendida, a ~30.
+  function loop(ts) {
+    requestAnimationFrame(loop);
+    const dt = lastDraw ? Math.min(0.1, (ts - lastDraw) / 1000) : 0;
+    lastDraw = ts;
+    tSim += dt * adj.speed;
+    const ms = performance.now();
+    plates.forEach(p => {
+      const l = p.lamp;
+      if (l.releaseAt && ms > l.releaseAt) { l.active = false; l.releaseAt = 0; }
+      if (!p.visible) return;
+      const lit = l.active || l.power > 0;
+      if (!lit && adj.speed <= 0) return;
+      if (ts - p.last < (lit ? 33 : 83)) return;
+      const pdt = p.last ? Math.min(0.1, (ts - p.last) / 1000) : 0.033;
+      p.last = ts;
+      draw(p, tSim, pdt);
+    });
+  }
+
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { layout(); drawAll(now()); }, 120);
+  });
+
+  rebuild();
+  layout();
+  drawAll(T_START);
+  const start = () => { layout(); drawAll(now()); requestAnimationFrame(loop); };
+  if (document.fonts && document.fonts.load) {
+    document.fonts.load('16px "IBM Plex Mono"', "abc░▒▓█·•").then(start, start);
+  } else {
+    start();
+  }
+})();
+</script>
+
+</html>
