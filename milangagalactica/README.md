@@ -12,6 +12,7 @@ abre la búsqueda de conceptos. La técnica no se toca; lo que sigue son ideas.
 | `ascii-2d.html` | La serie 2D anterior. La escena "Órbita" fue la que abrió el camino | https://claude.ai/artifact/DJid3R1uLU7DGS2QBuvzNc |
 | `arlequin-ascii.html` | Primera prueba del Arlequín con la misma técnica: cuatro escenas, arranca en modo Color | https://claude.ai/artifact/T2r7fWLWxU8UJ5FGRZRRTU |
 | `deriva.html` | Deriva: el Arlequín maneja de noche por una ciudad infinita (laberinto, avenidas, plazas, bosque, playa y la nada); la luz se gasta y se junta | https://claude.ai/artifact/JKjksFR9wwbNTdnKw2mtud |
+| `deriva-full.html` | Deriva táctil: pantalla llena, joystick y menú hechos de caracteres | https://claude.ai/artifact/Cu2TFX78HJ5dYzQnBoBf66 |
 
 Pendiente: migrar `deriva.html` a una página https propia (fuera de claude.ai)
 para que ande el giroscopio del celu. Se probó un rato en el sitio del

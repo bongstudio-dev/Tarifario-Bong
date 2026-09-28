@@ -1,0 +1,1695 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deriva táctil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Pantalla llena desde el arranque: solo el juego, de noche. */
+  :root { color-scheme: dark; --bg: #000000; --ink: #e9e5f0; --muted: #8d8ca6; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); overflow: hidden; overscroll-behavior: none; }
+  body { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #screen {
+    position: fixed; inset: 0; background: var(--bg);
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  }
+  canvas#game { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+  .nogl { padding: 24px 16px; color: var(--muted); font-size: 14px; max-width: 60ch; }
+  .legacy { display: none; }
+</style>
+
+<div id="screen" class="stage">
+  <canvas id="game" tabindex="0" role="img" aria-label="Deriva: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
+</div>
+<!-- Controles del juego base que acá se manejan desde el menú ASCII. -->
+<div class="legacy" aria-hidden="true">
+  <div id="pad"><button type="button" id="pad-gyro">Giroscopio</button><button type="button" id="pad-full">Pantalla completa</button></div>
+  <div id="opts"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // --- Ajustes de la técnica (los mismos que en las láminas) -----------------
+  const RAMP = " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+  const STAR_CHARS = ".+*";
+  const ADJ = { amount: 0.6, contrast: 1.8, exposure: 0.9, gamma: 2, threshold: 0.17 };
+  const DENSITY = { "Baja": 60, "Intermedia": 75, "Media": 90, "Alta": 120 };
+  const MODES = { "Color": null, "Tinta": "#e9e5f0" };
+  const SS = 2;
+  const TAU = Math.PI * 2;
+  const CELL = 8;          // una cuadra del laberinto, en metros
+  const HUD = "#ffb45c";
+
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  function hash(x, y) {
+    let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const h3 = (x, y, z) => hash(x + Math.imul(z, 7919), y + Math.imul(z, 104729));
+  function noise3(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+    const xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+    let r = 0;
+    for (let dz = 0; dz < 2; dz++) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      r += (dx ? u : 1 - u) * (dy ? v : 1 - v) * (dz ? w : 1 - w) * h3(xi + dx, yi + dy, zi + dz);
+    }
+    return r;
+  }
+  const mat = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.9, metalness: 0 }, extra || {}));
+
+  // --- El Arlequín -------------------------------------------------------------
+  // Golf de tercera generación, tres puertas, con los paneles de cuatro colores.
+  // Medidas en metros: el frente mira a +x, el piso es y = 0, el ancho va en z.
+  const HQ = { rojo: "#c8102e", azul: "#1f4fa0", amarillo: "#f2c200", verde: "#2f9a4a" };
+  // En el shader van más luminosos que los de la paleta: la grilla toma la luz del canal más
+  // fuerte, y un azul o un verde oscuros quedarían por debajo del umbral de negro.
+  const GLSL_COLORS = `
+    const vec3 ROJO = vec3(1.0, 0.04, 0.07);
+    const vec3 AZUL = vec3(0.10, 0.30, 1.0);
+    const vec3 AMARILLO = vec3(1.0, 0.70, 0.02);
+    const vec3 VERDE = vec3(0.10, 0.85, 0.20);
+  `;
+  const GLSL_PANELS = GLSL_COLORS + `
+    vec3 panelColor(vec3 p) {
+      bool der = p.z > 0.0;
+      #ifdef CABINA
+        bool lateral = abs(p.z) > 0.5;
+        bool pilarB = lateral && p.x > -0.44 && p.x < -0.30;
+        bool pilarC = lateral && p.x < -1.22;
+        if (p.y > 1.00 && p.y < 1.33 && !pilarB && !pilarC) return vec3(0.004, 0.006, 0.012);
+        return AZUL;
+      #else
+        if (p.x > 1.93) return AMARILLO;
+        if (p.x < -1.93) return VERDE;
+        if (p.x > 0.92 && p.y > 0.84 && abs(p.z) < 0.72) return ROJO;
+        if (p.x > 0.92) return der ? VERDE : AMARILLO;
+        if (p.x > -0.36) return der ? ROJO : AZUL;
+        return der ? AMARILLO : ROJO;
+      #endif
+    }
+  `;
+  function harlequinMat(cabina) {
+    const m = mat(0xffffff, { roughness: 0.38, metalness: 0.05 });
+    if (cabina) m.defines = { CABINA: "" };
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vObj;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvObj = position;");
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vObj;\n" + GLSL_PANELS)
+        .replace("vec4 diffuseColor = vec4( diffuse, opacity );", "vec4 diffuseColor = vec4( panelColor(vObj), opacity );");
+    };
+    return m;
+  }
+
+  // Llanta fifteen52: disco blanco tipo turbina, con ranuras curvas y centro chico.
+  function rimTexture() {
+    const c = document.createElement("canvas");
+    c.width = c.height = 256;
+    const g = c.getContext("2d");
+    g.translate(128, 128);
+    g.fillStyle = "#f4f4f2";
+    g.beginPath(); g.arc(0, 0, 128, 0, TAU); g.fill();
+    g.fillStyle = "#101010";
+    for (let k = 0; k < 5; k++) {
+      g.save();
+      g.rotate((k / 5) * TAU);
+      g.beginPath();
+      g.moveTo(34, -6);
+      g.quadraticCurveTo(80, -40, 108, -20);
+      g.quadraticCurveTo(100, 18, 70, 30);
+      g.quadraticCurveTo(52, 10, 34, 8);
+      g.closePath();
+      g.fill();
+      g.restore();
+    }
+    g.fillStyle = "#cfcfcf";
+    g.beginPath(); g.arc(0, 0, 22, 0, TAU); g.fill();
+    return new THREE.CanvasTexture(c);
+  }
+
+  function buildGolf() {
+    const car = new THREE.Group();
+
+    // Carrocería baja: el perfil lateral con los pasarruedas, extruido a lo ancho.
+    const s = new THREE.Shape();
+    s.moveTo(-1.99, 0.22);
+    s.lineTo(-1.59, 0.22); s.lineTo(-1.59, 0.30);
+    s.absarc(-1.23, 0.30, 0.36, Math.PI, 0, true);
+    s.lineTo(-0.87, 0.22); s.lineTo(0.88, 0.22); s.lineTo(0.88, 0.30);
+    s.absarc(1.24, 0.30, 0.36, Math.PI, 0, true);
+    s.lineTo(1.60, 0.22); s.lineTo(1.97, 0.25);
+    s.lineTo(2.01, 0.55); s.lineTo(1.98, 0.80);
+    s.lineTo(0.95, 0.95); s.lineTo(-1.80, 0.98);
+    s.lineTo(-1.97, 0.95); s.lineTo(-2.01, 0.55);
+    s.closePath();
+    const bodyGeo = new THREE.ExtrudeGeometry(s, { depth: 1.58, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.05, bevelSegments: 3, curveSegments: 18 });
+    bodyGeo.translate(0, 0, -0.79);
+    car.add(new THREE.Mesh(bodyGeo, harlequinMat(false)));
+
+    // Cabina: parabrisas, techo y portón; se angosta hacia arriba.
+    const c = new THREE.Shape();
+    c.moveTo(0.96, 0.92); c.lineTo(-0.02, 1.40); c.lineTo(-1.30, 1.41);
+    c.lineTo(-1.90, 1.00); c.lineTo(-1.92, 0.92);
+    c.closePath();
+    const cabGeo = new THREE.ExtrudeGeometry(c, { depth: 1.42, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 3 });
+    cabGeo.translate(0, 0, -0.71);
+    const pos = cabGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      pos.setZ(i, pos.getZ(i) * (1 - 0.15 * clamp((y - 0.95) / 0.46, 0, 1)));
+    }
+    cabGeo.computeVertexNormals();
+    car.add(new THREE.Mesh(cabGeo, harlequinMat(true)));
+
+    // Frente: parrilla oscura y los dos faros; atrás, las ópticas rojas.
+    const grille = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.62), mat(0x0c0c0c, { roughness: 0.6 }));
+    grille.position.set(2.02, 0.66, 0);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, emissive: 0xfff4e0, emissiveIntensity: 0, roughness: 0.2 });
+    const tailMat = new THREE.MeshStandardMaterial({ color: 0x5a0a10, emissive: 0xff2a20, emissiveIntensity: 0, roughness: 0.3 });
+    car.add(grille);
+    [-1, 1].forEach(side => {
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.17, 0.34), headMat);
+      h.position.set(2.02, 0.66, side * 0.56);
+      const t = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.26, 0.26), tailMat);
+      t.position.set(-2.04, 0.74, side * 0.62);
+      car.add(h, t);
+    });
+
+    // Ruedas: cubierta oscura y llanta blanca de cara al costado.
+    const tireMat = mat(0x161616, { roughness: 1 });
+    const rimMat = mat(0xffffff, { map: rimTexture(), roughness: 0.35 });
+    const tireGeo = new THREE.CylinderGeometry(0.31, 0.31, 0.21, 40);
+    tireGeo.rotateX(Math.PI / 2);
+    const rimGeo = new THREE.CircleGeometry(0.22, 40);
+    const wheels = [];
+    [[1.24, 1], [1.24, -1], [-1.23, 1], [-1.23, -1]].forEach(([x, side]) => {
+      const w = new THREE.Group();
+      w.position.set(x, 0.31, side * 0.72);
+      w.add(new THREE.Mesh(tireGeo, tireMat));
+      const rim = new THREE.Mesh(rimGeo, rimMat);
+      rim.position.z = side * 0.106;
+      if (side < 0) rim.rotation.y = Math.PI;
+      w.add(rim);
+      car.add(w);
+      wheels.push(w);
+    });
+
+    car.userData = { headMat, tailMat, wheels };
+    return car;
+  }
+
+  // Enredadera: una masa de hojas del tamaño de una casa, como la de Moreno.
+  function buildIvy() {
+    const geo = new THREE.IcosahedronGeometry(1, 5);
+    const pos = geo.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      // De esfera a bloque redondeado: se aplana arriba y cae recto a los costados.
+      const sq = x => Math.sign(x) * Math.pow(Math.abs(x), 0.55);
+      let x = sq(v.x) * 1.7, y = sq(v.y) * 1.9 + 1.9, z = sq(v.z) * 0.9;
+      const n = noise3(v.x * 4 + 3, v.y * 4, v.z * 4) - 0.5;
+      const fine = noise3(v.x * 14, v.y * 14 + 7, v.z * 14) - 0.5;
+      const k = 1 + 0.10 * n + 0.07 * fine;
+      pos.setXYZ(i, x * k, Math.max(0, y + 0.12 * n), z * k);
+    }
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, mat(0x8fd26a, { flatShading: true, roughness: 1 }));
+  }
+
+
+
+  // --- Estado ------------------------------------------------------------------
+  const touchDevice = window.matchMedia("(pointer: coarse)").matches;
+  const state = { density: "Intermedia", mode: "Color", view: "Atrás", map: false };
+  const keys = { up: false, down: false, left: false, right: false, hand: false };
+
+  // --- WebGL -------------------------------------------------------------------
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  let renderer = null;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+    renderer.setPixelRatio(1);
+    renderer.setSize(1, 1, false);
+    renderer.setClearColor(0x000000, 0);
+  } catch (e) { renderer = null; }
+  if (!renderer) {
+    document.querySelector(".stage").innerHTML = '<p class="nogl">Este navegador no tiene WebGL activado, así que el juego no se puede dibujar acá. Probá desde Chrome, Safari o Firefox actualizados.</p>';
+    return;
+  }
+
+  const scene = new THREE.Scene();
+  const fog = new THREE.Fog(0x000000, 16, 58);
+  scene.fog = fog;
+  const camera = new THREE.PerspectiveCamera(56, 16 / 9, 0.1, 400);
+  const hemi = new THREE.HemisphereLight(0x5566b8, 0x0a0810, 0.16);
+  const moonLight = new THREE.DirectionalLight(0xb4a8ff, 0.14);
+  moonLight.position.set(-30, 60, -60);
+  scene.add(hemi, moonLight);
+  // La luna sigue a la cámara desde lejos, siempre en el mismo lugar del cielo.
+  const MOON_DIR = new THREE.Vector3(-0.35, 0.3, -1).normalize();
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(9, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff1d6, fog: false }));
+  scene.add(moon);
+
+  // El auto, con los faros como linterna.
+  const car = buildGolf();
+  scene.add(car);
+  const { tailMat, wheels } = car.userData;
+  car.userData.headMat.emissiveIntensity = 1.3;
+  tailMat.emissiveIntensity = 0.5;
+  const headBeams = [-0.55, 0.55].map(z => {
+    const beam = new THREE.SpotLight(0xfff2dc, 2.1, 44, 0.42, 0.6, 1.3);
+    beam.position.set(2.0, 0.7, z);
+    beam.target.position.set(22, -1.2, z * 3);
+    car.add(beam, beam.target);
+    return beam;
+  });
+  // Una luz propia que acompaña al auto desde arriba, para que el Arlequín se lea de noche.
+  const carGlow = new THREE.PointLight(0xe8e4ff, 1.6, 9, 1.2);
+  carGlow.position.set(-1.2, 4.2, 0);
+  car.add(carGlow);
+
+  // Faroles: pocas luces reales que se mudan a los faroles más cercanos al auto.
+  const LAMP_LIGHTS = 8;
+  const lampLights = [];
+  for (let i = 0; i < LAMP_LIGHTS; i++) {
+    const l = new THREE.PointLight(0xffb45c, 0, 24, 1.4);
+    scene.add(l);
+    lampLights.push(l);
+  }
+
+  // --- El mundo: infinito, por zonas -------------------------------------------------
+  // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
+  // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
+  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14 };
+  const SOLID = t => t >= 10 && t !== T.SEA && t !== T.MOUNTAIN;
+  const mod = (a, n) => ((a % n) + n) % n;
+  let seed = 700, sx = 0, sy = 0;
+  const hs = (x, y, k) => hash(x + Math.imul(k + 1, 9973) + seed, y + Math.imul(k + 1, 7919) - seed);
+  const fbm = (x, y, z) => 0.65 * noise3(x, y, z) + 0.35 * noise3(x * 2.3 + 11, y * 2.3, z + 3);
+  const cache = new Map();
+
+  const sstep = (a, b, x) => { const k = clamp((x - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+  const monteNoise = (x, y) => fbm((x + sy) / 40, (y - sx) / 40, 8.1);
+  // Altura del monte en metros, en coordenadas de cuadra: sube lejos de la ciudad y baja antes de la nada.
+  function heightAt(x, y) {
+    const f = monteNoise(x, y);
+    const mask = sstep(0.585, 0.62, f) * (1 - sstep(0.645, 0.675, f));
+    if (mask <= 0) return 0;
+    const m = fbm((x + sx) / 13, (y + sy) / 13, 11.3);
+    return Math.max(0, (m - 0.46) * 150) * mask;
+  }
+
+  function zoneAt(x, y) {
+    const s = fbm((x + sx) / 60, (y + sy) / 60, 1.7);
+    if (s > 0.69) return T.SEA;
+    if (s > 0.64) return T.SAND;
+    // El monte rodea a la nada: para llegar al abismo hay que cruzarlo.
+    const f = monteNoise(x, y);
+    if (f > 0.69) return T.VOID;
+    if (f > 0.58) return heightAt(x + 0.5, y + 0.5) > 1 ? T.MOUNTAIN : T.FOREST;
+    return 0;
+  }
+  function cellType(x, y) {
+    const key = x + "," + y;
+    let t = cache.get(key);
+    if (t !== undefined) return t;
+    t = computeCell(x, y);
+    if (cache.size > 60000) cache.clear();
+    cache.set(key, t);
+    return t;
+  }
+  function computeCell(x, y) {
+    const z = zoneAt(x, y);
+    if (z) return z;
+    // Plazas: una por región de 20 × 20 cuadras, a veces.
+    const rx = Math.floor(x / 20), ry = Math.floor(y / 20);
+    if (hs(rx, ry, 1) < 0.34) {
+      const dx = x - (rx * 20 + 10), dy = y - (ry * 20 + 10);
+      if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
+        if (dx === 0 && dy === 0) return T.MONUMENT;
+        if (Math.abs(dx) + Math.abs(dy) === 5 && hs(x, y, 12) < 0.3) return T.IVY;
+        return T.PLAZA;
+      }
+    }
+    // Avenidas: tres cuadras de ancho, cada 26 de este a oeste y cada 22 de norte a sur.
+    if (mod(x, 26) < 3 || mod(y, 22) < 3) return T.AVENUE;
+    const ox = mod(x, 2) === 1, oy = mod(y, 2) === 1;
+    if (ox && oy) return T.STREET;
+    if (!ox && !oy) return hs(x, y, 4) < 0.07 ? T.IVY : T.WALL;
+    // Tramo entre dos esquinas: cada esquina abre hacia el sur o hacia el este, y a veces hay un tramo extra.
+    const open = ox ? hs(x, y - 1, 2) < 0.5 : hs(x - 1, y, 2) >= 0.5;
+    if (open || hs(x, y, 3) < 0.18) return T.STREET;
+    return hs(x, y, 4) < 0.07 ? T.IVY : T.WALL;
+  }
+  const solidAt = (x, y) => SOLID(cellType(x, y));
+  const toWorld = c => (c + 0.5) * CELL;
+  const toCell = v => Math.floor(v / CELL);
+
+  // --- Materiales compartidos --------------------------------------------------------
+  const PALETTE = [0xd8a8a0, 0xc9785e, 0xe6d6bc, 0xb8a6c9, 0xd9c3a0, 0x9fb0c9, 0xe8c9c9];
+  function facadeTexture(lit) {
+    const c = document.createElement("canvas");
+    c.width = 96; c.height = 32;
+    const g = c.getContext("2d");
+    g.fillStyle = lit ? "#000" : "#a4a0a8";
+    g.fillRect(0, 0, 96, 32);
+    for (let k = 0; k < 3; k++) {
+      g.fillStyle = lit ? (hash(k, 3) > 0.25 ? "#ffcf8a" : "#000") : "#3a3a48";
+      g.fillRect(k * 32 + 8, 8, 16, 16);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    return t;
+  }
+  const FACADE_MAP = facadeTexture(false), FACADE_GLOW = facadeTexture(true);
+  const buildingMats = {};
+  function buildingMat(floors) {
+    if (buildingMats[floors]) return buildingMats[floors];
+    const map = FACADE_MAP.clone(), glow = FACADE_GLOW.clone();
+    [map, glow].forEach(t => { t.needsUpdate = true; t.repeat.set(1, floors); });
+    return (buildingMats[floors] = mat(0xffffff, { map, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 0.7, roughness: 0.95 }));
+  }
+  const floorMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
+  const ivyMat = mat(0x8fd26a, { flatShading: true, roughness: 1, emissive: 0x1d3a12 });
+  const trunkMat = mat(0x5a4636, { roughness: 1 });
+  const crownMat = mat(0x3f7a3a, { flatShading: true, roughness: 1, emissive: 0x0c1a0a });
+  const poleMat = mat(0x8d8ca6, { roughness: 0.6 });
+  const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0 });
+  const stoneMat = mat(0xe8e4f0, { roughness: 0.7 });
+  const water = { uniforms: { uTime: { value: 0 } } };
+  const waterMat = mat(0x3a70d8, { roughness: 0.25, metalness: 0.1, flatShading: true });
+  waterMat.onBeforeCompile = sh => {
+    sh.uniforms.uTime = water.uniforms.uTime;
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nuniform float uTime;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(position.x * 0.35 + uTime * 1.3) * 0.22 + sin(position.z * 0.27 - uTime * 0.9) * 0.18 + sin((position.x + position.z) * 0.9 + uTime * 2.1) * 0.06;");
+  };
+
+  // Monte: luciérnagas y algún haz de luz, como en Abstract Landscapes.
+  const moteMat = new THREE.MeshBasicMaterial({ color: 0xfff3b0 });
+  const MOTE = new THREE.IcosahedronGeometry(0.09, 0);
+  // Tachas: luces al ras del asfalto que dibujan la calle hasta el horizonte.
+  // Ámbar en los bordes, blancas en el centro.
+  // Son puntos de tamaño fijo en pantalla: cada tacha ocupa siempre un carácter, cerca o lejos.
+  const amberStudMat = new THREE.PointsMaterial({ color: 0xffa640, size: 3, sizeAttenuation: false });
+  const whiteStudMat = new THREE.PointsMaterial({ color: 0xe8ecff, size: 3, sizeAttenuation: false });
+  function studPoints(list, material) {
+    if (!list.length) return null;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(list.flatMap(([x, z]) => [x, 0.12, z]), 3));
+    const pts = new THREE.Points(geo, material);
+    pts.userData.own = true;
+    return pts;
+  }
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xffe9c8, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending });
+  const BEAM = new THREE.CylinderGeometry(0.9, 2.2, 34, 12, 1, true); BEAM.translate(0, 17, 0);
+  // Monte: laderas facetadas, pasto y pinos sueltos.
+  const hillMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+  const grassMat = mat(0xffffff, { roughness: 1, flatShading: true });
+  const BLADE = new THREE.ConeGeometry(0.14, 0.8, 3); BLADE.translate(0, 0.4, 0);
+  const pineMat = mat(0x2f5a3a, { roughness: 1, flatShading: true });
+  const PINE = new THREE.ConeGeometry(1.3, 5, 6); PINE.translate(0, 3.2, 0);
+  const GRASS_COLORS = [0x5f9a4a, 0x7ab85a, 0x4a8a44, 0x8fbf5a, 0x6aa86a];
+  // Luz: orbes que brillan solos, visibles aunque todo esté oscuro.
+  const ORB_GEO = new THREE.IcosahedronGeometry(0.55, 2);
+  const orbMat = new THREE.MeshBasicMaterial({ color: 0xfff1c4 });
+
+  const BOX = new THREE.BoxGeometry(1, 1, 1); BOX.translate(0, 0.5, 0);
+  const POLE = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6); POLE.translate(0, 2.3, 0);
+  const BULB = new THREE.SphereGeometry(0.28, 10, 8);
+  const TRUNK = new THREE.CylinderGeometry(0.18, 0.25, 2.2, 6); TRUNK.translate(0, 1.1, 0);
+  const CROWN = new THREE.IcosahedronGeometry(1.7, 1); CROWN.translate(0, 3.3, 0);
+  const OBELISK = new THREE.ConeGeometry(1.1, 9, 4); OBELISK.translate(0, 4.5, 0);
+  const PLINTH = new THREE.BoxGeometry(3.2, 0.8, 3.2); PLINTH.translate(0, 0.4, 0);
+  // Enredadera: un bloque redondeado de hojas que ocupa una cuadra entera.
+  const IVY_GEO = (() => {
+    const geo = new THREE.IcosahedronGeometry(1, 3);
+    const pos = geo.attributes.position, v = new THREE.Vector3();
+    const sq = x => Math.sign(x) * Math.pow(Math.abs(x), 0.55);
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const n = noise3(v.x * 4 + 3, v.y * 4, v.z * 4) - 0.5;
+      const f = noise3(v.x * 11, v.y * 11 + 7, v.z * 11) - 0.5;
+      const k = 1 + 0.12 * n + 0.08 * f;
+      pos.setXYZ(i, sq(v.x) * 3.6 * k, Math.max(0, (sq(v.y) + 1) * 2.9 + 0.3 * n), sq(v.z) * 3.6 * k);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  })();
+
+  // --- Pedazos del mundo: 16 × 16 cuadras, se arman alrededor del auto --------------------
+  const CHUNK = 16;
+  const chunks = new Map();
+  const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
+  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x3a6a34, 14: 0x3a6a34, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
+
+  function instanced(geo, material, list, build) {
+    if (!list.length) return null;
+    const inst = new THREE.InstancedMesh(geo, material, list.length);
+    list.forEach((item, i) => { build(item, m4); inst.setMatrixAt(i, m4); });
+    return inst;
+  }
+
+  function buildChunk(cx, cy) {
+    const g = new THREE.Group();
+    const lamps = [];
+    const fp = [], fc = [];
+    const quad = (x0, z0, x1, z1, y, c) => {
+      fp.push(x0, y, z0, x0, y, z1, x1, y, z0, x1, y, z0, x0, y, z1, x1, y, z1);
+      col.set(c);
+      for (let k = 0; k < 6; k++) fc.push(col.r, col.g, col.b);
+    };
+    const wp = [];
+    const byFloors = {}, ivies = [], trees = [], poles = [], monuments = [];
+    const ideas = [], beams = [], motes = [], studs = [], midStuds = [], grass = [], pines = [];
+    for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
+      const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
+      const x0 = x * CELL, z0 = y * CELL;
+      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07, 14: 0.06 }[t] || 0;
+      const key = x + "," + y;
+      if (ideaChance && hs(x, y, 20) < ideaChance && !collected.has(key)) ideas.push([key, x0 + 2 + hs(x, y, 21) * 4, z0 + 2 + hs(x, y, 22) * 4, hs(x, y, 23)]);
+      if (t === T.VOID) continue;
+      if (t === T.SEA) {
+        const S = 4, d = CELL / S;
+        for (let b = 0; b < S; b++) for (let a = 0; a < S; a++) {
+          const ax = x0 + a * d, az = z0 + b * d;
+          wp.push(ax, -0.35, az, ax, -0.35, az + d, ax + d, -0.35, az, ax + d, -0.35, az, ax, -0.35, az + d, ax + d, -0.35, az + d);
+        }
+        continue;
+      }
+      quad(x0, z0, x0 + CELL, z0 + CELL, 0, FLOOR_COLORS[t]);
+      if (t === T.STREET || t === T.AVENUE) {
+        // Donde la calle termina (un edificio, el mar, la nada) va una línea y un mojón.
+        const edge = (a, b) => { const n = cellType(x + a, y + b); return SOLID(n) || n === T.VOID; };
+        const along = [1.33, 4, 6.67];
+        if (edge(1, 0)) { quad(x0 + 7.35, z0, x0 + 7.5, z0 + CELL, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + 6.9, z0 + a])); }
+        if (edge(-1, 0)) { quad(x0 + 0.5, z0, x0 + 0.65, z0 + CELL, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + 1.1, z0 + a])); }
+        if (edge(0, 1)) { quad(x0, z0 + 7.35, x0 + CELL, z0 + 7.5, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + a, z0 + 6.9])); }
+        if (edge(0, -1)) { quad(x0, z0 + 0.5, x0 + CELL, z0 + 0.65, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + a, z0 + 1.1])); }
+        // Centro: en los tramos del laberinto y en el eje de las avenidas.
+        const ox = mod(x, 2) === 1, oy = mod(y, 2) === 1;
+        if (t === T.STREET && ox && !oy) { midStuds.push([x0 + 4, z0 + 2], [x0 + 4, z0 + 6]); }
+        if (t === T.STREET && !ox && oy) { midStuds.push([x0 + 2, z0 + 4], [x0 + 6, z0 + 4]); }
+        if (t === T.AVENUE && mod(x, 26) === 1 && mod(y, 22) >= 3) midStuds.push([x0 + 4, z0 + 2], [x0 + 4, z0 + 6]);
+        if (t === T.AVENUE && mod(y, 22) === 1 && mod(x, 26) >= 3) midStuds.push([x0 + 2, z0 + 4], [x0 + 6, z0 + 4]);
+      }
+      if (t === T.AVENUE) {
+        // Línea punteada en el centro de la avenida.
+        if (mod(x, 26) === 1 && mod(y, 22) >= 3 && mod(y, 2) === 0) quad(x0 + 3.85, z0 + 1, x0 + 4.15, z0 + 7, 0.02, 0xd8d2c0);
+        if (mod(y, 22) === 1 && mod(x, 26) >= 3 && mod(x, 2) === 0) quad(x0 + 1, z0 + 3.85, x0 + 7, z0 + 4.15, 0.02, 0xd8d2c0);
+        if (mod(x, 26) === 0 && mod(y, 4) === 0) poles.push([x0 + 0.6, z0 + 4, 1]);
+        if (mod(x, 26) === 2 && mod(y, 4) === 2) poles.push([x0 + 7.4, z0 + 4, -1]);
+        if (mod(y, 22) === 0 && mod(x, 4) === 1 && mod(x, 26) >= 3) poles.push([x0 + 4, z0 + 0.6, 0, 1]);
+        if (mod(y, 22) === 2 && mod(x, 4) === 3 && mod(x, 26) >= 3) poles.push([x0 + 4, z0 + 7.4, 0, -1]);
+      } else if (t === T.WALL) {
+        const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
+        const r = hs(x, y, 5);
+        const floors = nearAvenue ? 4 + Math.floor(r * 5) : 1 + Math.floor(Math.pow(r, 1.6) * 5);
+        (byFloors[floors] = byFloors[floors] || []).push([x0, z0, PALETTE[Math.floor(hs(x, y, 6) * PALETTE.length)]]);
+      } else if (t === T.IVY) {
+        ivies.push([x0 + 4, z0 + 4, hs(x, y, 7)]);
+      } else if (t === T.PLAZA) {
+        if (hs(x, y, 8) < 0.55) trees.push([x0 + 2 + hs(x, y, 9) * 4, z0 + 2 + hs(x, y, 10) * 4, hs(x, y, 11)]);
+        const rx = Math.floor(x / 20), ry = Math.floor(y / 20);
+        const dx = x - (rx * 20 + 10), dy = y - (ry * 20 + 10);
+        if (Math.abs(dx) === 3 && Math.abs(dy) === 3) poles.push([x0 + 4, z0 + 4, 0]);
+      } else if (t === T.FOREST) {
+        // Pasto alto y algún pino suelto; nada choca.
+        for (let k = 0; k < 9; k++) grass.push([x0 + hs(x, y, 60 + k) * 8, z0 + hs(x, y, 70 + k) * 8, hs(x, y, 80 + k)]);
+        if (hs(x, y, 30) < 0.07) pines.push([x0 + 1 + hs(x, y, 32) * 6, 0, z0 + 1 + hs(x, y, 34) * 6, hs(x, y, 36)]);
+        if (hs(x, y, 44) < 0.02) beams.push([x0 + 4, z0 + 4, hs(x, y, 45)]);
+        // Luciérnagas: puntitos de luz quietos en el aire.
+        for (let k = 0; k < 3; k++) motes.push([x0 + hs(x, y, 50 + k) * 8, 0.5 + hs(x, y, 53 + k) * 3.5, z0 + hs(x, y, 56 + k) * 8]);
+      } else if (t === T.MOUNTAIN) {
+        if (hs(x, y, 31) < 0.18) { const px = x0 + 1 + hs(x, y, 33) * 6, pz = z0 + 1 + hs(x, y, 35) * 6; pines.push([px, heightAt(px / CELL, pz / CELL) - 0.4, pz, hs(x, y, 37)]); }
+      } else if (t === T.MONUMENT) {
+        monuments.push([x0 + 4, z0 + 4]);
+      } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
+        poles.push([x0 + 4 + (hs(x, y, 14) < 0.5 ? -3.2 : 3.2), z0 + 4 + (hs(x, y, 15) < 0.5 ? -3.2 : 3.2), 0]);
+      }
+    }
+
+    if (fp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(fp, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(fc, 3));
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, floorMat); m.userData.own = true; g.add(m);
+    }
+    if (wp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(wp, 3));
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, waterMat); m.userData.own = true; g.add(m);
+    }
+    Object.keys(byFloors).forEach(f => {
+      const list = byFloors[f];
+      const inst = instanced(BOX, buildingMat(+f), list, ([x0, z0], m) => m.makeScale(CELL, f * 3.2, CELL).setPosition(x0 + 4, 0, z0 + 4));
+      list.forEach(([, , c], i) => inst.setColorAt(i, col.set(c)));
+      g.add(inst);
+    });
+    const ivy = instanced(IVY_GEO, ivyMat, ivies, ([x, z, r], m) => {
+      q4.setFromAxisAngle(p3.set(0, 1, 0), r * TAU);
+      m.compose(p3.set(x, 0, z), q4, s3.set(0.85 + r * 0.25, 0.8 + r * 0.6, 0.85 + r * 0.25));
+    });
+    if (ivy) g.add(ivy);
+    const trunk = instanced(TRUNK, trunkMat, trees, ([x, z, r], m) => m.makeScale(1, 0.8 + r * 0.5, 1).setPosition(x, 0, z));
+    const crown = instanced(CROWN, crownMat, trees, ([x, z, r], m) => m.makeScale(0.8 + r * 0.5, 0.8 + r * 0.5, 0.8 + r * 0.5).setPosition(x, 0, z));
+    if (trunk) g.add(trunk, crown);
+    monuments.forEach(([x, z]) => {
+      const o = new THREE.Mesh(OBELISK, stoneMat); o.position.set(x, 0.8, z); o.rotation.y = Math.PI / 4;
+      const p = new THREE.Mesh(PLINTH, stoneMat); p.position.set(x, 0, z);
+      g.add(o, p);
+      lamps.push(new THREE.Vector3(x + 2.5, 3.5, z + 2.5));
+    });
+    const grassMesh = instanced(BLADE, grassMat, grass, ([x, z, r], m) => { q4.setFromAxisAngle(p3.set(Math.sin(r * 40), 0, Math.cos(r * 40)).normalize(), 0.25 * r); m.compose(p3.set(x, 0, z), q4, s3.set(1, 0.6 + r * 0.9, 1)); });
+    if (grassMesh) { grass.forEach(([, , r], i) => grassMesh.setColorAt(i, col.set(GRASS_COLORS[Math.floor(r * 53) % GRASS_COLORS.length]))); g.add(grassMesh); }
+    const pineMesh = instanced(PINE, pineMat, pines, ([x, y, z, r], m) => m.makeScale(0.8 + r * 0.6, 0.8 + r * 0.9, 0.8 + r * 0.6).setPosition(x, y, z));
+    if (pineMesh) g.add(pineMesh);
+    // Laderas: una malla de alturas cada 2 m, solo donde el monte se levanta.
+    const hp = [], hc = [], STEP = 2, N = CHUNK * CELL / STEP;
+    const H = [];
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) H.push(heightAt((cx * CHUNK * CELL + i * STEP) / CELL, (cy * CHUNK * CELL + j * STEP) / CELL));
+    const hcol = h => col.set(h < 3 ? 0x4a8040 : h < 10 ? 0x3c6444 : h < 22 ? 0x585c70 : 0x9894b0);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const a = H[j * (N + 1) + i], b = H[j * (N + 1) + i + 1], c = H[(j + 1) * (N + 1) + i], d = H[(j + 1) * (N + 1) + i + 1];
+      if (a + b + c + d < 0.05) continue;
+      const X = cx * CHUNK * CELL + i * STEP, Z = cy * CHUNK * CELL + j * STEP;
+      const v = [[X, a, Z], [X, c, Z + STEP], [X + STEP, b, Z], [X + STEP, b, Z], [X, c, Z + STEP], [X + STEP, d, Z + STEP]];
+      hcol((a + b + c + d) / 4 + (hash(i + cx * 97, j + cy * 89) - 0.5) * 3);
+      v.forEach(([px, py, pz]) => { hp.push(px, py + 0.03, pz); hc.push(col.r, col.g, col.b); });
+    }
+    if (hp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(hp, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(hc, 3));
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, hillMat); m.userData.own = true; g.add(m);
+    }
+    const studMesh = studPoints(studs, amberStudMat);
+    if (studMesh) g.add(studMesh);
+    const midMesh = studPoints(midStuds, whiteStudMat);
+    if (midMesh) g.add(midMesh);
+    const moteMesh = instanced(MOTE, moteMat, motes, ([x, y, z], m) => m.makeTranslation(x, y, z));
+    if (moteMesh) g.add(moteMesh);
+    beams.forEach(([x, z, r]) => { const b = new THREE.Mesh(BEAM, beamMat); b.position.set(x, 0, z); b.rotation.set(0.12 * Math.sin(r * 9), 0, 0.12 * Math.cos(r * 9)); g.add(b); });
+    const ideaList = ideas.map(([key, x, z, r]) => {
+      const m = new THREE.Mesh(ORB_GEO, orbMat);
+      const base = groundAt(x, z) + 1.5;
+      m.position.set(x, base, z);
+      g.add(m);
+      return { key, mesh: m, x, z, base, phase: r * TAU };
+    });
+
+    const polesMesh = instanced(POLE, poleMat, poles, ([x, z], m) => m.makeTranslation(x, 0, z));
+    const bulbs = instanced(BULB, bulbMat, poles, ([x, z, ax, az], m) => m.makeTranslation(x + (ax || 0) * 0.5, 4.6, z + (az || 0) * 0.5));
+    if (polesMesh) g.add(polesMesh, bulbs);
+    poles.forEach(([x, z, ax, az]) => lamps.push(new THREE.Vector3(x + (ax || 0) * 0.5, 4.3, z + (az || 0) * 0.5)));
+
+    scene.add(g);
+    return { group: g, lamps, ideas: ideaList };
+  }
+
+  function disposeChunk(c) {
+    scene.remove(c.group);
+    c.group.children.forEach(o => { if (o.userData.own) o.geometry.dispose(); if (o.isInstancedMesh && o.dispose) o.dispose(); });
+  }
+
+  function updateChunks(all) {
+    const pcx = Math.floor(toCell(player.x) / CHUNK), pcy = Math.floor(toCell(player.z) / CHUNK);
+    const want = new Set();
+    for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) want.add((pcx + a) + "," + (pcy + b));
+    chunks.forEach((c, k) => { if (!want.has(k)) { disposeChunk(c); chunks.delete(k); } });
+    for (const k of want) {
+      if (chunks.has(k)) continue;
+      const [a, b] = k.split(",").map(Number);
+      chunks.set(k, buildChunk(a, b));
+      if (!all) break; // uno por cuadro, para que no se trabe
+    }
+  }
+
+  // --- El auto ---------------------------------------------------------------------
+  const player = { x: 0, z: 0, y: 0, vy: 0, air: false, pitch: 0, roll: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0, dist: 0 };
+  // Suelo del monte: la misma malla de 2 m que se dibuja, interpolada.
+  function groundAt(wx, wz) {
+    const S = 2, gx = Math.floor(wx / S), gz = Math.floor(wz / S), u = wx / S - gx, v = wz / S - gz;
+    const h = (i, j) => heightAt((gx + i) * S / CELL, (gz + j) * S / CELL);
+    const a = h(0, 0), b = h(1, 0), c = h(0, 1), d = h(1, 1);
+    return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
+  }
+  const MAX_FWD = 24, MAX_REV = 8;
+  function physics(dt) {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    let along = player.vx * fx + player.vz * fz;
+    const latx = player.vx - fx * along, latz = player.vz - fz * along;
+
+    // Rally: en el aire no hay tracción; en las subidas se frena y en las bajadas se acelera.
+    const traction = player.air ? 0.05 : 1;
+    let acc = 0;
+    if (keys.up) acc = along < MAX_FWD ? 16 * traction : 0;
+    if (keys.down) acc = along > 0.5 ? -30 : (along > -MAX_REV ? -9 : 0);
+    // Joystick: arriba acelera, abajo frena y da marcha atrás, con fuerza proporcional.
+    if (joy.active && !keys.up && !keys.down && !menu.open) {
+      if (joy.y > 0.12) acc = along < MAX_FWD * (0.35 + 0.65 * joy.y) ? 16 * traction * Math.min(1, joy.y * 1.4) : 0;
+      else if (joy.y < -0.12) acc = along > 0.5 ? -30 * Math.min(1, -joy.y * 1.4) : (along > -MAX_REV ? -9 : 0);
+    }
+    if (keys.down && player.air) acc = 0;
+    along += acc * dt - 9.8 * Math.sin(player.pitch) * dt;
+    along -= along * (keys.up || keys.down || (joy.active && Math.abs(joy.y) > 0.12) ? 0.25 : 0.9) * dt * traction;
+    if (keys.hand) along -= Math.sign(along) * Math.min(Math.abs(along), 14 * dt);
+
+    const keySteer = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
+    const want = keySteer || (joy.active && Math.abs(joy.x) > 0.12 ? joy.x : gyro.on ? gyro.steer : 0);
+    player.steer += (want - player.steer) * Math.min(1, dt * 7);
+    const offroad = currentZone === T.FOREST;
+    const grip = player.air ? 0.2 : keys.hand ? 1.2 : offroad ? 3.2 : 9;
+    const k = Math.exp(-grip * dt);
+    const turn = player.steer * clamp(along / 6, -1, 1) * (1.9 - 0.9 * Math.min(1, Math.abs(along) / MAX_FWD));
+    player.heading += turn * dt * (keys.hand ? 1.35 : offroad ? 1.15 : 1) * (player.air ? 0.2 : 1);
+
+    const nfx = Math.cos(player.heading), nfz = -Math.sin(player.heading);
+    player.vx = nfx * along + latx * k;
+    player.vz = nfz * along + latz * k;
+    player.x += player.vx * dt;
+    player.z += player.vz * dt;
+    collide();
+    terrain(dt);
+    player.speed = Math.hypot(player.vx, player.vz);
+    player.dist += player.speed * dt;
+  }
+
+  // Altura, inclinación y saltos: el auto sigue el terreno y sale volando en las crestas.
+  function terrain(dt) {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading), rx = -fz, rz = fx;
+    const g = groundAt(player.x, player.z);
+    player.vy -= 24 * dt;
+    player.y += player.vy * dt;
+    if (player.y <= g) {
+      const landed = player.air && player.vy < -6;
+      const hf = groundAt(player.x + fx * 1.3, player.z + fz * 1.3), hb = groundAt(player.x - fx * 1.3, player.z - fz * 1.3);
+      const climb = (hf - hb) / 2.6 * (player.vx * fx + player.vz * fz); // cuánto sube el suelo por segundo
+      player.y = g;
+      player.vy = Math.max(player.vy, climb);
+      player.air = false;
+      if (landed) shake = Math.min(1, shake + 0.6);
+      const hl = groundAt(player.x - rx * 0.8, player.z - rz * 0.8), hr = groundAt(player.x + rx * 0.8, player.z + rz * 0.8);
+      const k = Math.min(1, dt * 12);
+      player.pitch += (Math.atan2(hf - hb, 2.6) - player.pitch) * k;
+      player.roll += (Math.atan2(hl - hr, 1.6) - player.roll) * k;
+    } else {
+      player.air = player.y > g + 0.25;
+      player.pitch *= Math.exp(-dt * 0.8);
+    }
+  }
+
+  // Dos círculos (trompa y cola) contra las cuadras sólidas vecinas: edificios, enredaderas, el mar.
+  function collide() {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    let hit = false;
+    for (const off of [1.3, -1.3]) {
+      const cx = player.x + fx * off, cz = player.z + fz * off, r = 1.0;
+      const gx = toCell(cx), gz = toCell(cz);
+      for (let y = gz - 1; y <= gz + 1; y++) for (let x = gx - 1; x <= gx + 1; x++) {
+        if (!solidAt(x, y)) continue;
+        const x0 = x * CELL, z0 = y * CELL;
+        const px = clamp(cx, x0, x0 + CELL), pz = clamp(cz, z0, z0 + CELL);
+        let dx = cx - px, dz = cz - pz, d = Math.hypot(dx, dz);
+        if (d >= r) continue;
+        if (d < 1e-4) { dx = 1; dz = 0; d = 1; }
+        const nx = dx / d, nz = dz / d, push = r - d;
+        player.x += nx * push; player.z += nz * push;
+        const vn = player.vx * nx + player.vz * nz;
+        if (vn < 0) { player.vx -= nx * vn * 1.25; player.vz -= nz * vn * 1.25; hit = true; }
+      }
+    }
+    if (hit) { player.vx *= 0.72; player.vz *= 0.72; shake = Math.min(1, shake + 0.5); }
+  }
+
+  // --- Cámara ------------------------------------------------------------------------
+  let shake = 0, camSnap = true;
+  const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+  const blocksCam = (x, y) => { const t = cellType(x, y); return t === T.WALL || t === T.IVY || t === T.MONUMENT; };
+  function placeCamera(dt) {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    const want = new THREE.Vector3(), look = new THREE.Vector3();
+    if (state.view === "Arriba") {
+      camera.up.set(0, 0, -1);
+      want.set(player.x + fx * 3, player.y + 22, player.z + fz * 3 + 0.01);
+      look.set(player.x + fx * 3, player.y, player.z + fz * 3);
+    } else if (state.view === "Adentro") {
+      // Desde el asiento: el capó adelante y la calle por el parabrisas.
+      camera.up.set(0, 1, 0);
+      const rx = fz * -1, rz = fx; // derecha del auto
+      want.set(player.x - fx * 0.1 - rx * 0.36, player.y + 1.32, player.z - fz * 0.1 - rz * 0.36);
+      look.set(want.x + fx * 12, player.y + 0.95 + Math.tan(player.pitch) * 12, want.z + fz * 12);
+    } else {
+      camera.up.set(0, 1, 0);
+      // La cámara va atrás del auto, pero nunca adentro de una manzana.
+      let back = camBack;
+      for (let s = 0.5; s <= camBack; s += 0.5) {
+        if (blocksCam(toCell(player.x - fx * s), toCell(player.z - fz * s))) { back = Math.max(1.5, s - 1); break; }
+      }
+      const wx = player.x - fx * back, wz = player.z - fz * back;
+      want.set(wx, Math.max(player.y + 2.1 + camLift + back * 0.12, groundAt(wx, wz) + 1.6), wz);
+      look.set(player.x + fx * 6, player.y + 1.0, player.z + fz * 6);
+    }
+    const inside = state.view === "Adentro";
+    const k = camSnap || inside ? 1 : 1 - Math.exp(-dt * 6);
+    camPos.lerp(want, k); camLook.lerp(look, camSnap ? 1 : 1 - Math.exp(-dt * 9));
+    camSnap = false;
+    camera.position.copy(camPos);
+    if (shake > 0) {
+      camera.position.x += (Math.random() - 0.5) * shake * 0.4;
+      camera.position.y += (Math.random() - 0.5) * shake * 0.3;
+      shake = Math.max(0, shake - dt * 3);
+    }
+    camera.lookAt(camLook);
+    moon.position.copy(camera.position).addScaledVector(MOON_DIR, 260);
+  }
+
+  // Polvo: puntos que quedan atrás cuando el auto anda rápido por el monte.
+  const DUST_N = 60;
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(DUST_N * 3).fill(-999), 3));
+  const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xb8a07a, size: 2, sizeAttenuation: false, transparent: true, opacity: 0.9 }));
+  scene.add(dustPts);
+  const dustLife = new Float32Array(DUST_N), dustVel = new Float32Array(DUST_N * 3);
+  let dustNext = 0;
+  function dust(dt) {
+    const pos = dustGeo.attributes.position.array;
+    if (currentZone === T.FOREST && !player.air && player.speed > 7) {
+      for (let n = 0; n < 2; n++) {
+        const i = dustNext = (dustNext + 1) % DUST_N, fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+        pos[i * 3] = player.x - fx * 2 + (Math.random() - 0.5) * 1.6; pos[i * 3 + 1] = player.y + 0.3; pos[i * 3 + 2] = player.z - fz * 2 + (Math.random() - 0.5) * 1.6;
+        dustVel[i * 3] = -fx * 2 + (Math.random() - 0.5) * 2; dustVel[i * 3 + 1] = 1 + Math.random() * 1.5; dustVel[i * 3 + 2] = -fz * 2 + (Math.random() - 0.5) * 2;
+        dustLife[i] = 0.8 + Math.random() * 0.6;
+      }
+    }
+    for (let i = 0; i < DUST_N; i++) {
+      if (dustLife[i] <= 0) { pos[i * 3 + 1] = -999; continue; }
+      dustLife[i] -= dt;
+      pos[i * 3] += dustVel[i * 3] * dt; pos[i * 3 + 1] += dustVel[i * 3 + 1] * dt; pos[i * 3 + 2] += dustVel[i * 3 + 2] * dt;
+      dustVel[i * 3 + 1] -= 2 * dt;
+    }
+    dustGeo.attributes.position.needsUpdate = true;
+  }
+
+  // Cada zona tiene su luz: la playa tiene luna, en la nada no hay nada.
+  // [cielo, luna, niebla lejos, color de cielo, color de suelo, color de niebla]
+  const ZONE_LIGHT = {
+    1: [0.38, 0.22, 70, 0xa89cf0, 0x2e2240, 0x1a1236],
+    2: [0.52, 0.3, 90, 0xb8b0ff, 0x2e2240, 0x1e1640],
+    3: [0.62, 0.3, 80, 0xc8f0c0, 0x2a5a24, 0x14182e],
+    4: [0.55, 0.5, 120, 0x9ab0ff, 0x1a1c2a, 0x120e2a],
+    5: [0, 0, 200, 0x000000, 0x000000, 0x000000],
+    6: [0.36, 0.95, 110, 0xc0d8ff, 0x2a4a2a, 0x1a1e38]
+  };
+  const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
+  function placeWorld(dt) {
+    const sk = sinking ? Math.min(1, sinking.t / 2) : 0;
+    car.position.set(player.x, player.y - sk * 2.6, player.z);
+    car.rotation.order = "YZX";
+    car.rotation.set(player.roll + sk * 0.35, player.heading, player.pitch);
+    dust(dt);
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    const along = player.vx * fx + player.vz * fz;
+    wheels.forEach((w, i) => { w.rotation.z -= along * 0.016; if (i < 2) w.rotation.y = player.steer * 0.4; });
+    tailMat.emissiveIntensity = keys.down || (joy.active && joy.y < -0.12) ? 2.2 : 0.5;
+    const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
+    hemi.intensity += (z[0] - hemi.intensity) * k;
+    moonLight.intensity += (z[1] - moonLight.intensity) * k;
+    hemi.color.lerp(_c1.set(z[3]), k); hemi.groundColor.lerp(_c2.set(z[4]), k); fog.color.lerp(_c3.set(z[5]), k);
+    fog.far += ((state.view === "Arriba" ? 120 : z[2]) - fog.far) * k;
+    fog.near = fog.far * 0.3;
+    // Los faroles más cercanos se quedan con las luces.
+    const near = [];
+    chunks.forEach(c => c.lamps.forEach(p => near.push(p)));
+    near.sort((a, b) => (a.x - player.x) ** 2 + (a.z - player.z) ** 2 - ((b.x - player.x) ** 2 + (b.z - player.z) ** 2));
+    lampLights.forEach((l, i) => {
+      const p = near[i];
+      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.intensity = 2.3; } else l.intensity = 0;
+    });
+  }
+
+  // --- Zonas y mensajes -------------------------------------------------------------------
+  let msg = "", msgUntil = 0, clock = 0, currentZone = 1;
+  function message(text, secs) { msg = text; msgUntil = clock + secs; }
+  function trackZone() {
+    const t = cellType(toCell(player.x), toCell(player.z));
+    const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : t === T.MOUNTAIN ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t;
+    if (zone === currentZone) return;
+    currentZone = zone;
+  }
+
+  // --- Recorrido ---------------------------------------------------------------------------
+  let seen = new Set();
+  function markSeen() {
+    const cx = toCell(player.x), cz = toCell(player.z);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx === 0 || dy === 0) seen.add((cx + dx) + "," + (cz + dy));
+  }
+
+  // --- Luz: se junta, se gasta, y sin luz aparece el limbo ------------------------------------
+  // La capacidad crece con cada orbe y queda guardada en este navegador.
+  let cap = 1;
+  try { cap = clamp(parseFloat(localStorage.getItem("deriva-luz")) || 1, 1, 4); } catch (e) { /* sin almacenamiento */ }
+  let light = Math.max(0.45, cap * 0.6), flash = 0, started = false;
+  const collected = new Set();
+
+  // Alrededor del auto orbita tu luz: los puntos encendidos son la que tenés,
+  // los apagados, lo que te falta para llenar tu capacidad.
+  const ORBIT_MAX = 12;
+  const emptyMat = new THREE.MeshBasicMaterial({ color: 0x4a4658 });
+  const orbit = new THREE.Group();
+  scene.add(orbit);
+  for (let i = 0; i < ORBIT_MAX; i++) {
+    const m = new THREE.Mesh(ORB_GEO, orbMat);
+    m.scale.setScalar(0.22);
+    m.userData = { i };
+    orbit.add(m);
+  }
+  function placeOrbit() {
+    orbit.position.set(player.x, 0, player.z);
+    // Los puntos son tu capacidad (de 4 a 12); los encendidos, la parte que tenés llena.
+    const slots = clamp(Math.round(4 + (cap - 1) * 8 / 3), 4, ORBIT_MAX), lit = Math.round((light / cap) * slots);
+    orbit.children.forEach((m, i) => {
+      const a = clock * 0.7 + (i / slots) * TAU;
+      m.visible = i < slots;
+      m.material = i < lit || (i === lit && light > 0.01 && Math.sin(clock * 9) > 0) ? orbMat : emptyMat;
+      m.position.set(Math.cos(a) * 2.9, 1.9 + Math.sin(clock * 1.3 + i) * 0.12, Math.sin(a) * 2.9);
+    });
+  }
+
+  // Si entrás al mar, el auto se hunde; volvés a la costa con la mitad de tu luz.
+  let sinking = null, lastSafe = null;
+  // Busca una cuadra adentro de la nada (con nada alrededor) cerca del auto.
+  function deepVoidNear() {
+    const sx0 = toCell(player.x), sy0 = toCell(player.z);
+    for (let r = 1; r < 260; r++) for (let d = -r; d <= r; d += 1) for (const [x, y] of [[sx0 + d, sy0 - r], [sx0 + d, sy0 + r], [sx0 - r, sy0 + d], [sx0 + r, sy0 + d]]) {
+      if (cellType(x, y) !== T.VOID) continue;
+      let ok = true;
+      for (let b = -2; b <= 2 && ok; b++) for (let a = -2; a <= 2; a++) if (cellType(x + a, y + b) !== T.VOID) { ok = false; break; }
+      if (ok) return [x, y];
+    }
+    return null;
+  }
+  // Caer en la nada: la grilla se rompe y aparecés adentro, a oscuras.
+  function fallIntoVoid() {
+    const v = deepVoidNear();
+    if (!v) return false;
+    player.x = toWorld(v[0]); player.z = toWorld(v[1]);
+    player.heading = Math.random() * TAU;
+    player.vx = player.vz = 0; player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0;
+    currentZone = T.VOID;
+    voidK = 1;
+    camSnap = true;
+    updateChunks(true);
+    return true;
+  }
+  let darkT = 0;
+
+  function tickWater(dt) {
+    const t = cellType(toCell(player.x), toCell(player.z));
+    if (!sinking) {
+      if (t === T.SEA) { sinking = { t: 0 }; keys.up = keys.down = false; return; }
+      if (t !== T.VOID && !SOLID(t)) lastSafe = { x: player.x, z: player.z, heading: player.heading };
+      return;
+    }
+    sinking.t += dt;
+    light = Math.max(0, light - 0.3 * dt);
+    player.vx *= Math.exp(-2.5 * dt); player.vz *= Math.exp(-2.5 * dt);
+    if (sinking.t > 2.6) {
+      // Si el agua te dejó casi sin luz, no volvés a la costa: caés en la nada.
+      if (light < 0.25 && fallIntoVoid()) { sinking = null; light = 0; return; }
+      const back = lastSafe || { x: player.x, z: player.z, heading: player.heading };
+      player.x = back.x - Math.cos(back.heading) * 4; player.z = back.z + Math.sin(back.heading) * 4;
+      player.heading = back.heading + Math.PI;
+      player.vx = player.vz = 0;
+      light = Math.max(0.08, light * 0.6);
+      sinking = null;
+      camSnap = true;
+    }
+  }
+
+  function tickLight(dt) {
+    if (state.map) return;
+    // Manejar gasta luz; la nada la gasta más rápido. Bajo un farol se recarga despacio.
+    let drain = player.speed > 1 ? 0.011 : 0.004;
+    if (currentZone === T.VOID) drain *= 3;
+    let lamp = false;
+    chunks.forEach(c => c.lamps.forEach(p => { if (!lamp && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 7.5 * 7.5) lamp = true; }));
+    light = clamp(light - (started ? drain * dt : 0) + (lamp ? 0.06 * dt : 0) + near * 0.35 * dt, 0, cap);
+    // Sin luz, la nada te alcanza: unos segundos de limbo y caés adentro.
+    if (light < 0.01 && currentZone !== T.VOID && !sinking && !ending) { darkT += dt; if (darkT > 3.5) { darkT = 0; fallIntoVoid(); } }
+    else darkT = 0;
+    flash = Math.max(0, flash - dt * 2.5);
+    chunks.forEach(c => c.ideas.forEach(it => {
+      if (it.taken) return;
+      it.mesh.position.y = (it.base || 1.5) + Math.sin(clock * 1.6 + it.phase) * 0.3;
+      it.mesh.scale.setScalar(1 + Math.sin(clock * 3 + it.phase) * 0.15);
+      const dx = it.x - player.x, dz = it.z - player.z;
+      if (dx * dx + dz * dz > 2.6 * 2.6 || Math.abs((it.base || 1.5) - 1.5 - player.y) > 3) return;
+      it.taken = true;
+      it.mesh.visible = false;
+      collected.add(it.key);
+      // Cada orbe te llena un poco y te deja cargar un poco más de luz para siempre.
+      cap = Math.min(4, cap + 0.125);
+      light = Math.min(cap, light + 0.3);
+      flash = 1;
+      try { localStorage.setItem("deriva-luz", String(cap)); } catch (e) { /* sin almacenamiento */ }
+    }));
+  }
+
+  // --- El horizonte de eventos: un punto de luz máxima en el centro de cada nada -----------
+  // Está donde la nada es más profunda. Un haz de luz sube al cielo y se ve desde lejos.
+  const singCache = new Map();
+  function singularities(cx, cy) {
+    const key = cx + "," + cy;
+    if (singCache.has(key)) return singCache.get(key);
+    const out = [];
+    for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
+      const x = cx * CHUNK + i, y = cy * CHUNK + j, f = monteNoise(x, y);
+      if (f < 0.73 || zoneAt(x, y) !== T.VOID) continue;
+      let top = true;
+      for (let b = -5; b <= 5 && top; b++) for (let a = -5; a <= 5; a++) if ((a || b) && monteNoise(x + a, y + b) > f) { top = false; break; }
+      if (top) out.push([toWorld(x), toWorld(y)]);
+    }
+    singCache.set(key, out);
+    return out;
+  }
+  const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+  const haloMat = new THREE.MeshBasicMaterial({ color: 0xfff4d8, transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  const pillarMat = new THREE.MeshBasicMaterial({ color: 0xfff1d0, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  const CORE = new THREE.SphereGeometry(1.4, 20, 14), HALO = new THREE.SphereGeometry(7, 20, 14);
+  const PILLAR = new THREE.CylinderGeometry(0.5, 2.5, 420, 12, 1, true); PILLAR.translate(0, 210, 0);
+  const beacons = new Map();
+  let near = 0, nearest = null;
+  function tickHorizon() {
+    const pcx = Math.floor(toCell(player.x) / CHUNK), pcy = Math.floor(toCell(player.z) / CHUNK);
+    const want = new Set();
+    for (let b = -3; b <= 3; b++) for (let a = -3; a <= 3; a++) singularities(pcx + a, pcy + b).forEach(([x, z]) => want.add(x + "," + z));
+    beacons.forEach((g, k) => { if (!want.has(k)) { scene.remove(g); beacons.delete(k); } });
+    want.forEach(k => {
+      if (beacons.has(k)) return;
+      const [x, z] = k.split(",").map(Number), g = new THREE.Group();
+      const core = new THREE.Mesh(CORE, coreMat), halo = new THREE.Mesh(HALO, haloMat), pillar = new THREE.Mesh(PILLAR, pillarMat);
+      core.position.y = halo.position.y = 3;
+      g.add(core, halo, pillar);
+      g.position.set(x, 0, z);
+      scene.add(g);
+      beacons.set(k, g);
+    });
+    nearest = null;
+    let best = Infinity;
+    beacons.forEach(g => { const d = Math.hypot(g.position.x - player.x, g.position.z - player.z); if (d < best) { best = d; nearest = g; } });
+    near = nearest ? 1 - clamp(best / 70, 0, 1) : 0;
+    beacons.forEach(g => { const s = 1 + Math.sin(clock * 2.2) * 0.08; g.children[1].scale.setScalar(s); });
+    if (nearest && best < 4 && !ending && !sinking) startEnding();
+  }
+
+  // --- El final: todo se vuelve luz, después negro, y queda el Arlequín girando solo -----------
+  let ending = null;
+  const endScene = new THREE.Scene();
+  const endCam = new THREE.PerspectiveCamera(35, 16 / 9, 0.1, 100);
+  const endTurn = new THREE.Group();
+  (() => {
+    const golf = buildGolf();
+    golf.position.y = -0.72;
+    golf.userData.headMat.emissiveIntensity = 1.2;
+    endTurn.add(golf);
+    endScene.add(endTurn);
+    const key = new THREE.DirectionalLight(0xffffff, 1.15); key.position.set(-3, 4, 5);
+    const rim = new THREE.DirectionalLight(0x9fb4ff, 0.45); rim.position.set(4, 2, -4);
+    endScene.add(key, rim, new THREE.AmbientLight(0xffffff, 0.05));
+    endCam.position.set(0, 2.4, 9.5);
+    endCam.lookAt(0, 0, 0);
+  })();
+  function startEnding() {
+    ending = { t: 0 };
+    keys.up = keys.down = keys.left = keys.right = keys.hand = false;
+  }
+  function tickEnding(dt) {
+    if (!ending) return;
+    ending.t += dt;
+    player.vx *= Math.exp(-3 * dt); player.vz *= Math.exp(-3 * dt);
+    endTurn.rotation.y = ending.t * 0.35;
+    endCam.aspect = ratio; endCam.updateProjectionMatrix();
+    if (ending.t > 14) {
+      ending = null;
+      newWorld((Math.random() * 1e9) | 0);
+    }
+  }
+  // Blanco que se come la grilla, después negro.
+  function endingOverlay() {
+    if (!ending) return;
+    const t = ending.t, n = cols * rows;
+    if (t < 3.2) {
+      const p = clamp((t - 0.8) / 2, 0, 1);
+      for (let i = 0; i < n; i++) if (hash(i, 7) < p) { CH[i] = RAMP[RAMP.length - 1 - Math.floor(hash(i, 9) * 4)]; COL[i] = "#fff6e0"; }
+    } else if (t < 5) {
+      const p = 1 - clamp((t - 3.2) / 1.6, 0, 1);
+      for (let i = 0; i < n; i++) if (hash(i, 7) < p) { CH[i] = RAMP[RAMP.length - 1 - Math.floor(hash(i, 9) * 4)]; COL[i] = "#fff6e0"; } else CH[i] = null;
+    }
+  }
+
+  // --- La nada: el limbo, donde algo te mira ------------------------------------------------
+  const scleraMats = [0xf2eedc, 0xe8c2b8, 0xd8e0f0].map(c => new THREE.MeshBasicMaterial({ color: c, fog: false }));
+  const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000, fog: false });
+  const SCLERA = new THREE.SphereGeometry(1, 18, 12), PUPIL = new THREE.SphereGeometry(0.52, 14, 10);
+  const WHISPERS = ["IT'S STILL THERE", "IDEAS OCCUPY PLACE", "NO ONE GETS HURT", "NOT ME OR THEM", "THE HARLEQUIN LEFT", "IT SEEMED THAT EVERYTHING WAS GOING TO IMPROVE", "BUT IT'S STILL THERE"];
+  const watchers = [];
+  let voidTime = 0, voidK = 0, giant = null, starAmount = 1, whisper = null, nextWhisper = 0;
+
+  function makeWatcher(big) {
+    const g = new THREE.Group(), lids = new THREE.Group();
+    g.add(lids);
+    const r = Math.random(), n = big ? 1 : r < 0.14 ? 3 : r < 0.26 ? 1 : 2;
+    const sm = scleraMats[Math.floor(Math.random() * scleraMats.length)];
+    for (let i = 0; i < n; i++) {
+      const e = new THREE.Group();
+      e.add(new THREE.Mesh(SCLERA, sm));
+      const pupil = new THREE.Mesh(PUPIL, pupilMat);
+      pupil.position.z = 0.68;
+      e.add(pupil);
+      e.position.set((i - (n - 1) / 2) * 2.5, n === 3 && i === 1 ? 1.4 : 0, 0);
+      lids.add(e);
+    }
+    if (big) g.scale.setScalar(11);
+    // Aparecen atrás o al costado, nunca de frente: se ven cuando girás.
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const rel = big ? 0.15 : Math.random() < 0.7 ? side * (0.55 + Math.random() * 0.8) : side * (Math.PI - Math.random() * 0.8);
+    const w = {
+      g, lids, big, rel, open: 0, blinkAt: clock + 1 + Math.random() * 5,
+      angle: player.heading + rel,
+      dist: big ? 95 : 14 + Math.random() * 12, height: big ? 24 : 0.8 + Math.random() * 4
+    };
+    g.position.set(player.x + Math.cos(w.angle) * w.dist, w.height, player.z - Math.sin(w.angle) * w.dist);
+    scene.add(g);
+    return w;
+  }
+
+  function tickVoid(dt) {
+    // Cerca del horizonte la luz calma todo: los ojos se cierran y la grilla se ordena.
+    const inVoid = (currentZone === T.VOID || light < 0.03 || !!sinking) && !state.map && near < 0.45 && !ending;
+    voidK += ((inVoid ? 1 : 0) - voidK) * Math.min(1, dt * 0.8);
+    voidTime = inVoid ? voidTime + dt : Math.max(0, voidTime - dt * 3);
+    starAmount = 1 - 0.96 * voidK;
+    const want = inVoid ? Math.min(14, Math.floor(voidTime / 2.5)) : 0;
+    if (watchers.length < want) watchers.push(makeWatcher(false));
+    if (inVoid && voidTime > 22 && !giant) giant = makeWatcher(true);
+    const all = giant ? watchers.concat([giant]) : watchers.slice();
+    all.forEach((w, i) => {
+      if (!w.big) {
+        // Se van metiendo hacia el centro de tu mirada. Si vas hacia ellos, retroceden y se corren.
+        const inFront = Math.abs(w.rel) < 0.32;
+        if (inFront && player.speed > 2) {
+          w.dist = Math.min(42, w.dist + dt * player.speed * 0.9);
+          w.rel += Math.sign(w.rel || 1) * dt * 0.25;
+        } else {
+          w.rel -= Math.sign(w.rel) * dt * 0.018;
+          w.dist += (15 - w.dist) * dt * 0.05;
+        }
+        w.rel += Math.sin(clock * 0.3 + i * 1.7) * dt * 0.02;
+      }
+      w.angle = player.heading + w.rel;
+      const tx = player.x + Math.cos(w.angle) * w.dist, tz = player.z - Math.sin(w.angle) * w.dist;
+      const lag = Math.min(1, dt * (w.big ? 0.5 : 0.9));
+      w.g.position.x += (tx - w.g.position.x) * lag;
+      w.g.position.z += (tz - w.g.position.z) * lag;
+      w.g.position.y = w.height + Math.sin(clock * 0.7 + i) * 0.3;
+      w.g.lookAt(camera.position);
+      // Abren los ojos de a poco, parpadean, y los cierran cuando te vas.
+      w.open += ((inVoid ? 1 : 0) - w.open) * Math.min(1, dt * (inVoid ? 1.2 : 4));
+      let lid = w.open;
+      if (clock > w.blinkAt) {
+        if (clock > w.blinkAt + 0.14) w.blinkAt = clock + 2 + Math.random() * 6;
+        else lid *= 0.06;
+      }
+      w.lids.scale.y = Math.max(0.02, lid);
+      if (!inVoid && w.open < 0.03) {
+        scene.remove(w.g);
+        if (w.big) giant = null; else watchers.splice(watchers.indexOf(w), 1);
+      }
+    });
+    // Los faros titilan, la cámara respira.
+    // Los faros dependen de la luz que te queda; con poca, titilan.
+    const flicker = (voidK > 0.1 && Math.random() < 0.05 * voidK) || (light < 0.2 && Math.random() < (0.2 - light) * 0.6) ? 0.12 : 1;
+    const l1 = Math.min(1, light);
+    // Más luz no encandila: llega más lejos y abre más.
+    headBeams.forEach(b => { b.intensity = flicker * (light < 0.01 ? 0 : 2.3 * (0.12 + 0.88 * l1)); b.angle = 0.3 + 0.14 * l1 + 0.04 * (light - l1); b.distance = 36 + 14 * light; });
+    carGlow.intensity = 0.5 + 1.1 * l1;
+    carGlow.distance = 9 + 5 * light;
+    camera.fov = baseFov + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
+    camera.updateProjectionMatrix();
+    // Susurros: frases sueltas que aparecen en cualquier lugar de la grilla.
+    if (inVoid && voidTime > 6 && clock > nextWhisper) {
+      const text = WHISPERS[Math.floor(Math.random() * WHISPERS.length)];
+      whisper = { text, r: 2 + Math.floor(Math.random() * Math.max(1, rows - 5)), c: 1 + Math.floor(Math.random() * Math.max(1, cols - text.length - 2)), until: clock + 2.2 };
+      nextWhisper = clock + 7 + Math.random() * 6;
+    }
+    if (!inVoid) whisper = null;
+  }
+
+  // En la nada la grilla se descompone: letras que no van y renglones corridos.
+  function glitch() {
+    const n = cols * rows, p = 0.006 * voidK;
+    for (let i = 0; i < n; i++) if (Math.random() < p) { CH[i] = RAMP[1 + Math.floor(Math.random() * (RAMP.length - 1))]; COL[i] = "#7a2b3c"; }
+    if (Math.random() < 0.05 * voidK) {
+      const r = 1 + Math.floor(Math.random() * (rows - 2)), sh = 1 + Math.floor(Math.random() * 3), o = r * cols;
+      const rowC = CH.slice(o, o + cols), rowK = COL.slice(o, o + cols);
+      for (let c = 0; c < cols; c++) { CH[o + c] = rowC[(c + sh) % cols]; COL[o + c] = rowK[(c + sh) % cols]; }
+    }
+  }
+
+  function newWorld(s) {
+    seed = s | 0;
+    sx = (hash(seed, 1) - 0.5) * 4000; sy = (hash(seed, 2) - 0.5) * 4000;
+    cache.clear();
+    chunks.forEach(c => disposeChunk(c));
+    chunks.clear();
+    seen = new Set();
+    collected.clear();
+    watchers.forEach(w => scene.remove(w.g));
+    watchers.length = 0;
+    if (giant) { scene.remove(giant.g); giant = null; }
+    voidTime = 0;
+    // Arranca en una esquina del laberinto, mirando hacia una calle abierta.
+    let start = null;
+    for (let r = 0; r < 60 && !start; r++) for (let dy = -r; dy <= r && !start; dy++) for (let dx = -r; dx <= r; dx++) {
+      const x = 1 + 2 * dx, y = 1 + 2 * dy;
+      if (cellType(x, y) === T.STREET && zoneAt(x, y) === 0 && hs(x, y, 13) < 0.3 && mod(x, 26) >= 3 && mod(y, 22) >= 3) { start = [x, y]; break; }
+    }
+    start = start || [1, 1];
+    player.x = toWorld(start[0]); player.z = toWorld(start[1]);
+    const dirs = [[1, 0, 0], [0, 1, -Math.PI / 2], [-1, 0, Math.PI], [0, -1, Math.PI / 2]];
+    const open = dirs.find(([a, b]) => !solidAt(start[0] + a, start[1] + b)) || dirs[0];
+    player.heading = open[2];
+    player.vx = player.vz = 0; player.steer = 0; player.dist = 0;
+    player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0;
+    currentZone = 1;
+    updateChunks(true);
+    camSnap = true;
+    // El primer orbe queda justo adelante: la primera cosa que se aprende es juntar luz.
+    const ox = player.x + Math.cos(player.heading) * 13, oz = player.z - Math.sin(player.heading) * 13;
+    const home = chunks.get(Math.floor(toCell(ox) / CHUNK) + "," + Math.floor(toCell(oz) / CHUNK));
+    if (home) {
+      const m = new THREE.Mesh(ORB_GEO, orbMat);
+      m.position.set(ox, 1.5, oz);
+      m.userData.base = 1.5;
+      home.group.add(m);
+      home.ideas.push({ key: "inicio", mesh: m, x: ox, z: oz, phase: 0 });
+    }
+  }
+
+  // --- Grilla ---------------------------------------------------------------------------------
+  let cols = 0, rows = 0, ratio = 16 / 9, rt = null, buf = null;
+  let L, RGB, A, Q, CH, COL;
+  let baseFov = 56, camBack = 6.8, camLift = 0;
+  function layout() {
+    const box = canvas.getBoundingClientRect();
+    const bw = Math.max(200, box.width || window.innerWidth), bh = Math.max(200, box.height || window.innerHeight);
+    ratio = bw / bh;
+    cols = DENSITY[state.density];
+    rows = Math.max(12, Math.round(cols * 0.6 / ratio));
+    const W = cols * SS, H = rows * SS;
+    if (rt) rt.dispose();
+    rt = new THREE.WebGLRenderTarget(W, H);
+    buf = new Uint8Array(W * H * 4);
+    const N = cols * rows;
+    L = new Float32Array(N); RGB = new Float32Array(N * 3); A = new Uint8Array(N); Q = new Int16Array(N);
+    CH = new Array(N); COL = new Array(N);
+    // En vertical se abre el campo y la cámara se aleja, para que el auto no tape todo.
+    baseFov = ratio < 1 ? 56 + (1 - ratio) * 36 : 56;
+    camBack = ratio < 1 ? 9 : 6.8;
+    camLift = ratio < 1 ? 1.2 : 0;
+    camera.aspect = ratio;
+    camera.fov = baseFov;
+    camera.updateProjectionMatrix();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(bw * dpr);
+    canvas.height = Math.round(bh * dpr);
+  }
+
+  function star(ci, ri, t) {
+    const h = hash(ci * 7 + 3, ri * 13 + 9);
+    if (h <= 1 - 0.012 * 2.1 * starAmount) return -1;
+    const tw = 0.5 + 0.5 * Math.sin(t * (0.8 + h * 2.5) + h * 50);
+    return 0.3 + 0.55 * hash(ci + 3, ri + 99) * (0.55 + 0.45 * tw);
+  }
+
+  let exposureNow = ADJ.exposure;
+  function shade() {
+    exposureNow = ending && ending.t > 5 ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
+    const W = cols * SS, H = rows * SS;
+    renderer.setRenderTarget(rt);
+    renderer.clear();
+    // En el final se ve solo el Arlequín girando en el negro.
+    if (ending && ending.t > 5) renderer.render(endScene, endCam); else renderer.render(scene, camera);
+    renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf);
+    renderer.setRenderTarget(null);
+    const steps = RAMP.length - 1, ink = MODES[state.mode];
+    for (let ri = 0; ri < rows; ri++) {
+      const y0 = (rows - 1 - ri) * SS;
+      for (let ci = 0; ci < cols; ci++) {
+        let r = 0, g = 0, b = 0, a = 0;
+        for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+          const k = ((y0 + sy) * W + ci * SS + sx) * 4;
+          r += buf[k]; g += buf[k + 1]; b += buf[k + 2]; a += buf[k + 3];
+        }
+        const n = SS * SS, i = ri * cols + ci;
+        r /= n; g /= n; b /= n;
+        A[i] = a / n > 8 ? 1 : 0;
+        const raw = Math.max(r, g, b) / 255;
+        let l = clamp((raw * exposureNow - 0.5) * ADJ.contrast + 0.5, 0, 1);
+        l = Math.pow(l, ADJ.gamma);
+        if (raw < 0.004 || l < ADJ.threshold) { CH[i] = null; continue; }
+        const off = hash(ci * 3 + 11, ri * 5 + 7) - 0.5;
+        const q = clamp(Math.round((l + (off * ADJ.amount) / steps) * steps), 0, steps);
+        CH[i] = RAMP[q];
+        if (ink) { COL[i] = ink; continue; }
+        const m = Math.max(r, g, b) || 1, kk = (150 + 105 * (q / steps)) / m;
+        COL[i] = "rgb(" + Math.min(255, r * kk | 0) + "," + Math.min(255, g * kk | 0) + "," + Math.min(255, b * kk | 0) + ")";
+      }
+    }
+    // Cielo: estrellas quietas solo donde no hay nada adelante.
+    const streak = state.view === "Arriba" ? 0 : clamp((player.speed - 9) / 12, 0, 1);
+    for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) {
+      const i = ri * cols + ci;
+      if (CH[i] || A[i]) continue;
+      const s = star(ci, ri, clock);
+      if (s < 0) continue;
+      CH[i] = STAR_CHARS[clamp(Math.floor(s * 3), 0, 2)]; COL[i] = "#dfe6ff";
+      // Rápido, las estrellas se vuelven trazos que salen del centro.
+      if (streak > 0 && hash(ci + 5, ri + 17) < streak) {
+        const dx = (ci - cols / 2) * 0.6, dy = ri - rows * 0.45, n = Math.hypot(dx, dy) || 1;
+        CH[i] = Math.abs(dx / n) > 0.92 ? "-" : Math.abs(dy / n) > 0.92 ? "|" : dx * dy > 0 ? "\\" : "/";
+      }
+    }
+  }
+
+
+  // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
+  const MAP_STYLE = {
+    [T.WALL]: ["##", "#e0463c"], [T.IVY]: ["&&", "#8fd26a"], [T.SEA]: ["~~", "#4a86e8"], [T.MONUMENT]: ["!!", "#e8e4f0"],
+    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"]
+  };
+  function automap() {
+    CH.fill(null);
+    const cw = 2, halfW = Math.floor(cols / cw / 2), halfH = Math.floor((rows - 2) / 2);
+    const px = toCell(player.x), pz = toCell(player.z), midC = Math.floor(cols / 2), midR = Math.floor(rows / 2);
+    const isSeen = (x, y) => seen.has(x + "," + y);
+    for (let dy = -halfH; dy <= halfH; dy++) for (let dx = -halfW; dx < halfW; dx++) {
+      const x = px + dx, y = pz + dy;
+      let near = false;
+      for (let b = -1; b <= 1 && !near; b++) for (let a = -1; a <= 1; a++) if (isSeen(x + a, y + b)) { near = true; break; }
+      if (!near) continue;
+      const t = cellType(x, y);
+      if (!SOLID(t) && !isSeen(x, y)) continue;
+      const st = MAP_STYLE[t];
+      if (!st) continue;
+      const r = midR + dy, c = midC + dx * cw;
+      for (let k = 0; k < 2; k++) {
+        if (r < 1 || r >= rows - 1 || c + k < 0 || c + k >= cols || st[0][k] === " ") continue;
+        CH[r * cols + c + k] = st[0][k]; COL[r * cols + c + k] = st[1];
+      }
+    }
+    const a = ((player.heading % TAU) + TAU) % TAU;
+    const arrow = a < Math.PI / 4 || a > 7 * Math.PI / 4 ? ">" : a < 3 * Math.PI / 4 ? "^" : a < 5 * Math.PI / 4 ? "<" : "v";
+    // Las ideas que todavía no juntaste, cerca de lo recorrido.
+    chunks.forEach(ch => ch.ideas.forEach(it => {
+      if (it.taken) return;
+      const x = toCell(it.x), y = toCell(it.z), dx = x - px, dy = y - pz;
+      if (Math.abs(dx) >= halfW || Math.abs(dy) > halfH || !(isSeen(x, y) || isSeen(x + 1, y) || isSeen(x - 1, y) || isSeen(x, y + 1) || isSeen(x, y - 1))) return;
+      const i = (midR + dy) * cols + midC + dx * cw;
+      if (midR + dy >= 1 && midR + dy < rows - 1) { CH[i] = "*"; COL[i] = "#fff1c4"; }
+    }));
+    CH[midR * cols + midC] = arrow; COL[midR * cols + midC] = "#f2c200";
+  }
+
+  function dashboard() {
+    const AMBER = "#ff9a3c", DIM = "#6e3c1c";
+    const top = Math.floor(rows * 0.72);
+    for (let r = top; r < rows; r++) for (let c = 0; c < cols; c++) { CH[r * cols + c] = null; }
+    for (let c = 0; c < cols; c++) { CH[top * cols + c] = "_"; COL[top * cols + c] = DIM; }
+    const R = Math.max(3, Math.floor((rows - top) * 0.42));
+    const gauge = (cx, cy, v) => {
+      // Arco de 225° a -45°, con marcas; la aguja apunta según el valor (0 a 1).
+      for (let a = 0; a <= 1.0001; a += 1 / (R * 5)) {
+        const ang = (225 - 270 * a) * Math.PI / 180;
+        const c = Math.round(cx + Math.cos(ang) * R / 0.6), r = Math.round(cy - Math.sin(ang) * R);
+        if (r > top && r < rows && c >= 0 && c < cols) { CH[r * cols + c] = a <= v ? "·" : "."; COL[r * cols + c] = a <= v ? AMBER : DIM; }
+      }
+      const ang = (225 - 270 * clamp(v, 0, 1)) * Math.PI / 180, ca = Math.cos(ang), sa = Math.sin(ang);
+      const ch = Math.abs(ca) > 0.92 ? "-" : Math.abs(sa) > 0.92 ? "|" : ca * sa > 0 ? "/" : "\\";
+      for (let k = 0; k < R - 0.5; k += 0.5) {
+        const c = Math.round(cx + ca * k / 0.6), r = Math.round(cy - sa * k);
+        if (r > top && r < rows && c >= 0 && c < cols) { CH[r * cols + c] = ch; COL[r * cols + c] = AMBER; }
+      }
+      CH[cy * cols + cx] = "o"; COL[cy * cols + cx] = AMBER;
+    };
+    const cy = Math.min(rows - 1, top + R + 1);
+    gauge(Math.round(cols * 0.3), cy, player.speed / MAX_FWD);
+    gauge(Math.round(cols * 0.7), cy, light / cap);
+  }
+
+  function hud() {
+    if (ending) return;
+    hudBase();
+    overlay();
+  }
+  function hudBase() {
+    if (state.view === "Adentro" && !state.map) dashboard();
+    const write = (text, r, align) => {
+      const c0 = align === "right" ? cols - text.length - 1 : align === "center" ? Math.floor((cols - text.length) / 2) : 1;
+      for (let k = 0; k < text.length; k++) {
+        const c = c0 + k;
+        if (c < 0 || c >= cols) continue;
+        CH[r * cols + c] = text[k] === " " ? null : text[k];
+        COL[r * cols + c] = HUD;
+      }
+    };
+    // Antes de moverse, una sola flecha que titila arriba del auto.
+    if (!started && Math.sin(clock * 5) > -0.2 && !state.map) {
+      const i = Math.floor(rows * 0.3) * cols + Math.floor(cols / 2);
+      CH[i] = "↑"; COL[i] = HUD;
+    }
+    if (whisper && clock < whisper.until) {
+      for (let k = 0; k < whisper.text.length; k++) {
+        const i = whisper.r * cols + whisper.c + k;
+        if (whisper.text[k] !== " ") { CH[i] = whisper.text[k]; COL[i] = "#9a8fa8"; }
+      }
+    }
+    if (msg && clock < msgUntil) {
+      const pad = " " + msg + " ";
+      const r = Math.floor(rows / 2);
+      // El mensaje limpia su fila para leerse sobre la escena.
+      for (let c = Math.floor((cols - pad.length) / 2); c < Math.floor((cols + pad.length) / 2); c++) if (c >= 0 && c < cols) CH[r * cols + c] = null;
+      const shown = voidK < 0.3 ? pad : pad.replace(/[^ ]/g, ch => Math.random() < 0.25 * voidK ? RAMP[1 + Math.floor(Math.random() * (RAMP.length - 1))] : ch);
+      write(shown, r, "center");
+    }
+  }
+
+  function paint() {
+    const cw = canvas.width / cols, chh = canvas.height / rows;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = chh.toFixed(2) + 'px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    let last = "";
+    for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) {
+      const i = ri * cols + ci, ch = CH[i];
+      if (!ch) continue;
+      if (COL[i] !== last) { ctx.fillStyle = COL[i]; last = COL[i]; }
+      ctx.fillText(ch, (ci + 0.5) * cw, (ri + 0.5) * chh);
+    }
+  }
+
+
+  // --- Controles ---------------------------------------------------------------------------------
+  const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", Space: "hand" };
+  let engaged = false;
+  // --- Joystick y menú, hechos de caracteres ------------------------------------------------
+  const joy = { active: false, id: null, cx: 0, cy: 0, x: 0, y: 0, hand: null };
+  const menu = { open: false, rows: [], box: null };
+  const AMBER = "#ff9a3c", DIM = "#6e3c1c", MUTED = "#8d8ca6";
+  const cellOf = e => {
+    const r = canvas.getBoundingClientRect();
+    return { c: Math.floor((e.clientX - r.left) / r.width * cols), r: Math.floor((e.clientY - r.top) / r.height * rows), px: e.clientX - r.left, py: e.clientY - r.top, w: r.width, h: r.height };
+  };
+  const put = (r, c, ch, color) => { if (r >= 0 && r < rows && c >= 0 && c < cols) { CH[r * cols + c] = ch; COL[r * cols + c] = color; } };
+  const text = (r, c, str, color) => { for (let k = 0; k < str.length; k++) put(r, c + k, str[k] === " " ? null : str[k], color); };
+  const MENU_BTN = () => ({ r: 1, c: cols - 3 });
+
+  function menuItems() {
+    const cyc = (list, v) => list[(list.indexOf(v) + 1) % list.length];
+    return [
+      { label: "CÁMARA", value: state.view.toUpperCase(), act: () => setOpt("view", cyc(VIEWS, state.view)) },
+      { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(Object.keys(DENSITY), state.density)) },
+      { label: "MODO", value: state.mode.toUpperCase(), act: () => setOpt("mode", cyc(Object.keys(MODES), state.mode)) },
+      { label: "GIROSCOPIO", value: gyro.on ? "SÍ" : gyroBtn.dataset.failed ? "NO HAY" : "NO", act: () => gyroBtn.click() },
+      { label: "MAPA", value: state.map ? "SÍ" : "NO", act: () => setOpt("map", !state.map) },
+      { label: "PANTALLA", value: document.fullscreenElement ? "COMPLETA" : "NORMAL", act: () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (err) { /* sin pantalla completa */ } } },
+      { label: "OTRA CIUDAD", value: "", act: () => { newWorld((Math.random() * 1e9) | 0); menu.open = false; } },
+      { label: "SEGUIR", value: "", act: () => { menu.open = false; } }
+    ];
+  }
+
+  function overlay() {
+    // Botón del menú: arriba a la derecha.
+    const b = MENU_BTN();
+    if (!menu.open) { text(b.r, b.c - 1, "[≡]", MUTED); }
+    // Joystick: donde apoyás el dedo. Antes del primer toque, un fantasma que empuja hacia arriba.
+    const ghost = !started && touchDevice && !menu.open;
+    if ((joy.active || ghost) && !menu.open && !state.map) {
+      const cw = canvas.getBoundingClientRect().width / cols, chh = canvas.getBoundingClientRect().height / rows;
+      const R = Math.min(canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height) * 0.13;
+      const cx = joy.active ? joy.cx : canvas.getBoundingClientRect().width * 0.5;
+      const cy = joy.active ? joy.cy : canvas.getBoundingClientRect().height * 0.78;
+      const kx = joy.active ? joy.x : 0, ky = joy.active ? joy.y : 0.55 + 0.45 * Math.sin(clock * 3);
+      for (let a = 0; a < 28; a++) {
+        const t = a / 28 * TAU;
+        put(Math.round((cy + Math.sin(t) * R) / chh - 0.5), Math.round((cx + Math.cos(t) * R) / cw - 0.5), "·", ghost ? DIM : "#a0582a");
+      }
+      const kr = Math.round((cy - ky * R) / chh - 0.5), kc = Math.round((cx + kx * R) / cw - 0.5);
+      put(kr, kc, "@", AMBER); put(kr, kc - 1, "(", AMBER); put(kr, kc + 1, ")", AMBER);
+    }
+    if (!menu.open) return;
+    // Menú: una caja de líneas en el centro de la grilla.
+    const items = menuItems();
+    const inner = Math.min(cols - 4, Math.max(26, ...items.map(it => it.label.length + it.value.length + 6)));
+    const h = items.length + 4, top = Math.max(1, Math.floor((rows - h) / 2)), left = Math.floor((cols - inner - 2) / 2);
+    for (let r = top; r < top + h; r++) for (let c = left; c < left + inner + 2; c++) put(r, c, null, AMBER);
+    put(top, left, "┌", DIM); put(top, left + inner + 1, "┐", DIM); put(top + h - 1, left, "└", DIM); put(top + h - 1, left + inner + 1, "┘", DIM);
+    for (let c = left + 1; c <= left + inner; c++) { put(top, c, "─", DIM); put(top + h - 1, c, "─", DIM); }
+    for (let r = top + 1; r < top + h - 1; r++) { put(r, left, "│", DIM); put(r, left + inner + 1, "│", DIM); }
+    text(top, left + 2, " DERIVA ", AMBER);
+    menu.rows = [];
+    items.forEach((it, k) => {
+      const r = top + 2 + k;
+      text(r, left + 2, it.label, it.value ? MUTED : AMBER);
+      if (it.value) text(r, left + inner - it.value.length - 3, "‹" + it.value + "›", AMBER);
+      menu.rows.push({ r, act: it.act });
+    });
+    menu.box = { top, left, bottom: top + h - 1, right: left + inner + 1 };
+  }
+
+  canvas.addEventListener("pointerdown", e => {
+    engaged = true;
+    const p = cellOf(e), b = MENU_BTN();
+    if (!menu.open && p.r <= b.r + 2 && p.c >= b.c - 4) { menu.tapBtn = true; return; }
+    if (menu.open) return;
+    started = true;
+    if (!joy.active) {
+      joy.active = true; joy.id = e.pointerId; joy.cx = p.px; joy.cy = p.py; joy.x = joy.y = 0;
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
+    } else if (joy.hand === null) { joy.hand = e.pointerId; keys.hand = true; }
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!joy.active || e.pointerId !== joy.id) return;
+    const p = cellOf(e), R = Math.min(p.w, p.h) * 0.13;
+    let dx = (p.px - joy.cx) / R, dy = (joy.cy - p.py) / R;
+    const m = Math.hypot(dx, dy);
+    if (m > 1) { dx /= m; dy /= m; }
+    joy.x = -dx; joy.y = dy; // izquierda = +1, como el volante
+  });
+  const endTouch = e => {
+    if (menu.tapBtn) { menu.tapBtn = false; const p = cellOf(e), b = MENU_BTN(); if (p.r <= b.r + 2 && p.c >= b.c - 4) menu.open = true; return; }
+    if (menu.open) {
+      const p = cellOf(e), bx = menu.box;
+      if (!bx || p.r < bx.top || p.r > bx.bottom || p.c < bx.left || p.c > bx.right) { menu.open = false; return; }
+      const row = menu.rows.find(x => x.r === p.r);
+      if (row) row.act();
+      return;
+    }
+    if (e.pointerId === joy.hand) { joy.hand = null; keys.hand = false; return; }
+    if (e.pointerId === joy.id) { joy.active = false; joy.x = joy.y = 0; joy.id = null; }
+  };
+  canvas.addEventListener("pointerup", endTouch);
+  canvas.addEventListener("pointercancel", e => { if (e.pointerId === joy.id) { joy.active = false; joy.x = joy.y = 0; } if (e.pointerId === joy.hand) { joy.hand = null; keys.hand = false; } });
+  canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+  window.addEventListener("keydown", e => {
+    if (e.code === "Escape") { menu.open = !menu.open; return; }
+    const k = KEYMAP[e.code];
+    if (k) { keys[k] = true; started = true; if (engaged) e.preventDefault(); return; }
+    if (e.code === "KeyC") setOpt("view", VIEWS[(VIEWS.indexOf(state.view) + 1) % VIEWS.length]);
+    if (e.code === "KeyM") setOpt("map", !state.map);
+    if (e.code === "KeyR") newWorld((Math.random() * 1e9) | 0);
+  });
+  window.addEventListener("keyup", e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
+  window.addEventListener("blur", () => Object.keys(keys).forEach(k => { keys[k] = false; }));
+  canvas.addEventListener("pointerdown", () => { engaged = true; canvas.focus(); });
+
+  // Giroscopio: el celu horizontal es el volante. Se mide hacia dónde cae la gravedad sobre
+  // la pantalla, así no importa cuánto lo inclines hacia atrás.
+  const gyro = { on: false, steer: 0, heard: 0 };
+  const gyroBtn = document.getElementById("pad-gyro");
+  function onOrient(e) {
+    if (e.beta == null || e.gamma == null) return;
+    gyro.heard = performance.now();
+    const b = e.beta * Math.PI / 180, g = e.gamma * Math.PI / 180;
+    const ux = -Math.sin(g) * Math.cos(b), uy = Math.sin(b); // "arriba" del mundo visto en el celu
+    const th = ((screen.orientation && screen.orientation.angle) || window.orientation || 0) * Math.PI / 180;
+    const sx = ux * Math.cos(th) - uy * Math.sin(th), sy = ux * Math.sin(th) + uy * Math.cos(th);
+    let a = Math.atan2(sx, sy) * 180 / Math.PI; // inclinación como volante, en grados
+    a = Math.abs(a) < 3 ? 0 : a - Math.sign(a) * 3;
+    gyro.steer = clamp(a / 22, -1, 1);
+  }
+  function setGyro(on) {
+    gyro.on = on;
+    document.body.classList.toggle("gyro", on);
+    gyroBtn.setAttribute("aria-pressed", String(on));
+    gyroBtn.textContent = on ? "Giroscopio" : gyroBtn.dataset.failed ? "Sin giroscopio" : "Giroscopio";
+  }
+  gyroBtn.addEventListener("click", async () => {
+    if (gyro.on) { setGyro(false); return; }
+    started = true;
+    try {
+      if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+        const r = await DeviceOrientationEvent.requestPermission();
+        if (r !== "granted") throw new Error("denegado");
+      }
+      window.addEventListener("deviceorientation", onOrient);
+      setGyro(true);
+      // Si en un segundo y medio no llega nada, este navegador (o el marco) no lo deja.
+      setTimeout(() => { if (performance.now() - gyro.heard > 1400) { gyroBtn.dataset.failed = "1"; setGyro(false); } }, 1500);
+    } catch (err) { gyroBtn.dataset.failed = "1"; setGyro(false); }
+  });
+
+  // Con el giroscopio, la pantalla es el pedal: derecha acelera, izquierda frena.
+  const pedal = e => {
+    return;
+    const r = canvas.getBoundingClientRect();
+    const right = e.clientX - r.left > r.width * 0.4;
+    keys.up = right; keys.down = !right; started = true;
+  };
+  canvas.addEventListener("pointerdown", e => { pedal(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ } });
+  canvas.addEventListener("pointermove", e => { if (gyro.on && (keys.up || keys.down)) pedal(e); });
+  const release = () => { if (gyro.on) { keys.up = keys.down = false; } };
+  canvas.addEventListener("pointerup", release);
+  canvas.addEventListener("pointercancel", release);
+
+  // Pantalla completa y horizontal, donde se pueda.
+  const fullBtn = document.getElementById("pad-full");
+  fullBtn.addEventListener("click", async () => {
+    const on = !document.body.classList.contains("full");
+    document.body.classList.toggle("full", on);
+    fullBtn.textContent = on ? "Salir" : "Pantalla completa";
+    fullBtn.setAttribute("aria-pressed", String(on));
+    // Si el navegador tiene pantalla completa de verdad, la usa además; si no, alcanza con tapar la página.
+    try {
+      if (!on && document.fullscreenElement) await document.exitFullscreen();
+      else if (on && document.documentElement.requestFullscreen) { await document.documentElement.requestFullscreen(); try { await screen.orientation.lock("landscape"); } catch (e) { /* no se puede bloquear */ } }
+    } catch (e) { /* sin pantalla completa del navegador */ }
+    setTimeout(layout, 200);
+  });
+  document.addEventListener("fullscreenchange", () => setTimeout(layout, 200));
+  canvas.addEventListener("focus", () => { engaged = true; });
+  canvas.addEventListener("blur", () => { engaged = false; });
+
+  document.querySelectorAll("#pad button").forEach(btn => {
+    const k = btn.dataset.key;
+    const on = e => { e.preventDefault(); keys[k] = true; started = true; btn.dataset.down = "true"; try { btn.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ } };
+    const off = () => { keys[k] = false; btn.dataset.down = "false"; };
+    btn.addEventListener("pointerdown", on);
+    btn.addEventListener("pointerup", off);
+    btn.addEventListener("pointercancel", off);
+    btn.addEventListener("lostpointercapture", off);
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  });
+
+  const opts = document.getElementById("opts");
+  const segs = {};
+  function addSeg(label, key, values) {
+    const wrap = document.createElement("div");
+    wrap.className = "ctl";
+    wrap.innerHTML = '<span class="ctl-label" id="lbl-' + key + '">' + label + "</span>";
+    const seg = document.createElement("div");
+    seg.className = "seg";
+    seg.setAttribute("role", "group");
+    seg.setAttribute("aria-labelledby", "lbl-" + key);
+    values.forEach(v => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.id = key + "-" + v;
+      b.textContent = v;
+      b.addEventListener("click", () => setOpt(key, v));
+      seg.appendChild(b);
+    });
+    wrap.appendChild(seg);
+    opts.appendChild(wrap);
+    segs[key] = seg;
+  }
+  const VIEWS = ["Atrás", "Adentro", "Arriba"];
+  addSeg("Cámara", "view", VIEWS);
+  addSeg("Densidad", "density", Object.keys(DENSITY));
+  addSeg("Modo", "mode", Object.keys(MODES));
+  const mapBtn = document.createElement("button");
+  mapBtn.type = "button"; mapBtn.id = "btn-map";
+  mapBtn.addEventListener("click", () => setOpt("map", !state.map));
+  const newBtn = document.createElement("button");
+  newBtn.type = "button"; newBtn.id = "btn-new"; newBtn.textContent = "Otra ciudad";
+  newBtn.addEventListener("click", () => newWorld((Math.random() * 1e9) | 0));
+  opts.append(mapBtn, newBtn);
+
+  function setOpt(key, value) {
+    state[key] = value;
+    Object.keys(segs).forEach(k => segs[k].querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.textContent === state[k]))));
+    mapBtn.textContent = state.map ? "Volver a manejar" : "Ver mapa";
+    mapBtn.setAttribute("aria-pressed", String(state.map));
+    if (key === "density") layout();
+    if (key === "view") camSnap = true;
+  }
+
+  // --- Bucle ----------------------------------------------------------------------------------------
+  let lastTs = 0, lastPaint = 0;
+  function loop(ts) {
+    requestAnimationFrame(loop);
+    if (document.hidden) { lastTs = ts; return; }
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
+    lastTs = ts;
+    clock += dt;
+    water.uniforms.uTime.value = clock;
+    if (!state.map && !menu.open) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
+    tickHorizon();
+    tickEnding(dt);
+    tickLight(dt);
+    markSeen();
+    trackZone();
+    updateChunks(false);
+    if (ts - lastPaint < 33) return;
+    const pdt = lastPaint ? Math.min(0.1, (ts - lastPaint) / 1000) : 0.033;
+    lastPaint = ts;
+    placeWorld(pdt);
+    placeOrbit();
+    tickVoid(pdt);
+    placeCamera(pdt);
+    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); }
+    hud();
+    paint();
+  }
+
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(layout, 120); });
+
+  setOpt("view", state.view);
+  layout();
+  newWorld(700);
+  const start = () => { layout(); requestAnimationFrame(loop); };
+  if (document.fonts && document.fonts.load) document.fonts.load('16px "IBM Plex Mono"', "abc").then(start, start);
+  else start();
+})();
+</script>
+
+</html>
