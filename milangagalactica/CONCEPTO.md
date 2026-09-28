@@ -194,8 +194,10 @@ Manejar el Arlequín de noche por una ciudad que no se termina, sin destino.
   de la génesis ("it's still there", "ideas occupy place").
 - **Luz:** la economía del juego, porque la luz es lo central de la obra.
   Se gasta al manejar (más rápido en la nada), se junta en orbes y se
-  recarga despacio bajo los faroles, la luz de la gente. La que llevás se
-  ve como puntos que orbitan el auto y en la fuerza de los faros. Sin luz,
+  recarga despacio bajo los faroles, la luz de la gente. Cada orbe agranda
+  para siempre cuánta luz podés cargar: con más luz ves más lejos, alumbrás
+  más alrededor y durás más. La que llevás se ve como puntos que orbitan el
+  auto (encendidos, la que tenés; apagados, lo que te falta). Sin luz,
   el limbo llega a cualquier lado: aparecen los ojos aunque estés en la
   ciudad.
 - **Sin explicaciones:** nada de textos ni contadores. El arranque enseña:

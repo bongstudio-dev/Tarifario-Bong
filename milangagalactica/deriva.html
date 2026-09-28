@@ -345,7 +345,6 @@
   // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
   const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13 };
   const SOLID = t => t >= 10;
-  const ZONE_NAME = { 1: "LABERINTO", 2: "AVENIDA", 3: "PLAZA", 4: "PLAYA", 5: "LA NADA", 6: "BOSQUE", 10: "LABERINTO", 11: "LABERINTO", 12: "PLAYA", 13: "PLAZA" };
   const mod = (a, n) => ((a % n) + n) % n;
   let seed = 700, sx = 0, sy = 0;
   const hs = (x, y, k) => hash(x + Math.imul(k + 1, 9973) + seed, y + Math.imul(k + 1, 7919) - seed);
@@ -438,7 +437,7 @@
 
   // Bosque: follaje de colores suaves, esferas y haces de luz, como en Abstract Landscapes.
   const leafMat = mat(0xffffff, { flatShading: true, roughness: 0.9, emissive: 0x10141a });
-  const LEAF_COLORS = [0x6fbf8a, 0x9ad0a0, 0xe2a6c8, 0x4f9a7a, 0xc9b6ec, 0x7fc4b8];
+  const LEAF_COLORS = [0x5fbf6a, 0x8fd88a, 0x3f9a5a, 0xb8e07a, 0x6fc4a0, 0xe2a6c8];
   const pearlMat = mat(0xf1eaff, { roughness: 0.18, metalness: 0.35, emissive: 0x3a3258 });
   const moteMat = new THREE.MeshBasicMaterial({ color: 0xfff3b0 });
   const MOTE = new THREE.IcosahedronGeometry(0.09, 0);
@@ -476,7 +475,7 @@
   const CHUNK = 16;
   const chunks = new Map();
   const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
-  const FLOOR_COLORS = { 1: 0x55525e, 2: 0x5a5a6e, 3: 0x3c5a3a, 4: 0x9c8f74, 6: 0x2e4a40, 10: 0x55525e, 11: 0x55525e, 13: 0x3c5a3a };
+  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x264830, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
 
   function instanced(geo, material, list, build) {
     if (!list.length) return null;
@@ -717,12 +716,12 @@
   // Cada zona tiene su luz: la playa tiene luna, en la nada no hay nada.
   // [cielo, luna, niebla lejos, color de cielo, color de suelo, color de niebla]
   const ZONE_LIGHT = {
-    1: [0.22, 0.16, 64, 0x9aa4e8, 0x2a2018, 0x000000],
-    2: [0.24, 0.18, 74, 0x9aa4e8, 0x2a2018, 0x000000],
-    3: [0.28, 0.18, 66, 0xa8c0e0, 0x1e2a18, 0x000000],
-    4: [0.42, 0.42, 110, 0x8aa0ff, 0x10121a, 0x000000],
+    1: [0.38, 0.22, 70, 0xa8b0f0, 0x3a2c1e, 0x000000],
+    2: [0.52, 0.3, 90, 0xc0c4ff, 0x3a2c1e, 0x000000],
+    3: [0.62, 0.3, 80, 0xc8f0c0, 0x2a5a24, 0x000000],
+    4: [0.55, 0.5, 120, 0x9ab0ff, 0x1a1c2a, 0x000000],
     5: [0, 0, 200, 0x000000, 0x000000, 0x000000],
-    6: [0.5, 0.22, 70, 0xffb8d8, 0x1f4a3a, 0x1c2544]
+    6: [0.85, 0.35, 80, 0xc8ffc8, 0x2f6a3a, 0x0e2a1a]
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
   function placeWorld(dt) {
@@ -750,15 +749,12 @@
 
   // --- Zonas y mensajes -------------------------------------------------------------------
   let msg = "", msgUntil = 0, clock = 0, currentZone = 1;
-  const announced = {};
   function message(text, secs) { msg = text; msgUntil = clock + secs; }
   function trackZone() {
     const t = cellType(toCell(player.x), toCell(player.z));
     const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : (t === T.WALL || t === T.IVY) ? T.STREET : t;
     if (zone === currentZone) return;
     currentZone = zone;
-    const name = ZONE_NAME[zone];
-    if (!announced[name] || clock - announced[name] > 25) { announced[name] = clock; message(name, 2.4); }
   }
 
   // --- Recorrido ---------------------------------------------------------------------------
@@ -769,25 +765,32 @@
   }
 
   // --- Luz: se junta, se gasta, y sin luz aparece el limbo ------------------------------------
-  let light = 0.45, flash = 0, started = false;
+  // La capacidad crece con cada orbe y queda guardada en este navegador.
+  let cap = 1;
+  try { cap = clamp(parseFloat(localStorage.getItem("deriva-luz")) || 1, 1, 4); } catch (e) { /* sin almacenamiento */ }
+  let light = Math.max(0.45, cap * 0.6), flash = 0, started = false;
   const collected = new Set();
 
-  // La luz que llevás se ve alrededor del auto: puntos que orbitan, más o menos según cuánta quede.
+  // Alrededor del auto orbita tu luz: los puntos encendidos son la que tenés,
+  // los apagados, lo que te falta para llenar tu capacidad.
+  const PER_UNIT = 8, ORBIT_MAX = 32;
+  const emptyMat = new THREE.MeshBasicMaterial({ color: 0x4a4658 });
   const orbit = new THREE.Group();
   scene.add(orbit);
-  const ORBIT_MAX = 18;
   for (let i = 0; i < ORBIT_MAX; i++) {
     const m = new THREE.Mesh(ORB_GEO, orbMat);
-    m.scale.setScalar(0.34);
-    m.userData = { r: 2.6 + (i % 3) * 0.5, h: 1.0 + (i % 4) * 0.45, sp: 0.55 + (i % 5) * 0.13, ph: i * 2.39 };
+    m.scale.setScalar(0.3);
+    const ring = Math.floor(i / 8);
+    m.userData = { r: 2.5 + ring * 0.75 + (i % 2) * 0.2, h: 0.9 + (i % 4) * 0.4 + ring * 0.25, sp: (0.6 + (i % 5) * 0.1) * (ring % 2 ? -1 : 1), ph: i * 2.39 };
     orbit.add(m);
   }
   function placeOrbit() {
     orbit.position.set(player.x, 0, player.z);
-    const n = Math.round(light * ORBIT_MAX);
+    const slots = Math.min(ORBIT_MAX, Math.round(cap * PER_UNIT)), lit = Math.round(light * PER_UNIT);
     orbit.children.forEach((m, i) => {
       const u = m.userData, a = clock * u.sp + u.ph;
-      m.visible = i < n || (i === n && light > 0.01 && Math.sin(clock * 9) > 0);
+      m.visible = i < slots;
+      m.material = i < lit || (i === lit && light > 0.01 && Math.sin(clock * 9) > 0) ? orbMat : emptyMat;
       m.position.set(Math.cos(a) * u.r, u.h + Math.sin(clock * 1.3 + u.ph) * 0.25, Math.sin(a) * u.r);
     });
   }
@@ -799,7 +802,7 @@
     if (currentZone === T.VOID) drain *= 3;
     let lamp = false;
     chunks.forEach(c => c.lamps.forEach(p => { if (!lamp && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 7.5 * 7.5) lamp = true; }));
-    light = clamp(light - (started ? drain * dt : 0) + (lamp ? 0.06 * dt : 0), 0, 1);
+    light = clamp(light - (started ? drain * dt : 0) + (lamp ? 0.06 * dt : 0), 0, cap);
     flash = Math.max(0, flash - dt * 2.5);
     chunks.forEach(c => c.ideas.forEach(it => {
       if (it.taken) return;
@@ -810,8 +813,11 @@
       it.taken = true;
       it.mesh.visible = false;
       collected.add(it.key);
-      light = Math.min(1, light + 0.2);
+      // Cada orbe te llena un poco y te deja cargar un poco más de luz para siempre.
+      cap = Math.min(4, cap + 0.125);
+      light = Math.min(cap, light + 0.3);
       flash = 1;
+      try { localStorage.setItem("deriva-luz", String(cap)); } catch (e) { /* sin almacenamiento */ }
     }));
   }
 
@@ -896,8 +902,10 @@
     // Los faros titilan, la cámara respira.
     // Los faros dependen de la luz que te queda; con poca, titilan.
     const flicker = (voidK > 0.1 && Math.random() < 0.05 * voidK) || (light < 0.2 && Math.random() < (0.2 - light) * 0.6) ? 0.12 : 1;
-    headBeams.forEach(b => { b.intensity = 2.3 * flicker * (light < 0.01 ? 0 : 0.12 + 0.88 * light); b.angle = 0.3 + 0.14 * light; });
-    carGlow.intensity = 0.5 + 1.1 * light;
+    const l1 = Math.min(1, light);
+    headBeams.forEach(b => { b.intensity = flicker * (light < 0.01 ? 0 : 2.3 * (0.12 + 0.88 * l1) + 0.35 * (light - l1)); b.angle = 0.3 + 0.14 * l1 + 0.05 * (light - l1); b.distance = 36 + 14 * light; });
+    carGlow.intensity = 0.5 + 1.1 * l1 + 0.3 * (light - l1);
+    carGlow.distance = 9 + 5 * light;
     camera.fov = 56 + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
     camera.updateProjectionMatrix();
     // Susurros: frases sueltas que aparecen en cualquier lugar de la grilla.
@@ -994,7 +1002,7 @@
 
   let exposureNow = ADJ.exposure;
   function shade() {
-    exposureNow = ADJ.exposure * (0.72 + 0.28 * light) * (1 + flash * 0.7);
+    exposureNow = ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7);
     const W = cols * SS, H = rows * SS;
     renderer.setRenderTarget(rt);
     renderer.clear();
