@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Buscando Moreno</title>
+<title>Deriva del Arlequín</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -66,12 +66,12 @@
 <div class="wrap">
   <header>
     <p class="eyebrow">milangagalactica · Arlequín</p>
-    <h1>Buscando Moreno</h1>
-    <p>Es de noche y la ciudad es un laberinto que se arma solo. Manejá el Arlequín con los faros prendidos hasta encontrar la enredadera de Moreno. Cada vez que llegás, la ciudad cambia y crece.</p>
+    <h1>Deriva del Arlequín</h1>
+    <p>Manejá el Arlequín de noche, sin destino. La ciudad es un laberinto que no se termina: cada tanto se abre una avenida, aparece una plaza, llegás a la playa o de golpe estás andando en la nada, y después volvés a entrar al laberinto. Las enredaderas te ayudan a ubicarte.</p>
   </header>
 
   <div class="stage">
-    <canvas id="game" tabindex="0" role="img" aria-label="Juego en caracteres: el Arlequín maneja por un laberinto de noche"></canvas>
+    <canvas id="game" tabindex="0" role="img" aria-label="Juego en caracteres: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
     <div class="pad" id="pad">
       <div class="pad-group">
         <button type="button" id="pad-left" data-key="left" aria-label="Doblar a la izquierda">◀</button>
@@ -94,7 +94,7 @@
 
   <footer>
     <p>La misma técnica que las láminas: la escena 3D se renderiza a la resolución de la grilla, cada celda toma la luz que le llega y la luz elige el carácter. Las letras no se mueven; el mundo pasa por adentro de la grilla.</p>
-    <p>Las estrellas solo aparecen donde la cámara ve cielo, así que los edificios las tapan.</p>
+    <p>Las estrellas solo aparecen donde la cámara ve cielo, así que los edificios las tapan. En la nada no hay piso, así que también aparecen abajo.</p>
   </footer>
 </div>
 
@@ -112,7 +112,7 @@
   const SS = 2;
   const TAU = Math.PI * 2;
   const CELL = 8;          // una cuadra del laberinto, en metros
-  const HUD = "#ffb45c", MAPWALL = "#e0463c", MAPFLOOR = "#4a4f78";
+  const HUD = "#ffb45c";
 
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function hash(x, y) {
@@ -131,15 +131,6 @@
       r += (dx ? u : 1 - u) * (dy ? v : 1 - v) * (dz ? w : 1 - w) * h3(xi + dx, yi + dy, zi + dz);
     }
     return r;
-  }
-  function rng(seed) {
-    let a = seed >>> 0;
-    return () => {
-      a = (a + 0x6d2b79f5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
   }
   const mat = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.9, metalness: 0 }, extra || {}));
 
@@ -304,11 +295,10 @@
   }
 
 
+
   // --- Estado ------------------------------------------------------------------
   const state = { density: window.innerWidth < 700 ? "Baja" : "Media", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
-  let best = {};
-  try { best = JSON.parse(localStorage.getItem("mg-moreno-records") || "{}") || {}; } catch (e) { best = {}; }
 
   // --- WebGL -------------------------------------------------------------------
   const canvas = document.getElementById("game");
@@ -328,17 +318,21 @@
   const scene = new THREE.Scene();
   const fog = new THREE.Fog(0x000000, 16, 58);
   scene.fog = fog;
-  const camera = new THREE.PerspectiveCamera(56, 16 / 9, 0.1, 220);
-  scene.add(new THREE.HemisphereLight(0x5566b8, 0x0a0810, 0.16));
-  const moon = new THREE.DirectionalLight(0xa9b8ff, 0.14);
-  moon.position.set(-30, 60, 20);
+  const camera = new THREE.PerspectiveCamera(56, 16 / 9, 0.1, 400);
+  const hemi = new THREE.HemisphereLight(0x5566b8, 0x0a0810, 0.16);
+  const moonLight = new THREE.DirectionalLight(0xa9b8ff, 0.14);
+  moonLight.position.set(-30, 60, -60);
+  scene.add(hemi, moonLight);
+  // La luna sigue a la cámara desde lejos, siempre en el mismo lugar del cielo.
+  const MOON_DIR = new THREE.Vector3(-0.35, 0.3, -1).normalize();
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(9, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff1d6, fog: false }));
   scene.add(moon);
 
   // El auto, con los faros como linterna.
   const car = buildGolf();
   scene.add(car);
-  const { headMat, tailMat, wheels } = car.userData;
-  headMat.emissiveIntensity = 1.3;
+  const { tailMat, wheels } = car.userData;
+  car.userData.headMat.emissiveIntensity = 1.3;
   tailMat.emissiveIntensity = 0.5;
   [-0.55, 0.55].forEach(z => {
     const beam = new THREE.SpotLight(0xfff2dc, 2.1, 44, 0.42, 0.6, 1.3);
@@ -346,13 +340,12 @@
     beam.target.position.set(22, -1.2, z * 3);
     car.add(beam, beam.target);
   });
-
   // Una luz propia que acompaña al auto desde arriba, para que el Arlequín se lea de noche.
   const carGlow = new THREE.PointLight(0xe8e4ff, 1.6, 9, 1.2);
   carGlow.position.set(-1.2, 4.2, 0);
   car.add(carGlow);
 
-  // Faroles: pocas luces reales que se mudan al farol más cercano al auto.
+  // Faroles: pocas luces reales que se mudan a los faroles más cercanos al auto.
   const LAMP_LIGHTS = 6;
   const lampLights = [];
   for (let i = 0; i < LAMP_LIGHTS; i++) {
@@ -361,156 +354,250 @@
     lampLights.push(l);
   }
 
-  // --- La ciudad -----------------------------------------------------------------
-  let city = null;
+  // --- El mundo: infinito, por zonas -------------------------------------------------
+  // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
+  // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
+  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13 };
+  const SOLID = t => t >= 10;
+  const ZONE_NAME = { 1: "LABERINTO", 2: "AVENIDA", 3: "PLAZA", 4: "PLAYA", 5: "LA NADA", 10: "LABERINTO", 11: "LABERINTO", 12: "PLAYA", 13: "PLAZA" };
+  const mod = (a, n) => ((a % n) + n) % n;
+  let seed = 700, sx = 0, sy = 0;
+  const hs = (x, y, k) => hash(x + Math.imul(k + 1, 9973) + seed, y + Math.imul(k + 1, 7919) - seed);
+  const fbm = (x, y, z) => 0.65 * noise3(x, y, z) + 0.35 * noise3(x * 2.3 + 11, y * 2.3, z + 3);
+  const cache = new Map();
+
+  function zoneAt(x, y) {
+    const s = fbm((x + sx) / 60, (y + sy) / 60, 1.7);
+    if (s > 0.69) return T.SEA;
+    if (s > 0.64) return T.SAND;
+    if (fbm((x - sy) / 42, (y + sx) / 42, 5.3) > 0.68) return T.VOID;
+    return 0;
+  }
+  function cellType(x, y) {
+    const key = x + "," + y;
+    let t = cache.get(key);
+    if (t !== undefined) return t;
+    t = computeCell(x, y);
+    if (cache.size > 60000) cache.clear();
+    cache.set(key, t);
+    return t;
+  }
+  function computeCell(x, y) {
+    const z = zoneAt(x, y);
+    if (z) return z;
+    // Plazas: una por región de 20 × 20 cuadras, a veces.
+    const rx = Math.floor(x / 20), ry = Math.floor(y / 20);
+    if (hs(rx, ry, 1) < 0.34) {
+      const dx = x - (rx * 20 + 10), dy = y - (ry * 20 + 10);
+      if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
+        if (dx === 0 && dy === 0) return T.MONUMENT;
+        if (Math.abs(dx) + Math.abs(dy) === 5 && hs(x, y, 12) < 0.3) return T.IVY;
+        return T.PLAZA;
+      }
+    }
+    // Avenidas: tres cuadras de ancho, cada 26 de este a oeste y cada 22 de norte a sur.
+    if (mod(x, 26) < 3 || mod(y, 22) < 3) return T.AVENUE;
+    const ox = mod(x, 2) === 1, oy = mod(y, 2) === 1;
+    if (ox && oy) return T.STREET;
+    if (!ox && !oy) return hs(x, y, 4) < 0.07 ? T.IVY : T.WALL;
+    // Tramo entre dos esquinas: cada esquina abre hacia el sur o hacia el este, y a veces hay un tramo extra.
+    const open = ox ? hs(x, y - 1, 2) < 0.5 : hs(x - 1, y, 2) >= 0.5;
+    if (open || hs(x, y, 3) < 0.18) return T.STREET;
+    return hs(x, y, 4) < 0.07 ? T.IVY : T.WALL;
+  }
+  const solidAt = (x, y) => SOLID(cellType(x, y));
+  const toWorld = c => (c + 0.5) * CELL;
+  const toCell = v => Math.floor(v / CELL);
+
+  // --- Materiales compartidos --------------------------------------------------------
   const PALETTE = [0xd8a8a0, 0xc9785e, 0xe6d6bc, 0xb8a6c9, 0xd9c3a0, 0x9fb0c9, 0xe8c9c9];
+  function facadeTexture(lit) {
+    const c = document.createElement("canvas");
+    c.width = 96; c.height = 32;
+    const g = c.getContext("2d");
+    g.fillStyle = lit ? "#000" : "#fff";
+    g.fillRect(0, 0, 96, 32);
+    for (let k = 0; k < 3; k++) {
+      g.fillStyle = lit ? (hash(k, 3) > 0.4 ? "#ffcf8a" : "#000") : "#3a3a48";
+      g.fillRect(k * 32 + 8, 8, 16, 16);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    return t;
+  }
+  const FACADE_MAP = facadeTexture(false), FACADE_GLOW = facadeTexture(true);
+  const buildingMats = {};
+  function buildingMat(floors) {
+    if (buildingMats[floors]) return buildingMats[floors];
+    const map = FACADE_MAP.clone(), glow = FACADE_GLOW.clone();
+    [map, glow].forEach(t => { t.needsUpdate = true; t.repeat.set(1, floors); });
+    return (buildingMats[floors] = mat(0xffffff, { map, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 0.55, roughness: 0.95 }));
+  }
+  const floorMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
+  const ivyMat = mat(0x8fd26a, { flatShading: true, roughness: 1, emissive: 0x1d3a12 });
+  const trunkMat = mat(0x5a4636, { roughness: 1 });
+  const crownMat = mat(0x3f7a3a, { flatShading: true, roughness: 1, emissive: 0x0c1a0a });
+  const poleMat = mat(0x8d8ca6, { roughness: 0.6 });
+  const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0 });
+  const stoneMat = mat(0xe8e4f0, { roughness: 0.7 });
+  const water = { uniforms: { uTime: { value: 0 } } };
+  const waterMat = mat(0x3a70d8, { roughness: 0.25, metalness: 0.1, flatShading: true });
+  waterMat.onBeforeCompile = sh => {
+    sh.uniforms.uTime = water.uniforms.uTime;
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nuniform float uTime;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(position.x * 0.35 + uTime * 1.3) * 0.22 + sin(position.z * 0.27 - uTime * 0.9) * 0.18 + sin((position.x + position.z) * 0.9 + uTime * 2.1) * 0.06;");
+  };
 
-  function facadeTextures() {
-    const make = lit => {
-      const c = document.createElement("canvas");
-      c.width = 96; c.height = 32;
-      const g = c.getContext("2d");
-      g.fillStyle = lit ? "#000" : "#fff";
-      g.fillRect(0, 0, 96, 32);
-      for (let k = 0; k < 3; k++) {
-        g.fillStyle = lit ? (hash(k, 3) > 0.4 ? "#ffcf8a" : "#000") : "#3a3a48";
-        g.fillRect(k * 32 + 8, 8, 16, 16);
-      }
-      const t = new THREE.CanvasTexture(c);
-      t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      return t;
+  const BOX = new THREE.BoxGeometry(1, 1, 1); BOX.translate(0, 0.5, 0);
+  const POLE = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6); POLE.translate(0, 2.3, 0);
+  const BULB = new THREE.SphereGeometry(0.28, 10, 8);
+  const TRUNK = new THREE.CylinderGeometry(0.18, 0.25, 2.2, 6); TRUNK.translate(0, 1.1, 0);
+  const CROWN = new THREE.IcosahedronGeometry(1.7, 1); CROWN.translate(0, 3.3, 0);
+  const OBELISK = new THREE.ConeGeometry(1.1, 9, 4); OBELISK.translate(0, 4.5, 0);
+  const PLINTH = new THREE.BoxGeometry(3.2, 0.8, 3.2); PLINTH.translate(0, 0.4, 0);
+  // Enredadera: un bloque redondeado de hojas que ocupa una cuadra entera.
+  const IVY_GEO = (() => {
+    const geo = new THREE.IcosahedronGeometry(1, 3);
+    const pos = geo.attributes.position, v = new THREE.Vector3();
+    const sq = x => Math.sign(x) * Math.pow(Math.abs(x), 0.55);
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const n = noise3(v.x * 4 + 3, v.y * 4, v.z * 4) - 0.5;
+      const f = noise3(v.x * 11, v.y * 11 + 7, v.z * 11) - 0.5;
+      const k = 1 + 0.12 * n + 0.08 * f;
+      pos.setXYZ(i, sq(v.x) * 3.6 * k, Math.max(0, (sq(v.y) + 1) * 2.9 + 0.3 * n), sq(v.z) * 3.6 * k);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  })();
+
+  // --- Pedazos del mundo: 16 × 16 cuadras, se arman alrededor del auto --------------------
+  const CHUNK = 16;
+  const chunks = new Map();
+  const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
+  const FLOOR_COLORS = { 1: 0x4c4c5a, 2: 0x57576c, 3: 0x3c5a3a, 4: 0x9c8f74, 10: 0x4c4c5a, 11: 0x4c4c5a, 13: 0x3c5a3a };
+
+  function instanced(geo, material, list, build) {
+    if (!list.length) return null;
+    const inst = new THREE.InstancedMesh(geo, material, list.length);
+    list.forEach((item, i) => { build(item, m4); inst.setMatrixAt(i, m4); });
+    return inst;
+  }
+
+  function buildChunk(cx, cy) {
+    const g = new THREE.Group();
+    const lamps = [];
+    const fp = [], fc = [];
+    const quad = (x0, z0, x1, z1, y, c) => {
+      fp.push(x0, y, z0, x0, y, z1, x1, y, z0, x1, y, z0, x0, y, z1, x1, y, z1);
+      col.set(c);
+      for (let k = 0; k < 6; k++) fc.push(col.r, col.g, col.b);
     };
-    return { map: make(false), glow: make(true) };
-  }
-  const FACADE = facadeTextures();
-
-  function makeCity(level, seed) {
-    const rnd = rng(seed);
-    const k = Math.min(4 + level, 12);
-    const W = 2 * k + 1;
-    const wall = new Uint8Array(W * W).fill(1);
-    const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= W) ? 1 : wall[y * W + x];
-
-    // Laberinto por retroceso, desde la esquina.
-    const stack = [[1, 1]];
-    wall[W + 1] = 0;
-    while (stack.length) {
-      const [x, y] = stack[stack.length - 1];
-      const dirs = [[2, 0], [-2, 0], [0, 2], [0, -2]].sort(() => rnd() - 0.5);
-      let moved = false;
-      for (const [dx, dy] of dirs) {
-        const nx = x + dx, ny = y + dy;
-        if (nx > 0 && ny > 0 && nx < W - 1 && ny < W - 1 && wall[ny * W + nx]) {
-          wall[(y + dy / 2) * W + x + dx / 2] = 0;
-          wall[ny * W + nx] = 0;
-          stack.push([nx, ny]);
-          moved = true;
-          break;
+    const wp = [];
+    const byFloors = {}, ivies = [], trees = [], poles = [], monuments = [];
+    for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
+      const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
+      const x0 = x * CELL, z0 = y * CELL;
+      if (t === T.VOID) continue;
+      if (t === T.SEA) {
+        const S = 4, d = CELL / S;
+        for (let b = 0; b < S; b++) for (let a = 0; a < S; a++) {
+          const ax = x0 + a * d, az = z0 + b * d;
+          wp.push(ax, -0.35, az, ax, -0.35, az + d, ax + d, -0.35, az, ax + d, -0.35, az, ax, -0.35, az + d, ax + d, -0.35, az + d);
         }
+        continue;
       }
-      if (!moved) stack.pop();
+      quad(x0, z0, x0 + CELL, z0 + CELL, 0, FLOOR_COLORS[t]);
+      if (t === T.AVENUE) {
+        // Línea punteada en el centro de la avenida.
+        if (mod(x, 26) === 1 && mod(y, 22) >= 3 && mod(y, 2) === 0) quad(x0 + 3.85, z0 + 1, x0 + 4.15, z0 + 7, 0.02, 0xd8d2c0);
+        if (mod(y, 22) === 1 && mod(x, 26) >= 3 && mod(x, 2) === 0) quad(x0 + 1, z0 + 3.85, x0 + 7, z0 + 4.15, 0.02, 0xd8d2c0);
+        if (mod(x, 26) === 0 && mod(y, 4) === 0) poles.push([x0 + 0.6, z0 + 4, 1]);
+        if (mod(x, 26) === 2 && mod(y, 4) === 2) poles.push([x0 + 7.4, z0 + 4, -1]);
+        if (mod(y, 22) === 0 && mod(x, 4) === 1 && mod(x, 26) >= 3) poles.push([x0 + 4, z0 + 0.6, 0, 1]);
+        if (mod(y, 22) === 2 && mod(x, 4) === 3 && mod(x, 26) >= 3) poles.push([x0 + 4, z0 + 7.4, 0, -1]);
+      } else if (t === T.WALL) {
+        const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
+        const r = hs(x, y, 5);
+        const floors = nearAvenue ? 4 + Math.floor(r * 5) : 1 + Math.floor(Math.pow(r, 1.6) * 5);
+        (byFloors[floors] = byFloors[floors] || []).push([x0, z0, PALETTE[Math.floor(hs(x, y, 6) * PALETTE.length)]]);
+      } else if (t === T.IVY) {
+        ivies.push([x0 + 4, z0 + 4, hs(x, y, 7)]);
+      } else if (t === T.PLAZA) {
+        if (hs(x, y, 8) < 0.55) trees.push([x0 + 2 + hs(x, y, 9) * 4, z0 + 2 + hs(x, y, 10) * 4, hs(x, y, 11)]);
+        const rx = Math.floor(x / 20), ry = Math.floor(y / 20);
+        const dx = x - (rx * 20 + 10), dy = y - (ry * 20 + 10);
+        if (Math.abs(dx) === 3 && Math.abs(dy) === 3) poles.push([x0 + 4, z0 + 4, 0]);
+      } else if (t === T.MONUMENT) {
+        monuments.push([x0 + 4, z0 + 4]);
+      } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.12) {
+        poles.push([x0 + 4 + (hs(x, y, 14) < 0.5 ? -3.2 : 3.2), z0 + 4 + (hs(x, y, 15) < 0.5 ? -3.2 : 3.2), 0]);
+      }
     }
-    // Algunas vueltas extra, para que haya más de un camino.
-    for (let y = 1; y < W - 1; y++) for (let x = 1; x < W - 1; x++) {
-      if (!wall[y * W + x] || (x + y) % 2 === 0 || rnd() > 0.1) continue;
-      if ((!at(x - 1, y) && !at(x + 1, y)) || (!at(x, y - 1) && !at(x, y + 1))) wall[y * W + x] = 0;
+
+    if (fp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(fp, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(fc, 3));
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, floorMat); m.userData.own = true; g.add(m);
     }
-    // Moreno queda en la cuadra más lejana.
-    const dist = new Int32Array(W * W).fill(-1);
-    const q = [W + 1];
-    dist[W + 1] = 0;
-    let goal = W + 1;
-    while (q.length) {
-      const i = q.shift();
-      if (dist[i] > dist[goal]) goal = i;
-      [1, -1, W, -W].forEach(d => { const j = i + d; if (!wall[j] && dist[j] < 0) { dist[j] = dist[i] + 1; q.push(j); } });
+    if (wp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(wp, 3));
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, waterMat); m.userData.own = true; g.add(m);
     }
-    return { level, seed, W, wall, at, goal: { x: goal % W, y: (goal / W) | 0 }, rnd, seen: new Uint8Array(W * W) };
+    Object.keys(byFloors).forEach(f => {
+      const list = byFloors[f];
+      const inst = instanced(BOX, buildingMat(+f), list, ([x0, z0], m) => m.makeScale(CELL, f * 3.2, CELL).setPosition(x0 + 4, 0, z0 + 4));
+      list.forEach(([, , c], i) => inst.setColorAt(i, col.set(c)));
+      g.add(inst);
+    });
+    const ivy = instanced(IVY_GEO, ivyMat, ivies, ([x, z, r], m) => {
+      q4.setFromAxisAngle(p3.set(0, 1, 0), r * TAU);
+      m.compose(p3.set(x, 0, z), q4, s3.set(0.85 + r * 0.25, 0.8 + r * 0.6, 0.85 + r * 0.25));
+    });
+    if (ivy) g.add(ivy);
+    const trunk = instanced(TRUNK, trunkMat, trees, ([x, z, r], m) => m.makeScale(1, 0.8 + r * 0.5, 1).setPosition(x, 0, z));
+    const crown = instanced(CROWN, crownMat, trees, ([x, z, r], m) => m.makeScale(0.8 + r * 0.5, 0.8 + r * 0.5, 0.8 + r * 0.5).setPosition(x, 0, z));
+    if (trunk) g.add(trunk, crown);
+    monuments.forEach(([x, z]) => {
+      const o = new THREE.Mesh(OBELISK, stoneMat); o.position.set(x, 0.8, z); o.rotation.y = Math.PI / 4;
+      const p = new THREE.Mesh(PLINTH, stoneMat); p.position.set(x, 0, z);
+      g.add(o, p);
+      lamps.push(new THREE.Vector3(x + 2.5, 3.5, z + 2.5));
+    });
+    const polesMesh = instanced(POLE, poleMat, poles, ([x, z], m) => m.makeTranslation(x, 0, z));
+    const bulbs = instanced(BULB, bulbMat, poles, ([x, z, ax, az], m) => m.makeTranslation(x + (ax || 0) * 0.5, 4.6, z + (az || 0) * 0.5));
+    if (polesMesh) g.add(polesMesh, bulbs);
+    poles.forEach(([x, z, ax, az]) => lamps.push(new THREE.Vector3(x + (ax || 0) * 0.5, 4.3, z + (az || 0) * 0.5)));
+
+    scene.add(g);
+    return { group: g, lamps };
   }
 
-  const toWorld = (c, W) => (c - W / 2 + 0.5) * CELL;
-  const toCell = (v, W) => Math.floor(v / CELL + W / 2);
+  function disposeChunk(c) {
+    scene.remove(c.group);
+    c.group.children.forEach(o => { if (o.userData.own) o.geometry.dispose(); if (o.isInstancedMesh && o.dispose) o.dispose(); });
+  }
 
-  let cityGroup = null;
-  function buildCity(level, seed) {
-    if (cityGroup) {
-      scene.remove(cityGroup);
-      cityGroup.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== headMat) o.material.dispose(); });
+  function updateChunks(all) {
+    const pcx = Math.floor(toCell(player.x) / CHUNK), pcy = Math.floor(toCell(player.z) / CHUNK);
+    const want = new Set();
+    for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) want.add((pcx + a) + "," + (pcy + b));
+    chunks.forEach((c, k) => { if (!want.has(k)) { disposeChunk(c); chunks.delete(k); } });
+    for (const k of want) {
+      if (chunks.has(k)) continue;
+      const [a, b] = k.split(",").map(Number);
+      chunks.set(k, buildChunk(a, b));
+      if (!all) break; // uno por cuadro, para que no se trabe
     }
-    city = makeCity(level, seed);
-    const { W, wall, rnd } = city;
-    cityGroup = new THREE.Group();
-    scene.add(cityGroup);
-
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W * CELL, W * CELL), mat(0x4c4c5a, { roughness: 1 }));
-    floor.rotation.x = -Math.PI / 2;
-    cityGroup.add(floor);
-
-    // Edificios: una caja por cuadra tapada, con pisos de 3,2 m y ventanas.
-    const byFloors = {};
-    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
-      if (!wall[y * W + x]) continue;
-      const edge = x === 0 || y === 0 || x === W - 1 || y === W - 1;
-      const floors = edge ? 5 + Math.floor(rnd() * 3) : 1 + Math.floor(Math.pow(rnd(), 1.6) * 5);
-      (byFloors[floors] = byFloors[floors] || []).push([x, y, PALETTE[Math.floor(rnd() * PALETTE.length)]]);
-    }
-    const box = new THREE.BoxGeometry(1, 1, 1);
-    box.translate(0, 0.5, 0);
-    const m4 = new THREE.Matrix4(), col = new THREE.Color();
-    Object.keys(byFloors).forEach(f => {
-      const list = byFloors[f], floors = +f;
-      const map = FACADE.map.clone(), glow = FACADE.glow.clone();
-      [map, glow].forEach(t => { t.needsUpdate = true; t.repeat.set(1, floors); });
-      const m = mat(0xffffff, { map, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 0.55, roughness: 0.95 });
-      const inst = new THREE.InstancedMesh(box, m, list.length);
-      list.forEach(([x, y, c], i) => {
-        m4.makeScale(CELL, floors * 3.2, CELL).setPosition(toWorld(x, W), 0, toWorld(y, W));
-        inst.setMatrixAt(i, m4);
-        inst.setColorAt(i, col.set(c));
-      });
-      cityGroup.add(inst);
-    });
-
-    // Faroles en algunas esquinas, pegados a la ochava de una manzana.
-    const pole = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6);
-    pole.translate(0, 2.3, 0);
-    const poleMat = mat(0x8d8ca6, { roughness: 0.6 });
-    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0 });
-    const bulb = new THREE.SphereGeometry(0.28, 10, 8);
-    city.lamps = [];
-    for (let y = 1; y < W - 1; y += 2) for (let x = 1; x < W - 1; x += 2) {
-      if (wall[y * W + x] || rnd() > 0.45) continue;
-      const sx = rnd() < 0.5 ? -1 : 1, sz = rnd() < 0.5 ? -1 : 1;
-      const px = toWorld(x, W) + sx * CELL * 0.4, pz = toWorld(y, W) + sz * CELL * 0.4;
-      const p = new THREE.Mesh(pole, poleMat);
-      p.position.set(px, 0, pz);
-      const b = new THREE.Mesh(bulb, bulbMat);
-      b.position.set(px - sx * 0.5, 4.6, pz - sz * 0.5);
-      cityGroup.add(p, b);
-      city.lamps.push(new THREE.Vector3(px - sx * 0.5, 4.3, pz - sz * 0.5));
-    }
-
-    // Moreno: la enredadera al final del laberinto, con su propia luz.
-    const ivy = buildIvy();
-    ivy.scale.setScalar(0.85);
-    ivy.position.set(toWorld(city.goal.x, W), 0, toWorld(city.goal.y, W));
-    const ivyLight = new THREE.PointLight(0xd8ffc8, 2.2, 16, 1.2);
-    ivyLight.position.set(ivy.position.x, 5.5, ivy.position.z);
-    cityGroup.add(ivy, ivyLight);
-    city.goalPos = ivy.position.clone();
-
-    // El Arlequín arranca en la esquina, mirando hacia la primera calle abierta.
-    player.x = toWorld(1, W); player.z = toWorld(1, W);
-    player.heading = city.at(2, 1) ? -Math.PI / 2 : 0;
-    player.vx = player.vz = 0; player.steer = 0;
-    city.startedAt = clock;
-    city.won = 0;
-    message("BUSCÁ MORENO", 3);
-    camSnap = true;
   }
 
   // --- El auto ---------------------------------------------------------------------
-  const player = { x: 0, z: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0 };
+  const player = { x: 0, z: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0, dist: 0 };
   const MAX_FWD = 24, MAX_REV = 8;
   function physics(dt) {
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
@@ -538,19 +625,19 @@
     player.z += player.vz * dt;
     collide();
     player.speed = Math.hypot(player.vx, player.vz);
+    player.dist += player.speed * dt;
   }
 
-  // Dos círculos (trompa y cola) contra las manzanas vecinas.
+  // Dos círculos (trompa y cola) contra las cuadras sólidas vecinas: edificios, enredaderas, el mar.
   function collide() {
-    const { W, at } = city;
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     let hit = false;
     for (const off of [1.3, -1.3]) {
       const cx = player.x + fx * off, cz = player.z + fz * off, r = 1.0;
-      const gx = toCell(cx, W), gz = toCell(cz, W);
+      const gx = toCell(cx), gz = toCell(cz);
       for (let y = gz - 1; y <= gz + 1; y++) for (let x = gx - 1; x <= gx + 1; x++) {
-        if (!at(x, y)) continue;
-        const x0 = toWorld(x, W) - CELL / 2, z0 = toWorld(y, W) - CELL / 2;
+        if (!solidAt(x, y)) continue;
+        const x0 = x * CELL, z0 = y * CELL;
         const px = clamp(cx, x0, x0 + CELL), pz = clamp(cz, z0, z0 + CELL);
         let dx = cx - px, dz = cz - pz, d = Math.hypot(dx, dz);
         if (d >= r) continue;
@@ -567,6 +654,7 @@
   // --- Cámara ------------------------------------------------------------------------
   let shake = 0, camSnap = true;
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+  const blocksCam = (x, y) => { const t = cellType(x, y); return t === T.WALL || t === T.IVY || t === T.MONUMENT; };
   function placeCamera(dt) {
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const want = new THREE.Vector3(), look = new THREE.Vector3();
@@ -574,18 +662,15 @@
       camera.up.set(0, 0, -1);
       want.set(player.x + fx * 3, 22, player.z + fz * 3 + 0.01);
       look.set(player.x + fx * 3, 0, player.z + fz * 3);
-      fog.near = 60; fog.far = 120;
     } else {
       camera.up.set(0, 1, 0);
       // La cámara va atrás del auto, pero nunca adentro de una manzana.
       let back = 6.8;
       for (let s = 0.5; s <= 6.8; s += 0.5) {
-        const x = player.x - fx * s, z = player.z - fz * s;
-        if (city.at(toCell(x, city.W), toCell(z, city.W))) { back = Math.max(1.5, s - 1); break; }
+        if (blocksCam(toCell(player.x - fx * s), toCell(player.z - fz * s))) { back = Math.max(1.5, s - 1); break; }
       }
       want.set(player.x - fx * back, 2.1 + back * 0.12, player.z - fz * back);
       look.set(player.x + fx * 6, 1.0, player.z + fz * 6);
-      fog.near = 16; fog.far = 58;
     }
     const k = camSnap ? 1 : 1 - Math.exp(-dt * 6);
     camPos.lerp(want, k); camLook.lerp(look, camSnap ? 1 : 1 - Math.exp(-dt * 9));
@@ -597,38 +682,76 @@
       shake = Math.max(0, shake - dt * 3);
     }
     camera.lookAt(camLook);
+    moon.position.copy(camera.position).addScaledVector(MOON_DIR, 260);
   }
 
-  function placeCar() {
+  // Cada zona tiene su luz: la playa tiene luna, en la nada no hay nada.
+  const ZONE_LIGHT = { 1: [0.16, 0.14, 58], 2: [0.2, 0.16, 70], 3: [0.22, 0.16, 62], 4: [0.42, 0.42, 110], 5: [0, 0, 200] };
+  function placeWorld(dt) {
     car.position.set(player.x, 0, player.z);
     car.rotation.y = player.heading;
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const along = player.vx * fx + player.vz * fz;
     wheels.forEach((w, i) => { w.rotation.z -= along * 0.016; if (i < 2) w.rotation.y = player.steer * 0.4; });
     tailMat.emissiveIntensity = keys.down ? 2.2 : 0.5;
+    const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
+    hemi.intensity += (z[0] - hemi.intensity) * k;
+    moonLight.intensity += (z[1] - moonLight.intensity) * k;
+    fog.far += ((state.view === "Arriba" ? 120 : z[2]) - fog.far) * k;
+    fog.near = fog.far * 0.3;
     // Los faroles más cercanos se quedan con las luces.
-    city.lamps.sort((a, b) => (a.x - player.x) ** 2 + (a.z - player.z) ** 2 - ((b.x - player.x) ** 2 + (b.z - player.z) ** 2));
+    const near = [];
+    chunks.forEach(c => c.lamps.forEach(p => near.push(p)));
+    near.sort((a, b) => (a.x - player.x) ** 2 + (a.z - player.z) ** 2 - ((b.x - player.x) ** 2 + (b.z - player.z) ** 2));
     lampLights.forEach((l, i) => {
-      const p = city.lamps[i];
-      if (p) { l.position.copy(p); l.intensity = 2.6; } else l.intensity = 0;
+      const p = near[i];
+      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.intensity = 2.6; } else l.intensity = 0;
     });
   }
 
-  // --- Mensajes y récords ---------------------------------------------------------------
-  let msg = "", msgUntil = 0, clock = 0;
+  // --- Zonas y mensajes -------------------------------------------------------------------
+  let msg = "", msgUntil = 0, clock = 0, currentZone = 1;
+  const announced = {};
   function message(text, secs) { msg = text; msgUntil = clock + secs; }
-  const fmtTime = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+  function trackZone() {
+    const t = cellType(toCell(player.x), toCell(player.z));
+    const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : (t === T.WALL || t === T.IVY) ? T.STREET : t;
+    if (zone === currentZone) return;
+    currentZone = zone;
+    const name = ZONE_NAME[zone];
+    if (!announced[name] || clock - announced[name] > 25) { announced[name] = clock; message(name, 2.4); }
+  }
 
-  function checkGoal() {
-    if (city.won) return;
-    const dx = player.x - city.goalPos.x, dz = player.z - city.goalPos.z;
-    if (dx * dx + dz * dz > (CELL * 0.55) ** 2) return;
-    const t = clock - city.startedAt;
-    city.won = clock;
-    const key = "n" + city.level;
-    const record = !best[key] || t < best[key];
-    if (record) { best[key] = t; try { localStorage.setItem("mg-moreno-records", JSON.stringify(best)); } catch (e) { /* sin almacenamiento */ } }
-    message("LLEGASTE A MORENO · " + fmtTime(t) + (record ? " · RÉCORD" : ""), 3.2);
+  // --- Recorrido ---------------------------------------------------------------------------
+  let seen = new Set();
+  function markSeen() {
+    const cx = toCell(player.x), cz = toCell(player.z);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx === 0 || dy === 0) seen.add((cx + dx) + "," + (cz + dy));
+  }
+
+  function newWorld(s) {
+    seed = s | 0;
+    sx = (hash(seed, 1) - 0.5) * 4000; sy = (hash(seed, 2) - 0.5) * 4000;
+    cache.clear();
+    chunks.forEach(c => disposeChunk(c));
+    chunks.clear();
+    seen = new Set();
+    // Arranca en una esquina del laberinto, mirando hacia una calle abierta.
+    let start = null;
+    for (let r = 0; r < 60 && !start; r++) for (let dy = -r; dy <= r && !start; dy++) for (let dx = -r; dx <= r; dx++) {
+      const x = 1 + 2 * dx, y = 1 + 2 * dy;
+      if (cellType(x, y) === T.STREET && zoneAt(x, y) === 0) { start = [x, y]; break; }
+    }
+    start = start || [1, 1];
+    player.x = toWorld(start[0]); player.z = toWorld(start[1]);
+    const dirs = [[1, 0, 0], [0, 1, -Math.PI / 2], [-1, 0, Math.PI], [0, -1, Math.PI / 2]];
+    const open = dirs.find(([a, b]) => !solidAt(start[0] + a, start[1] + b)) || dirs[0];
+    player.heading = open[2];
+    player.vx = player.vz = 0; player.steer = 0; player.dist = 0;
+    currentZone = 1;
+    updateChunks(true);
+    camSnap = true;
+    message("DERIVA", 2.4);
   }
 
   // --- Grilla ---------------------------------------------------------------------------------
@@ -705,32 +828,35 @@
     }
   }
 
+
   // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
+  const MAP_STYLE = {
+    [T.WALL]: ["##", "#e0463c"], [T.IVY]: ["&&", "#8fd26a"], [T.SEA]: ["~~", "#4a86e8"], [T.MONUMENT]: ["!!", "#e8e4f0"],
+    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"]
+  };
   function automap() {
     CH.fill(null);
-    const { W, wall, seen } = city;
-    const cw = 2, x0 = Math.floor((cols - W * cw) / 2), y0 = Math.floor((rows - W) / 2);
-    const put = (c, r, ch, color) => { if (c >= 0 && r >= 1 && c < cols && r < rows - 1) { CH[r * cols + c] = ch; COL[r * cols + c] = color; } };
-    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
+    const cw = 2, halfW = Math.floor(cols / cw / 2), halfH = Math.floor((rows - 2) / 2);
+    const px = toCell(player.x), pz = toCell(player.z), midC = Math.floor(cols / 2), midR = Math.floor(rows / 2);
+    const isSeen = (x, y) => seen.has(x + "," + y);
+    for (let dy = -halfH; dy <= halfH; dy++) for (let dx = -halfW; dx < halfW; dx++) {
+      const x = px + dx, y = pz + dy;
       let near = false;
-      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const nx = x + dx, ny = y + dy;
-        if (nx >= 0 && ny >= 0 && nx < W && ny < W && seen[ny * W + nx]) { near = true; break; }
-      }
+      for (let b = -1; b <= 1 && !near; b++) for (let a = -1; a <= 1; a++) if (isSeen(x + a, y + b)) { near = true; break; }
       if (!near) continue;
-      const i = y * W + x;
-      if (wall[i]) { put(x0 + x * cw, y0 + y, "#", MAPWALL); put(x0 + x * cw + 1, y0 + y, "#", MAPWALL); }
-      else if (seen[i]) { put(x0 + x * cw, y0 + y, "·", MAPFLOOR); put(x0 + x * cw + 1, y0 + y, " ", MAPFLOOR); }
+      const t = cellType(x, y);
+      if (!SOLID(t) && !isSeen(x, y)) continue;
+      const st = MAP_STYLE[t];
+      if (!st) continue;
+      const r = midR + dy, c = midC + dx * cw;
+      for (let k = 0; k < 2; k++) {
+        if (r < 1 || r >= rows - 1 || c + k < 0 || c + k >= cols || st[0][k] === " ") continue;
+        CH[r * cols + c + k] = st[0][k]; COL[r * cols + c + k] = st[1];
+      }
     }
-    if (seen[city.goal.y * W + city.goal.x] || nearSeen(city.goal.x, city.goal.y)) put(x0 + city.goal.x * cw, y0 + city.goal.y, "&", "#8fd26a");
     const a = ((player.heading % TAU) + TAU) % TAU;
     const arrow = a < Math.PI / 4 || a > 7 * Math.PI / 4 ? ">" : a < 3 * Math.PI / 4 ? "^" : a < 5 * Math.PI / 4 ? "<" : "v";
-    put(x0 + toCell(player.x, W) * cw, y0 + toCell(player.z, W), arrow, "#f2c200");
-  }
-  function nearSeen(x, y) {
-    const { W, seen } = city;
-    const s = (a, b) => a >= 0 && b >= 0 && a < W && b < W && seen[b * W + a];
-    return s(x - 1, y) || s(x + 1, y) || s(x, y - 1) || s(x, y + 1);
+    CH[midR * cols + midC] = arrow; COL[midR * cols + midC] = "#f2c200";
   }
 
   function hud() {
@@ -743,12 +869,9 @@
         COL[r * cols + c] = HUD;
       }
     };
-    const t = city.won ? city.won - city.startedAt : clock - city.startedAt;
-    write("MORENO " + city.level, 0, "left");
-    write(fmtTime(t), 0, "right");
+    write(ZONE_NAME[currentZone], 0, "left");
+    write((player.dist / 1000).toFixed(1).replace(".", ",") + " KM", 0, "right");
     write(String(Math.round(player.speed * 3.6)).padStart(3, "0") + " KM/H", rows - 1, "left");
-    const rec = best["n" + city.level];
-    if (rec) write("RÉCORD " + fmtTime(rec), rows - 1, "right");
     if (msg && clock < msgUntil) {
       const pad = " " + msg + " ";
       const r = Math.floor(rows / 2);
@@ -774,6 +897,7 @@
     }
   }
 
+
   // --- Controles ---------------------------------------------------------------------------------
   const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", Space: "hand" };
   let engaged = false;
@@ -782,7 +906,7 @@
     if (k) { keys[k] = true; if (engaged) e.preventDefault(); return; }
     if (e.code === "KeyC") setOpt("view", state.view === "Atrás" ? "Arriba" : "Atrás");
     if (e.code === "KeyM") setOpt("map", !state.map);
-    if (e.code === "KeyR") newCity(city.level);
+    if (e.code === "KeyR") newWorld((Math.random() * 1e9) | 0);
   });
   window.addEventListener("keyup", e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
   window.addEventListener("blur", () => Object.keys(keys).forEach(k => { keys[k] = false; }));
@@ -831,7 +955,7 @@
   mapBtn.addEventListener("click", () => setOpt("map", !state.map));
   const newBtn = document.createElement("button");
   newBtn.type = "button"; newBtn.id = "btn-new"; newBtn.textContent = "Otra ciudad";
-  newBtn.addEventListener("click", () => newCity(city.level));
+  newBtn.addEventListener("click", () => newWorld((Math.random() * 1e9) | 0));
   opts.append(mapBtn, newBtn);
 
   function setOpt(key, value) {
@@ -843,10 +967,6 @@
     if (key === "view") camSnap = true;
   }
 
-  function newCity(level) {
-    buildCity(level, (Math.random() * 1e9) | 0);
-  }
-
   // --- Bucle ----------------------------------------------------------------------------------------
   let lastTs = 0, lastPaint = 0;
   function loop(ts) {
@@ -855,19 +975,16 @@
     const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
     lastTs = ts;
     clock += dt;
+    water.uniforms.uTime.value = clock;
     if (!state.map) physics(dt);
-    const { W } = city;
-    const cx = toCell(player.x, W), cz = toCell(player.z, W);
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      const x = cx + dx, y = cz + dy;
-      if (x >= 0 && y >= 0 && x < W && y < W && (dx === 0 || dy === 0)) city.seen[y * W + x] = 1;
-    }
-    checkGoal();
-    if (city.won && clock - city.won > 3.2) { newCity(city.level + 1); return; }
+    markSeen();
+    trackZone();
+    updateChunks(false);
     if (ts - lastPaint < 33) return;
+    const pdt = lastPaint ? Math.min(0.1, (ts - lastPaint) / 1000) : 0.033;
     lastPaint = ts;
-    placeCar();
-    placeCamera(Math.max(dt, 0.033));
+    placeWorld(pdt);
+    placeCamera(pdt);
     if (state.map) automap(); else shade();
     hud();
     paint();
@@ -878,7 +995,7 @@
 
   setOpt("view", state.view);
   layout();
-  buildCity(1, 700);
+  newWorld(700);
   const start = () => { layout(); requestAnimationFrame(loop); };
   if (document.fonts && document.fonts.load) document.fonts.load('16px "IBM Plex Mono"', "abc").then(start, start);
   else start();
