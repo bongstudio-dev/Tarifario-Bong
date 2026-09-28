@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Buscando Moreno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Un solo tema a propósito: el juego pasa de noche. */
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d19;
+    --ink: #e9e5f0;
+    --muted: #8d8ca6;
+    --line: #262a40;
+    --sun: #ffb45c;
+    --plate: #000000;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.55;
+    padding-inline: clamp(16px, 4vw, 48px);
+    padding-block: 28px 48px;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  header { display: flex; flex-direction: column; gap: 8px; max-width: 68ch; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--sun); margin: 0; }
+  h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 500; line-height: 1.1; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+  header p { margin: 0; color: var(--muted); }
+
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  canvas#game { display: block; max-width: 100%; border-radius: 3px; background: var(--plate); touch-action: none; outline: none; }
+  canvas#game:focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
+
+  .pad { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pad-group { display: flex; gap: 10px; }
+  .pad button, .opts button {
+    font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+    -webkit-user-select: none; user-select: none; touch-action: none;
+  }
+  .pad button { min-width: 64px; min-height: 56px; padding: 0 16px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  .pad button[data-down="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; border-block: 1px solid var(--line); width: 100%; }
+  .ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ctl-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .opts .seg button { border: 0; border-radius: 0; font-size: 12px; padding: 6px 10px; color: var(--muted); }
+  .opts .seg button + button { border-left: 1px solid var(--line); }
+  .opts .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .opts > button { font-size: 12px; padding: 6px 10px; }
+  .pad button:focus-visible, .opts button:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+  @media (hover: hover) { .opts button:hover, .pad button:hover { border-color: var(--muted); } }
+
+  .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 28px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
+  .keys kbd { font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+  footer { color: var(--muted); font-size: 12px; max-width: 68ch; display: flex; flex-direction: column; gap: 8px; }
+  footer p { margin: 0; }
+  .nogl { padding: 16px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">milangagalactica · Arlequín</p>
+    <h1>Buscando Moreno</h1>
+    <p>Es de noche y la ciudad es un laberinto que se arma solo. Manejá el Arlequín con los faros prendidos hasta encontrar la enredadera de Moreno. Cada vez que llegás, la ciudad cambia y crece.</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="game" tabindex="0" role="img" aria-label="Juego en caracteres: el Arlequín maneja por un laberinto de noche"></canvas>
+    <div class="pad" id="pad">
+      <div class="pad-group">
+        <button type="button" id="pad-left" data-key="left" aria-label="Doblar a la izquierda">◀</button>
+        <button type="button" id="pad-right" data-key="right" aria-label="Doblar a la derecha">▶</button>
+      </div>
+      <div class="pad-group">
+        <button type="button" id="pad-brake" data-key="down">Freno</button>
+        <button type="button" id="pad-gas" data-key="up">Acelerar</button>
+      </div>
+    </div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <ul class="keys">
+    <li><kbd>W</kbd> <kbd>↑</kbd> acelerar · <kbd>S</kbd> <kbd>↓</kbd> frenar y marcha atrás</li>
+    <li><kbd>A</kbd> <kbd>D</kbd> <kbd>←</kbd> <kbd>→</kbd> doblar · <kbd>Espacio</kbd> freno de mano</li>
+    <li><kbd>C</kbd> cámara de atrás o desde arriba</li>
+    <li><kbd>M</kbd> mapa de lo que ya recorriste · <kbd>R</kbd> otra ciudad</li>
+  </ul>
+
+  <footer>
+    <p>La misma técnica que las láminas: la escena 3D se renderiza a la resolución de la grilla, cada celda toma la luz que le llega y la luz elige el carácter. Las letras no se mueven; el mundo pasa por adentro de la grilla.</p>
+    <p>Las estrellas solo aparecen donde la cámara ve cielo, así que los edificios las tapan.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // --- Ajustes de la técnica (los mismos que en las láminas) -----------------
+  const RAMP = " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+  const STAR_CHARS = ".+*";
+  const ADJ = { amount: 0.6, contrast: 1.8, exposure: 0.9, gamma: 2, threshold: 0.17 };
+  const DENSITY = { "Baja": 60, "Media": 90, "Alta": 120 };
+  const MODES = { "Color": null, "Tinta": "#e9e5f0" };
+  const SS = 2;
+  const TAU = Math.PI * 2;
+  const CELL = 8;          // una cuadra del laberinto, en metros
+  const HUD = "#ffb45c", MAPWALL = "#e0463c", MAPFLOOR = "#4a4f78";
+
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  function hash(x, y) {
+    let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const h3 = (x, y, z) => hash(x + Math.imul(z, 7919), y + Math.imul(z, 104729));
+  function noise3(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+    const xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+    let r = 0;
+    for (let dz = 0; dz < 2; dz++) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      r += (dx ? u : 1 - u) * (dy ? v : 1 - v) * (dz ? w : 1 - w) * h3(xi + dx, yi + dy, zi + dz);
+    }
+    return r;
+  }
+  function rng(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const mat = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.9, metalness: 0 }, extra || {}));
+
+  // --- El Arlequín -------------------------------------------------------------
+  // Golf de tercera generación, tres puertas, con los paneles de cuatro colores.
+  // Medidas en metros: el frente mira a +x, el piso es y = 0, el ancho va en z.
+  const HQ = { rojo: "#c8102e", azul: "#1f4fa0", amarillo: "#f2c200", verde: "#2f9a4a" };
+  // En el shader van más luminosos que los de la paleta: la grilla toma la luz del canal más
+  // fuerte, y un azul o un verde oscuros quedarían por debajo del umbral de negro.
+  const GLSL_COLORS = `
+    const vec3 ROJO = vec3(1.0, 0.04, 0.07);
+    const vec3 AZUL = vec3(0.10, 0.30, 1.0);
+    const vec3 AMARILLO = vec3(1.0, 0.70, 0.02);
+    const vec3 VERDE = vec3(0.10, 0.85, 0.20);
+  `;
+  const GLSL_PANELS = GLSL_COLORS + `
+    vec3 panelColor(vec3 p) {
+      bool der = p.z > 0.0;
+      #ifdef CABINA
+        bool lateral = abs(p.z) > 0.5;
+        bool pilarB = lateral && p.x > -0.44 && p.x < -0.30;
+        bool pilarC = lateral && p.x < -1.22;
+        if (p.y > 1.00 && p.y < 1.33 && !pilarB && !pilarC) return vec3(0.004, 0.006, 0.012);
+        return AZUL;
+      #else
+        if (p.x > 1.93) return AMARILLO;
+        if (p.x < -1.93) return VERDE;
+        if (p.x > 0.92 && p.y > 0.84 && abs(p.z) < 0.72) return ROJO;
+        if (p.x > 0.92) return der ? VERDE : AMARILLO;
+        if (p.x > -0.36) return der ? ROJO : AZUL;
+        return der ? AMARILLO : ROJO;
+      #endif
+    }
+  `;
+  function harlequinMat(cabina) {
+    const m = mat(0xffffff, { roughness: 0.38, metalness: 0.05 });
+    if (cabina) m.defines = { CABINA: "" };
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vObj;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvObj = position;");
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vObj;\n" + GLSL_PANELS)
+        .replace("vec4 diffuseColor = vec4( diffuse, opacity );", "vec4 diffuseColor = vec4( panelColor(vObj), opacity );");
+    };
+    return m;
+  }
+
+  // Llanta fifteen52: disco blanco tipo turbina, con ranuras curvas y centro chico.
+  function rimTexture() {
+    const c = document.createElement("canvas");
+    c.width = c.height = 256;
+    const g = c.getContext("2d");
+    g.translate(128, 128);
+    g.fillStyle = "#f4f4f2";
+    g.beginPath(); g.arc(0, 0, 128, 0, TAU); g.fill();
+    g.fillStyle = "#101010";
+    for (let k = 0; k < 5; k++) {
+      g.save();
+      g.rotate((k / 5) * TAU);
+      g.beginPath();
+      g.moveTo(34, -6);
+      g.quadraticCurveTo(80, -40, 108, -20);
+      g.quadraticCurveTo(100, 18, 70, 30);
+      g.quadraticCurveTo(52, 10, 34, 8);
+      g.closePath();
+      g.fill();
+      g.restore();
+    }
+    g.fillStyle = "#cfcfcf";
+    g.beginPath(); g.arc(0, 0, 22, 0, TAU); g.fill();
+    return new THREE.CanvasTexture(c);
+  }
+
+  function buildGolf() {
+    const car = new THREE.Group();
+
+    // Carrocería baja: el perfil lateral con los pasarruedas, extruido a lo ancho.
+    const s = new THREE.Shape();
+    s.moveTo(-1.99, 0.22);
+    s.lineTo(-1.59, 0.22); s.lineTo(-1.59, 0.30);
+    s.absarc(-1.23, 0.30, 0.36, Math.PI, 0, true);
+    s.lineTo(-0.87, 0.22); s.lineTo(0.88, 0.22); s.lineTo(0.88, 0.30);
+    s.absarc(1.24, 0.30, 0.36, Math.PI, 0, true);
+    s.lineTo(1.60, 0.22); s.lineTo(1.97, 0.25);
+    s.lineTo(2.01, 0.55); s.lineTo(1.98, 0.80);
+    s.lineTo(0.95, 0.95); s.lineTo(-1.80, 0.98);
+    s.lineTo(-1.97, 0.95); s.lineTo(-2.01, 0.55);
+    s.closePath();
+    const bodyGeo = new THREE.ExtrudeGeometry(s, { depth: 1.58, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.05, bevelSegments: 3, curveSegments: 18 });
+    bodyGeo.translate(0, 0, -0.79);
+    car.add(new THREE.Mesh(bodyGeo, harlequinMat(false)));
+
+    // Cabina: parabrisas, techo y portón; se angosta hacia arriba.
+    const c = new THREE.Shape();
+    c.moveTo(0.96, 0.92); c.lineTo(-0.02, 1.40); c.lineTo(-1.30, 1.41);
+    c.lineTo(-1.90, 1.00); c.lineTo(-1.92, 0.92);
+    c.closePath();
+    const cabGeo = new THREE.ExtrudeGeometry(c, { depth: 1.42, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 3 });
+    cabGeo.translate(0, 0, -0.71);
+    const pos = cabGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      pos.setZ(i, pos.getZ(i) * (1 - 0.15 * clamp((y - 0.95) / 0.46, 0, 1)));
+    }
+    cabGeo.computeVertexNormals();
+    car.add(new THREE.Mesh(cabGeo, harlequinMat(true)));
+
+    // Frente: parrilla oscura y los dos faros; atrás, las ópticas rojas.
+    const grille = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.62), mat(0x0c0c0c, { roughness: 0.6 }));
+    grille.position.set(2.02, 0.66, 0);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, emissive: 0xfff4e0, emissiveIntensity: 0, roughness: 0.2 });
+    const tailMat = new THREE.MeshStandardMaterial({ color: 0x5a0a10, emissive: 0xff2a20, emissiveIntensity: 0, roughness: 0.3 });
+    car.add(grille);
+    [-1, 1].forEach(side => {
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.17, 0.34), headMat);
+      h.position.set(2.02, 0.66, side * 0.56);
+      const t = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.26, 0.26), tailMat);
+      t.position.set(-2.04, 0.74, side * 0.62);
+      car.add(h, t);
+    });
+
+    // Ruedas: cubierta oscura y llanta blanca de cara al costado.
+    const tireMat = mat(0x161616, { roughness: 1 });
+    const rimMat = mat(0xffffff, { map: rimTexture(), roughness: 0.35 });
+    const tireGeo = new THREE.CylinderGeometry(0.31, 0.31, 0.21, 40);
+    tireGeo.rotateX(Math.PI / 2);
+    const rimGeo = new THREE.CircleGeometry(0.22, 40);
+    const wheels = [];
+    [[1.24, 1], [1.24, -1], [-1.23, 1], [-1.23, -1]].forEach(([x, side]) => {
+      const w = new THREE.Group();
+      w.position.set(x, 0.31, side * 0.72);
+      w.add(new THREE.Mesh(tireGeo, tireMat));
+      const rim = new THREE.Mesh(rimGeo, rimMat);
+      rim.position.z = side * 0.106;
+      if (side < 0) rim.rotation.y = Math.PI;
+      w.add(rim);
+      car.add(w);
+      wheels.push(w);
+    });
+
+    car.userData = { headMat, tailMat, wheels };
+    return car;
+  }
+
+  // Enredadera: una masa de hojas del tamaño de una casa, como la de Moreno.
+  function buildIvy() {
+    const geo = new THREE.IcosahedronGeometry(1, 5);
+    const pos = geo.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      // De esfera a bloque redondeado: se aplana arriba y cae recto a los costados.
+      const sq = x => Math.sign(x) * Math.pow(Math.abs(x), 0.55);
+      let x = sq(v.x) * 1.7, y = sq(v.y) * 1.9 + 1.9, z = sq(v.z) * 0.9;
+      const n = noise3(v.x * 4 + 3, v.y * 4, v.z * 4) - 0.5;
+      const fine = noise3(v.x * 14, v.y * 14 + 7, v.z * 14) - 0.5;
+      const k = 1 + 0.10 * n + 0.07 * fine;
+      pos.setXYZ(i, x * k, Math.max(0, y + 0.12 * n), z * k);
+    }
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, mat(0x8fd26a, { flatShading: true, roughness: 1 }));
+  }
+
+
+  // --- Estado ------------------------------------------------------------------
+  const state = { density: window.innerWidth < 700 ? "Baja" : "Media", mode: "Color", view: "Atrás", map: false };
+  const keys = { up: false, down: false, left: false, right: false, hand: false };
+  let best = {};
+  try { best = JSON.parse(localStorage.getItem("mg-moreno-records") || "{}") || {}; } catch (e) { best = {}; }
+
+  // --- WebGL -------------------------------------------------------------------
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  let renderer = null;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+    renderer.setPixelRatio(1);
+    renderer.setSize(1, 1, false);
+    renderer.setClearColor(0x000000, 0);
+  } catch (e) { renderer = null; }
+  if (!renderer) {
+    document.querySelector(".stage").innerHTML = '<p class="nogl">Este navegador no tiene WebGL activado, así que el juego no se puede dibujar acá. Probá desde Chrome, Safari o Firefox actualizados.</p>';
+    return;
+  }
+
+  const scene = new THREE.Scene();
+  const fog = new THREE.Fog(0x000000, 16, 58);
+  scene.fog = fog;
+  const camera = new THREE.PerspectiveCamera(56, 16 / 9, 0.1, 220);
+  scene.add(new THREE.HemisphereLight(0x5566b8, 0x0a0810, 0.16));
+  const moon = new THREE.DirectionalLight(0xa9b8ff, 0.14);
+  moon.position.set(-30, 60, 20);
+  scene.add(moon);
+
+  // El auto, con los faros como linterna.
+  const car = buildGolf();
+  scene.add(car);
+  const { headMat, tailMat, wheels } = car.userData;
+  headMat.emissiveIntensity = 1.3;
+  tailMat.emissiveIntensity = 0.5;
+  [-0.55, 0.55].forEach(z => {
+    const beam = new THREE.SpotLight(0xfff2dc, 2.1, 44, 0.42, 0.6, 1.3);
+    beam.position.set(2.0, 0.7, z);
+    beam.target.position.set(22, -1.2, z * 3);
+    car.add(beam, beam.target);
+  });
+
+  // Una luz propia que acompaña al auto desde arriba, para que el Arlequín se lea de noche.
+  const carGlow = new THREE.PointLight(0xe8e4ff, 1.6, 9, 1.2);
+  carGlow.position.set(-1.2, 4.2, 0);
+  car.add(carGlow);
+
+  // Faroles: pocas luces reales que se mudan al farol más cercano al auto.
+  const LAMP_LIGHTS = 6;
+  const lampLights = [];
+  for (let i = 0; i < LAMP_LIGHTS; i++) {
+    const l = new THREE.PointLight(0xffb45c, 0, 24, 1.4);
+    scene.add(l);
+    lampLights.push(l);
+  }
+
+  // --- La ciudad -----------------------------------------------------------------
+  let city = null;
+  const PALETTE = [0xd8a8a0, 0xc9785e, 0xe6d6bc, 0xb8a6c9, 0xd9c3a0, 0x9fb0c9, 0xe8c9c9];
+
+  function facadeTextures() {
+    const make = lit => {
+      const c = document.createElement("canvas");
+      c.width = 96; c.height = 32;
+      const g = c.getContext("2d");
+      g.fillStyle = lit ? "#000" : "#fff";
+      g.fillRect(0, 0, 96, 32);
+      for (let k = 0; k < 3; k++) {
+        g.fillStyle = lit ? (hash(k, 3) > 0.4 ? "#ffcf8a" : "#000") : "#3a3a48";
+        g.fillRect(k * 32 + 8, 8, 16, 16);
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      return t;
+    };
+    return { map: make(false), glow: make(true) };
+  }
+  const FACADE = facadeTextures();
+
+  function makeCity(level, seed) {
+    const rnd = rng(seed);
+    const k = Math.min(4 + level, 12);
+    const W = 2 * k + 1;
+    const wall = new Uint8Array(W * W).fill(1);
+    const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= W) ? 1 : wall[y * W + x];
+
+    // Laberinto por retroceso, desde la esquina.
+    const stack = [[1, 1]];
+    wall[W + 1] = 0;
+    while (stack.length) {
+      const [x, y] = stack[stack.length - 1];
+      const dirs = [[2, 0], [-2, 0], [0, 2], [0, -2]].sort(() => rnd() - 0.5);
+      let moved = false;
+      for (const [dx, dy] of dirs) {
+        const nx = x + dx, ny = y + dy;
+        if (nx > 0 && ny > 0 && nx < W - 1 && ny < W - 1 && wall[ny * W + nx]) {
+          wall[(y + dy / 2) * W + x + dx / 2] = 0;
+          wall[ny * W + nx] = 0;
+          stack.push([nx, ny]);
+          moved = true;
+          break;
+        }
+      }
+      if (!moved) stack.pop();
+    }
+    // Algunas vueltas extra, para que haya más de un camino.
+    for (let y = 1; y < W - 1; y++) for (let x = 1; x < W - 1; x++) {
+      if (!wall[y * W + x] || (x + y) % 2 === 0 || rnd() > 0.1) continue;
+      if ((!at(x - 1, y) && !at(x + 1, y)) || (!at(x, y - 1) && !at(x, y + 1))) wall[y * W + x] = 0;
+    }
+    // Moreno queda en la cuadra más lejana.
+    const dist = new Int32Array(W * W).fill(-1);
+    const q = [W + 1];
+    dist[W + 1] = 0;
+    let goal = W + 1;
+    while (q.length) {
+      const i = q.shift();
+      if (dist[i] > dist[goal]) goal = i;
+      [1, -1, W, -W].forEach(d => { const j = i + d; if (!wall[j] && dist[j] < 0) { dist[j] = dist[i] + 1; q.push(j); } });
+    }
+    return { level, seed, W, wall, at, goal: { x: goal % W, y: (goal / W) | 0 }, rnd, seen: new Uint8Array(W * W) };
+  }
+
+  const toWorld = (c, W) => (c - W / 2 + 0.5) * CELL;
+  const toCell = (v, W) => Math.floor(v / CELL + W / 2);
+
+  let cityGroup = null;
+  function buildCity(level, seed) {
+    if (cityGroup) {
+      scene.remove(cityGroup);
+      cityGroup.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== headMat) o.material.dispose(); });
+    }
+    city = makeCity(level, seed);
+    const { W, wall, rnd } = city;
+    cityGroup = new THREE.Group();
+    scene.add(cityGroup);
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W * CELL, W * CELL), mat(0x4c4c5a, { roughness: 1 }));
+    floor.rotation.x = -Math.PI / 2;
+    cityGroup.add(floor);
+
+    // Edificios: una caja por cuadra tapada, con pisos de 3,2 m y ventanas.
+    const byFloors = {};
+    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
+      if (!wall[y * W + x]) continue;
+      const edge = x === 0 || y === 0 || x === W - 1 || y === W - 1;
+      const floors = edge ? 5 + Math.floor(rnd() * 3) : 1 + Math.floor(Math.pow(rnd(), 1.6) * 5);
+      (byFloors[floors] = byFloors[floors] || []).push([x, y, PALETTE[Math.floor(rnd() * PALETTE.length)]]);
+    }
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    box.translate(0, 0.5, 0);
+    const m4 = new THREE.Matrix4(), col = new THREE.Color();
+    Object.keys(byFloors).forEach(f => {
+      const list = byFloors[f], floors = +f;
+      const map = FACADE.map.clone(), glow = FACADE.glow.clone();
+      [map, glow].forEach(t => { t.needsUpdate = true; t.repeat.set(1, floors); });
+      const m = mat(0xffffff, { map, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 0.55, roughness: 0.95 });
+      const inst = new THREE.InstancedMesh(box, m, list.length);
+      list.forEach(([x, y, c], i) => {
+        m4.makeScale(CELL, floors * 3.2, CELL).setPosition(toWorld(x, W), 0, toWorld(y, W));
+        inst.setMatrixAt(i, m4);
+        inst.setColorAt(i, col.set(c));
+      });
+      cityGroup.add(inst);
+    });
+
+    // Faroles en algunas esquinas, pegados a la ochava de una manzana.
+    const pole = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6);
+    pole.translate(0, 2.3, 0);
+    const poleMat = mat(0x8d8ca6, { roughness: 0.6 });
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0 });
+    const bulb = new THREE.SphereGeometry(0.28, 10, 8);
+    city.lamps = [];
+    for (let y = 1; y < W - 1; y += 2) for (let x = 1; x < W - 1; x += 2) {
+      if (wall[y * W + x] || rnd() > 0.45) continue;
+      const sx = rnd() < 0.5 ? -1 : 1, sz = rnd() < 0.5 ? -1 : 1;
+      const px = toWorld(x, W) + sx * CELL * 0.4, pz = toWorld(y, W) + sz * CELL * 0.4;
+      const p = new THREE.Mesh(pole, poleMat);
+      p.position.set(px, 0, pz);
+      const b = new THREE.Mesh(bulb, bulbMat);
+      b.position.set(px - sx * 0.5, 4.6, pz - sz * 0.5);
+      cityGroup.add(p, b);
+      city.lamps.push(new THREE.Vector3(px - sx * 0.5, 4.3, pz - sz * 0.5));
+    }
+
+    // Moreno: la enredadera al final del laberinto, con su propia luz.
+    const ivy = buildIvy();
+    ivy.scale.setScalar(0.85);
+    ivy.position.set(toWorld(city.goal.x, W), 0, toWorld(city.goal.y, W));
+    const ivyLight = new THREE.PointLight(0xd8ffc8, 2.2, 16, 1.2);
+    ivyLight.position.set(ivy.position.x, 5.5, ivy.position.z);
+    cityGroup.add(ivy, ivyLight);
+    city.goalPos = ivy.position.clone();
+
+    // El Arlequín arranca en la esquina, mirando hacia la primera calle abierta.
+    player.x = toWorld(1, W); player.z = toWorld(1, W);
+    player.heading = city.at(2, 1) ? -Math.PI / 2 : 0;
+    player.vx = player.vz = 0; player.steer = 0;
+    city.startedAt = clock;
+    city.won = 0;
+    message("BUSCÁ MORENO", 3);
+    camSnap = true;
+  }
+
+  // --- El auto ---------------------------------------------------------------------
+  const player = { x: 0, z: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0 };
+  const MAX_FWD = 24, MAX_REV = 8;
+  function physics(dt) {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    let along = player.vx * fx + player.vz * fz;
+    const latx = player.vx - fx * along, latz = player.vz - fz * along;
+
+    let acc = 0;
+    if (keys.up) acc = along < MAX_FWD ? 16 : 0;
+    if (keys.down) acc = along > 0.5 ? -30 : (along > -MAX_REV ? -9 : 0);
+    along += acc * dt;
+    along -= along * (keys.up || keys.down ? 0.25 : 0.9) * dt;
+    if (keys.hand) along -= Math.sign(along) * Math.min(Math.abs(along), 14 * dt);
+
+    const want = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
+    player.steer += (want - player.steer) * Math.min(1, dt * 7);
+    const grip = keys.hand ? 1.2 : 9;
+    const k = Math.exp(-grip * dt);
+    const turn = player.steer * clamp(along / 6, -1, 1) * (1.9 - 0.9 * Math.min(1, Math.abs(along) / MAX_FWD));
+    player.heading += turn * dt * (keys.hand ? 1.35 : 1);
+
+    const nfx = Math.cos(player.heading), nfz = -Math.sin(player.heading);
+    player.vx = nfx * along + latx * k;
+    player.vz = nfz * along + latz * k;
+    player.x += player.vx * dt;
+    player.z += player.vz * dt;
+    collide();
+    player.speed = Math.hypot(player.vx, player.vz);
+  }
+
+  // Dos círculos (trompa y cola) contra las manzanas vecinas.
+  function collide() {
+    const { W, at } = city;
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    let hit = false;
+    for (const off of [1.3, -1.3]) {
+      const cx = player.x + fx * off, cz = player.z + fz * off, r = 1.0;
+      const gx = toCell(cx, W), gz = toCell(cz, W);
+      for (let y = gz - 1; y <= gz + 1; y++) for (let x = gx - 1; x <= gx + 1; x++) {
+        if (!at(x, y)) continue;
+        const x0 = toWorld(x, W) - CELL / 2, z0 = toWorld(y, W) - CELL / 2;
+        const px = clamp(cx, x0, x0 + CELL), pz = clamp(cz, z0, z0 + CELL);
+        let dx = cx - px, dz = cz - pz, d = Math.hypot(dx, dz);
+        if (d >= r) continue;
+        if (d < 1e-4) { dx = 1; dz = 0; d = 1; }
+        const nx = dx / d, nz = dz / d, push = r - d;
+        player.x += nx * push; player.z += nz * push;
+        const vn = player.vx * nx + player.vz * nz;
+        if (vn < 0) { player.vx -= nx * vn * 1.25; player.vz -= nz * vn * 1.25; hit = true; }
+      }
+    }
+    if (hit) { player.vx *= 0.72; player.vz *= 0.72; shake = Math.min(1, shake + 0.5); }
+  }
+
+  // --- Cámara ------------------------------------------------------------------------
+  let shake = 0, camSnap = true;
+  const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+  function placeCamera(dt) {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    const want = new THREE.Vector3(), look = new THREE.Vector3();
+    if (state.view === "Arriba") {
+      camera.up.set(0, 0, -1);
+      want.set(player.x + fx * 3, 22, player.z + fz * 3 + 0.01);
+      look.set(player.x + fx * 3, 0, player.z + fz * 3);
+      fog.near = 60; fog.far = 120;
+    } else {
+      camera.up.set(0, 1, 0);
+      // La cámara va atrás del auto, pero nunca adentro de una manzana.
+      let back = 6.8;
+      for (let s = 0.5; s <= 6.8; s += 0.5) {
+        const x = player.x - fx * s, z = player.z - fz * s;
+        if (city.at(toCell(x, city.W), toCell(z, city.W))) { back = Math.max(1.5, s - 1); break; }
+      }
+      want.set(player.x - fx * back, 2.1 + back * 0.12, player.z - fz * back);
+      look.set(player.x + fx * 6, 1.0, player.z + fz * 6);
+      fog.near = 16; fog.far = 58;
+    }
+    const k = camSnap ? 1 : 1 - Math.exp(-dt * 6);
+    camPos.lerp(want, k); camLook.lerp(look, camSnap ? 1 : 1 - Math.exp(-dt * 9));
+    camSnap = false;
+    camera.position.copy(camPos);
+    if (shake > 0) {
+      camera.position.x += (Math.random() - 0.5) * shake * 0.4;
+      camera.position.y += (Math.random() - 0.5) * shake * 0.3;
+      shake = Math.max(0, shake - dt * 3);
+    }
+    camera.lookAt(camLook);
+  }
+
+  function placeCar() {
+    car.position.set(player.x, 0, player.z);
+    car.rotation.y = player.heading;
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+    const along = player.vx * fx + player.vz * fz;
+    wheels.forEach((w, i) => { w.rotation.z -= along * 0.016; if (i < 2) w.rotation.y = player.steer * 0.4; });
+    tailMat.emissiveIntensity = keys.down ? 2.2 : 0.5;
+    // Los faroles más cercanos se quedan con las luces.
+    city.lamps.sort((a, b) => (a.x - player.x) ** 2 + (a.z - player.z) ** 2 - ((b.x - player.x) ** 2 + (b.z - player.z) ** 2));
+    lampLights.forEach((l, i) => {
+      const p = city.lamps[i];
+      if (p) { l.position.copy(p); l.intensity = 2.6; } else l.intensity = 0;
+    });
+  }
+
+  // --- Mensajes y récords ---------------------------------------------------------------
+  let msg = "", msgUntil = 0, clock = 0;
+  function message(text, secs) { msg = text; msgUntil = clock + secs; }
+  const fmtTime = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+  function checkGoal() {
+    if (city.won) return;
+    const dx = player.x - city.goalPos.x, dz = player.z - city.goalPos.z;
+    if (dx * dx + dz * dz > (CELL * 0.55) ** 2) return;
+    const t = clock - city.startedAt;
+    city.won = clock;
+    const key = "n" + city.level;
+    const record = !best[key] || t < best[key];
+    if (record) { best[key] = t; try { localStorage.setItem("mg-moreno-records", JSON.stringify(best)); } catch (e) { /* sin almacenamiento */ } }
+    message("LLEGASTE A MORENO · " + fmtTime(t) + (record ? " · RÉCORD" : ""), 3.2);
+  }
+
+  // --- Grilla ---------------------------------------------------------------------------------
+  let cols = 0, rows = 0, ratio = 16 / 9, rt = null, buf = null;
+  let L, RGB, A, Q, CH, COL;
+  function layout() {
+    const narrow = window.innerWidth < 700;
+    ratio = narrow ? 4 / 5 : 16 / 9;
+    cols = DENSITY[state.density];
+    rows = Math.max(12, Math.round(cols * 0.6 / ratio));
+    const W = cols * SS, H = rows * SS;
+    if (rt) rt.dispose();
+    rt = new THREE.WebGLRenderTarget(W, H);
+    buf = new Uint8Array(W * H * 4);
+    const N = cols * rows;
+    L = new Float32Array(N); RGB = new Float32Array(N * 3); A = new Uint8Array(N); Q = new Int16Array(N);
+    CH = new Array(N); COL = new Array(N);
+    camera.aspect = ratio;
+    camera.updateProjectionMatrix();
+    const avail = canvas.parentElement.clientWidth || 800;
+    const maxH = Math.max(260, window.innerHeight * (narrow ? 0.62 : 0.72));
+    const w = Math.min(avail, maxH * ratio);
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.style.width = w + "px";
+    canvas.style.aspectRatio = String(ratio);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round((w / ratio) * dpr);
+  }
+
+  function star(ci, ri, t) {
+    const h = hash(ci * 7 + 3, ri * 13 + 9);
+    if (h <= 1 - 0.012 * 2.1) return -1;
+    const tw = 0.5 + 0.5 * Math.sin(t * (0.8 + h * 2.5) + h * 50);
+    return 0.3 + 0.55 * hash(ci + 3, ri + 99) * (0.55 + 0.45 * tw);
+  }
+
+  function shade() {
+    const W = cols * SS, H = rows * SS;
+    renderer.setRenderTarget(rt);
+    renderer.clear();
+    renderer.render(scene, camera);
+    renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf);
+    renderer.setRenderTarget(null);
+    const steps = RAMP.length - 1, ink = MODES[state.mode];
+    for (let ri = 0; ri < rows; ri++) {
+      const y0 = (rows - 1 - ri) * SS;
+      for (let ci = 0; ci < cols; ci++) {
+        let r = 0, g = 0, b = 0, a = 0;
+        for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+          const k = ((y0 + sy) * W + ci * SS + sx) * 4;
+          r += buf[k]; g += buf[k + 1]; b += buf[k + 2]; a += buf[k + 3];
+        }
+        const n = SS * SS, i = ri * cols + ci;
+        r /= n; g /= n; b /= n;
+        A[i] = a / n > 8 ? 1 : 0;
+        const raw = Math.max(r, g, b) / 255;
+        let l = clamp((raw * ADJ.exposure - 0.5) * ADJ.contrast + 0.5, 0, 1);
+        l = Math.pow(l, ADJ.gamma);
+        if (raw < 0.004 || l < ADJ.threshold) { CH[i] = null; continue; }
+        const off = hash(ci * 3 + 11, ri * 5 + 7) - 0.5;
+        const q = clamp(Math.round((l + (off * ADJ.amount) / steps) * steps), 0, steps);
+        CH[i] = RAMP[q];
+        if (ink) { COL[i] = ink; continue; }
+        const m = Math.max(r, g, b) || 1, kk = (150 + 105 * (q / steps)) / m;
+        COL[i] = "rgb(" + Math.min(255, r * kk | 0) + "," + Math.min(255, g * kk | 0) + "," + Math.min(255, b * kk | 0) + ")";
+      }
+    }
+    // Cielo: estrellas quietas solo donde no hay nada adelante.
+    for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) {
+      const i = ri * cols + ci;
+      if (CH[i] || A[i]) continue;
+      const s = star(ci, ri, clock);
+      if (s >= 0) { CH[i] = STAR_CHARS[clamp(Math.floor(s * 3), 0, 2)]; COL[i] = "#dfe6ff"; }
+    }
+  }
+
+  // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
+  function automap() {
+    CH.fill(null);
+    const { W, wall, seen } = city;
+    const cw = 2, x0 = Math.floor((cols - W * cw) / 2), y0 = Math.floor((rows - W) / 2);
+    const put = (c, r, ch, color) => { if (c >= 0 && r >= 1 && c < cols && r < rows - 1) { CH[r * cols + c] = ch; COL[r * cols + c] = color; } };
+    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
+      let near = false;
+      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < W && seen[ny * W + nx]) { near = true; break; }
+      }
+      if (!near) continue;
+      const i = y * W + x;
+      if (wall[i]) { put(x0 + x * cw, y0 + y, "#", MAPWALL); put(x0 + x * cw + 1, y0 + y, "#", MAPWALL); }
+      else if (seen[i]) { put(x0 + x * cw, y0 + y, "·", MAPFLOOR); put(x0 + x * cw + 1, y0 + y, " ", MAPFLOOR); }
+    }
+    if (seen[city.goal.y * W + city.goal.x] || nearSeen(city.goal.x, city.goal.y)) put(x0 + city.goal.x * cw, y0 + city.goal.y, "&", "#8fd26a");
+    const a = ((player.heading % TAU) + TAU) % TAU;
+    const arrow = a < Math.PI / 4 || a > 7 * Math.PI / 4 ? ">" : a < 3 * Math.PI / 4 ? "^" : a < 5 * Math.PI / 4 ? "<" : "v";
+    put(x0 + toCell(player.x, W) * cw, y0 + toCell(player.z, W), arrow, "#f2c200");
+  }
+  function nearSeen(x, y) {
+    const { W, seen } = city;
+    const s = (a, b) => a >= 0 && b >= 0 && a < W && b < W && seen[b * W + a];
+    return s(x - 1, y) || s(x + 1, y) || s(x, y - 1) || s(x, y + 1);
+  }
+
+  function hud() {
+    const write = (text, r, align) => {
+      const c0 = align === "right" ? cols - text.length - 1 : align === "center" ? Math.floor((cols - text.length) / 2) : 1;
+      for (let k = 0; k < text.length; k++) {
+        const c = c0 + k;
+        if (c < 0 || c >= cols) continue;
+        CH[r * cols + c] = text[k] === " " ? null : text[k];
+        COL[r * cols + c] = HUD;
+      }
+    };
+    const t = city.won ? city.won - city.startedAt : clock - city.startedAt;
+    write("MORENO " + city.level, 0, "left");
+    write(fmtTime(t), 0, "right");
+    write(String(Math.round(player.speed * 3.6)).padStart(3, "0") + " KM/H", rows - 1, "left");
+    const rec = best["n" + city.level];
+    if (rec) write("RÉCORD " + fmtTime(rec), rows - 1, "right");
+    if (msg && clock < msgUntil) {
+      const pad = " " + msg + " ";
+      const r = Math.floor(rows / 2);
+      // El mensaje limpia su fila para leerse sobre la escena.
+      for (let c = Math.floor((cols - pad.length) / 2); c < Math.floor((cols + pad.length) / 2); c++) if (c >= 0 && c < cols) CH[r * cols + c] = null;
+      write(pad, r, "center");
+    }
+  }
+
+  function paint() {
+    const cw = canvas.width / cols, chh = canvas.height / rows;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = chh.toFixed(2) + 'px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    let last = "";
+    for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) {
+      const i = ri * cols + ci, ch = CH[i];
+      if (!ch) continue;
+      if (COL[i] !== last) { ctx.fillStyle = COL[i]; last = COL[i]; }
+      ctx.fillText(ch, (ci + 0.5) * cw, (ri + 0.5) * chh);
+    }
+  }
+
+  // --- Controles ---------------------------------------------------------------------------------
+  const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", Space: "hand" };
+  let engaged = false;
+  window.addEventListener("keydown", e => {
+    const k = KEYMAP[e.code];
+    if (k) { keys[k] = true; if (engaged) e.preventDefault(); return; }
+    if (e.code === "KeyC") setOpt("view", state.view === "Atrás" ? "Arriba" : "Atrás");
+    if (e.code === "KeyM") setOpt("map", !state.map);
+    if (e.code === "KeyR") newCity(city.level);
+  });
+  window.addEventListener("keyup", e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
+  window.addEventListener("blur", () => Object.keys(keys).forEach(k => { keys[k] = false; }));
+  canvas.addEventListener("pointerdown", () => { engaged = true; canvas.focus(); });
+  canvas.addEventListener("focus", () => { engaged = true; });
+  canvas.addEventListener("blur", () => { engaged = false; });
+
+  document.querySelectorAll("#pad button").forEach(btn => {
+    const k = btn.dataset.key;
+    const on = e => { e.preventDefault(); keys[k] = true; btn.dataset.down = "true"; try { btn.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ } };
+    const off = () => { keys[k] = false; btn.dataset.down = "false"; };
+    btn.addEventListener("pointerdown", on);
+    btn.addEventListener("pointerup", off);
+    btn.addEventListener("pointercancel", off);
+    btn.addEventListener("lostpointercapture", off);
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  });
+
+  const opts = document.getElementById("opts");
+  const segs = {};
+  function addSeg(label, key, values) {
+    const wrap = document.createElement("div");
+    wrap.className = "ctl";
+    wrap.innerHTML = '<span class="ctl-label" id="lbl-' + key + '">' + label + "</span>";
+    const seg = document.createElement("div");
+    seg.className = "seg";
+    seg.setAttribute("role", "group");
+    seg.setAttribute("aria-labelledby", "lbl-" + key);
+    values.forEach(v => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.id = key + "-" + v;
+      b.textContent = v;
+      b.addEventListener("click", () => setOpt(key, v));
+      seg.appendChild(b);
+    });
+    wrap.appendChild(seg);
+    opts.appendChild(wrap);
+    segs[key] = seg;
+  }
+  addSeg("Cámara", "view", ["Atrás", "Arriba"]);
+  addSeg("Densidad", "density", Object.keys(DENSITY));
+  addSeg("Modo", "mode", Object.keys(MODES));
+  const mapBtn = document.createElement("button");
+  mapBtn.type = "button"; mapBtn.id = "btn-map";
+  mapBtn.addEventListener("click", () => setOpt("map", !state.map));
+  const newBtn = document.createElement("button");
+  newBtn.type = "button"; newBtn.id = "btn-new"; newBtn.textContent = "Otra ciudad";
+  newBtn.addEventListener("click", () => newCity(city.level));
+  opts.append(mapBtn, newBtn);
+
+  function setOpt(key, value) {
+    state[key] = value;
+    Object.keys(segs).forEach(k => segs[k].querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.textContent === state[k]))));
+    mapBtn.textContent = state.map ? "Volver a manejar" : "Ver mapa";
+    mapBtn.setAttribute("aria-pressed", String(state.map));
+    if (key === "density") layout();
+    if (key === "view") camSnap = true;
+  }
+
+  function newCity(level) {
+    buildCity(level, (Math.random() * 1e9) | 0);
+  }
+
+  // --- Bucle ----------------------------------------------------------------------------------------
+  let lastTs = 0, lastPaint = 0;
+  function loop(ts) {
+    requestAnimationFrame(loop);
+    if (document.hidden) { lastTs = ts; return; }
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
+    lastTs = ts;
+    clock += dt;
+    if (!state.map) physics(dt);
+    const { W } = city;
+    const cx = toCell(player.x, W), cz = toCell(player.z, W);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const x = cx + dx, y = cz + dy;
+      if (x >= 0 && y >= 0 && x < W && y < W && (dx === 0 || dy === 0)) city.seen[y * W + x] = 1;
+    }
+    checkGoal();
+    if (city.won && clock - city.won > 3.2) { newCity(city.level + 1); return; }
+    if (ts - lastPaint < 33) return;
+    lastPaint = ts;
+    placeCar();
+    placeCamera(Math.max(dt, 0.033));
+    if (state.map) automap(); else shade();
+    hud();
+    paint();
+  }
+
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(layout, 120); });
+
+  setOpt("view", state.view);
+  layout();
+  buildCity(1, 700);
+  const start = () => { layout(); requestAnimationFrame(loop); };
+  if (document.fonts && document.fonts.load) document.fonts.load('16px "IBM Plex Mono"', "abc").then(start, start);
+  else start();
+})();
+</script>
+
+</html>
