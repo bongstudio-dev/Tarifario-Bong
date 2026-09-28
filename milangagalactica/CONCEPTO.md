@@ -103,6 +103,14 @@ Un Golf GT arlequín (el de los paneles de colores). Aparecía en distintas
 escenas representando una **presencia**: no es el protagonista de una
 historia, es algo que está ahí aunque se haya ido.
 
+**El Arlequín vino después de Moreno.** Lo había visto en Facebook hace muchos
+años. Un día buscaba algo colorido y apareció. Tenía llantas **fifteen52**,
+muy asociadas a mi infancia y a **Ken Block**.
+
+Por eso el Arlequín no es un auto cualquiera: es un objeto de la memoria. Los
+colores le ganan al barrio gris, y las llantas lo conectan con lo que me
+fascinaba de chico.
+
 ## Génesis (texto original)
 
 > The Harlequin left Moreno, but It's still there, it seemed that everything
@@ -135,8 +143,9 @@ Ideas que salen de ahí:
 
 Ramas que se desprenden:
 
-- **Abstract Landscapes:** horizontes como interiores mentales; niebla y luz
-  volumétrica que hacen que el vacío se sienta denso y húmedo.
+- **Abstract Landscapes:** lugares seguros e idealizados de mi infancia y
+  adolescencia. Horizontes como interiores mentales; niebla y luz volumétrica
+  que hacen que el vacío se sienta denso y húmedo.
 - **Shapes:** geometría pura con comportamiento de agua o tela. *Shapes #3*:
   "La espiral está hecha para hundirte, pero te puede elevar; el miedo sirve,
   pero no hay que rendirse ante él."
@@ -146,6 +155,18 @@ Ramas que se desprenden:
 > Esta ficha salió de un resumen armado a partir de búsquedas web. Antes de
 > usar algo públicamente (bio, statement, textos de colección), revisar que
 > los datos sean correctos, sobre todo nombres de clientes y atribuciones.
+
+## Lo que une todo
+
+Hay dos fuentes:
+
+- **Lo que veo:** la calle, el barrio, la hora azul, el auto quieto
+  (*Moments of Transition*, Moreno).
+- **Lo que recuerdo:** la infancia y la adolescencia idealizadas, los autos,
+  Ken Block (el Arlequín con sus llantas, *Abstract Landscapes*).
+
+El trabajo aparece cuando una de las dos se mete en la otra: un objeto de la
+memoria estacionado en un lugar real, donde no debería estar.
 
 ## Cruce con la técnica ASCII
 
@@ -163,7 +184,5 @@ vacío.
 ## Para charlar
 
 - Traer la segunda foto de Moreno (la de Instagram) para tener el par.
-- ¿Qué relación hay entre la foto de Moreno y el Arlequín? ¿El Golf estuvo
-  en esa calle?
 - ¿El Arlequín entra en la serie ASCII o queda como línea aparte?
 - ¿Formato 2000×2000 (el de la génesis) o 4:5 (el de Instagram)?
