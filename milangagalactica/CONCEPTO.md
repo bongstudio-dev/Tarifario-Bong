@@ -187,8 +187,11 @@ Manejar el Arlequín de noche por una ciudad que no se termina, sin destino.
 
 - **Laberinto:** el barrio, amigable, con faroles y ventanas prendidas.
 - **Avenidas, plazas, playa:** respiros dentro del laberinto.
-- **Bosque:** Abstract Landscapes. Árboles que se atraviesan, esferas y
-  enredaderas flotando, haces de luz, luciérnagas.
+- **Monte:** valles de pasto por donde se maneja, montañas que no se
+  atraviesan y se ven desde lejos, pinos sueltos, luciérnagas. En el
+  corazón del monte está la nada: para llegar al abismo hay que cruzarlo.
+- **El mar:** si entrás, el auto se hunde y volvés a la costa con la mitad
+  de tu luz.
 - **La nada:** el limbo. Sin piso y sin estrellas. Ojos que te miran y te
   siguen sin hacerte nada; la grilla se descompone y aparecen fragmentos
   de la génesis ("it's still there", "ideas occupy place").

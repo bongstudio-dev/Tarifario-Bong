@@ -343,20 +343,33 @@
   // --- El mundo: infinito, por zonas -------------------------------------------------
   // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
   // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
-  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13 };
-  const SOLID = t => t >= 10;
+  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14 };
+  const SOLID = t => t >= 10 && t !== T.SEA;
   const mod = (a, n) => ((a % n) + n) % n;
   let seed = 700, sx = 0, sy = 0;
   const hs = (x, y, k) => hash(x + Math.imul(k + 1, 9973) + seed, y + Math.imul(k + 1, 7919) - seed);
   const fbm = (x, y, z) => 0.65 * noise3(x, y, z) + 0.35 * noise3(x * 2.3 + 11, y * 2.3, z + 3);
   const cache = new Map();
 
+  const sstep = (a, b, x) => { const k = clamp((x - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+  const monteNoise = (x, y) => fbm((x + sy) / 40, (y - sx) / 40, 8.1);
+  // Altura del monte en metros, en coordenadas de cuadra: sube lejos de la ciudad y baja antes de la nada.
+  function heightAt(x, y) {
+    const f = monteNoise(x, y);
+    const mask = sstep(0.585, 0.62, f) * (1 - sstep(0.645, 0.675, f));
+    if (mask <= 0) return 0;
+    const m = fbm((x + sx) / 13, (y + sy) / 13, 11.3);
+    return Math.max(0, (m - 0.46) * 150) * mask;
+  }
+
   function zoneAt(x, y) {
     const s = fbm((x + sx) / 60, (y + sy) / 60, 1.7);
     if (s > 0.69) return T.SEA;
     if (s > 0.64) return T.SAND;
-    if (fbm((x - sy) / 95, (y + sx) / 95, 5.3) > 0.69) return T.VOID;
-    if (fbm((x + sy) / 50, (y - sx) / 50, 8.1) > 0.63) return T.FOREST;
+    // El monte rodea a la nada: para llegar al abismo hay que cruzarlo.
+    const f = monteNoise(x, y);
+    if (f > 0.69) return T.VOID;
+    if (f > 0.58) return heightAt(x + 0.5, y + 0.5) > 1 ? T.MOUNTAIN : T.FOREST;
     return 0;
   }
   function cellType(x, y) {
@@ -435,10 +448,7 @@
       .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(position.x * 0.35 + uTime * 1.3) * 0.22 + sin(position.z * 0.27 - uTime * 0.9) * 0.18 + sin((position.x + position.z) * 0.9 + uTime * 2.1) * 0.06;");
   };
 
-  // Bosque: follaje de colores suaves, esferas y haces de luz, como en Abstract Landscapes.
-  const leafMat = mat(0xffffff, { flatShading: true, roughness: 0.9, emissive: 0x10141a });
-  const LEAF_COLORS = [0x5fbf6a, 0x8fd88a, 0x3f9a5a, 0xb8e07a, 0x6fc4a0, 0xe2a6c8];
-  const pearlMat = mat(0xf1eaff, { roughness: 0.18, metalness: 0.35, emissive: 0x3a3258 });
+  // Monte: luciérnagas y algún haz de luz, como en Abstract Landscapes.
   const moteMat = new THREE.MeshBasicMaterial({ color: 0xfff3b0 });
   const MOTE = new THREE.IcosahedronGeometry(0.09, 0);
   // Tachas: luces al ras del asfalto que dibujan la calle hasta el horizonte.
@@ -456,7 +466,13 @@
   }
   const beamMat = new THREE.MeshBasicMaterial({ color: 0xffe9c8, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending });
   const BEAM = new THREE.CylinderGeometry(0.9, 2.2, 34, 12, 1, true); BEAM.translate(0, 17, 0);
-  const PEARL = new THREE.SphereGeometry(1, 20, 14);
+  // Monte: laderas facetadas, pasto y pinos sueltos.
+  const hillMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+  const grassMat = mat(0xffffff, { roughness: 1, flatShading: true });
+  const BLADE = new THREE.ConeGeometry(0.14, 0.8, 3); BLADE.translate(0, 0.4, 0);
+  const pineMat = mat(0x2f5a3a, { roughness: 1, flatShading: true });
+  const PINE = new THREE.ConeGeometry(1.3, 5, 6); PINE.translate(0, 3.2, 0);
+  const GRASS_COLORS = [0x5f9a4a, 0x7ab85a, 0x4a8a44, 0x8fbf5a, 0x6aa86a];
   // Luz: orbes que brillan solos, visibles aunque todo esté oscuro.
   const ORB_GEO = new THREE.IcosahedronGeometry(0.55, 2);
   const orbMat = new THREE.MeshBasicMaterial({ color: 0xfff1c4 });
@@ -488,7 +504,7 @@
   const CHUNK = 16;
   const chunks = new Map();
   const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
-  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x264830, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
+  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x3a6a34, 14: 0x3a6a34, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
 
   function instanced(geo, material, list, build) {
     if (!list.length) return null;
@@ -508,7 +524,7 @@
     };
     const wp = [];
     const byFloors = {}, ivies = [], trees = [], poles = [], monuments = [];
-    const ideas = [], forest = [], pearls = [], floaters = [], beams = [], motes = [], studs = [], midStuds = [];
+    const ideas = [], beams = [], motes = [], studs = [], midStuds = [], grass = [], pines = [];
     for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
       const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
       const x0 = x * CELL, z0 = y * CELL;
@@ -561,13 +577,14 @@
         const dx = x - (rx * 20 + 10), dy = y - (ry * 20 + 10);
         if (Math.abs(dx) === 3 && Math.abs(dy) === 3) poles.push([x0 + 4, z0 + 4, 0]);
       } else if (t === T.FOREST) {
-        // Árboles que se atraviesan: el bosque no choca.
-        for (let k = 0; k < 2; k++) if (hs(x, y, 30 + k) < 0.45) forest.push([x0 + 1 + hs(x, y, 32 + k) * 6, z0 + 1 + hs(x, y, 34 + k) * 6, hs(x, y, 36 + k)]);
-        if (hs(x, y, 38) < 0.16) pearls.push([x0 + 4, 1.4 + hs(x, y, 39) * 4, z0 + 4, 0.4 + hs(x, y, 40) * 0.9]);
-        if (hs(x, y, 41) < 0.05) floaters.push([x0 + 4, 3.5 + hs(x, y, 42) * 3, z0 + 4, hs(x, y, 43)]);
-        if (hs(x, y, 44) < 0.035) beams.push([x0 + 4, z0 + 4, hs(x, y, 45)]);
+        // Pasto alto y algún pino suelto; nada choca.
+        for (let k = 0; k < 9; k++) grass.push([x0 + hs(x, y, 60 + k) * 8, z0 + hs(x, y, 70 + k) * 8, hs(x, y, 80 + k)]);
+        if (hs(x, y, 30) < 0.07) pines.push([x0 + 1 + hs(x, y, 32) * 6, 0, z0 + 1 + hs(x, y, 34) * 6, hs(x, y, 36)]);
+        if (hs(x, y, 44) < 0.02) beams.push([x0 + 4, z0 + 4, hs(x, y, 45)]);
         // Luciérnagas: puntitos de luz quietos en el aire.
         for (let k = 0; k < 3; k++) motes.push([x0 + hs(x, y, 50 + k) * 8, 0.5 + hs(x, y, 53 + k) * 3.5, z0 + hs(x, y, 56 + k) * 8]);
+      } else if (t === T.MOUNTAIN) {
+        if (hs(x, y, 31) < 0.18) { const px = x0 + 1 + hs(x, y, 33) * 6, pz = z0 + 1 + hs(x, y, 35) * 6; pines.push([px, heightAt(px / CELL, pz / CELL) - 0.4, pz, hs(x, y, 37)]); }
       } else if (t === T.MONUMENT) {
         monuments.push([x0 + 4, z0 + 4]);
       } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
@@ -608,13 +625,30 @@
       g.add(o, p);
       lamps.push(new THREE.Vector3(x + 2.5, 3.5, z + 2.5));
     });
-    const trunks2 = instanced(TRUNK, trunkMat, forest, ([x, z, r], m) => m.makeScale(0.7, 0.55 + r * 0.6, 0.7).setPosition(x, 0, z));
-    const crowns2 = instanced(CROWN, leafMat, forest, ([x, z, r], m) => { const k = 0.55 + r * 0.6, ky = 1 + r * 0.7; m.makeScale(k, k * ky, k).setPosition(x, (0.55 + r * 0.6) * 2.2 - 3.3 * k * ky + 1.2 * k * ky, z); });
-    if (trunks2) { forest.forEach(([, , r], i) => crowns2.setColorAt(i, col.set(LEAF_COLORS[Math.floor(r * 97) % LEAF_COLORS.length]))); g.add(trunks2, crowns2); }
-    const pearlMesh = instanced(PEARL, pearlMat, pearls, ([x, y, z, k], m) => m.makeScale(k, k, k).setPosition(x, y, z));
-    if (pearlMesh) g.add(pearlMesh);
-    const floatMesh = instanced(IVY_GEO, ivyMat, floaters, ([x, y, z, r], m) => { q4.setFromAxisAngle(p3.set(0.3, 1, 0.2).normalize(), r * TAU); m.compose(p3.set(x, y, z), q4, s3.set(0.35, 0.3, 0.35)); });
-    if (floatMesh) g.add(floatMesh);
+    const grassMesh = instanced(BLADE, grassMat, grass, ([x, z, r], m) => { q4.setFromAxisAngle(p3.set(Math.sin(r * 40), 0, Math.cos(r * 40)).normalize(), 0.25 * r); m.compose(p3.set(x, 0, z), q4, s3.set(1, 0.6 + r * 0.9, 1)); });
+    if (grassMesh) { grass.forEach(([, , r], i) => grassMesh.setColorAt(i, col.set(GRASS_COLORS[Math.floor(r * 53) % GRASS_COLORS.length]))); g.add(grassMesh); }
+    const pineMesh = instanced(PINE, pineMat, pines, ([x, y, z, r], m) => m.makeScale(0.8 + r * 0.6, 0.8 + r * 0.9, 0.8 + r * 0.6).setPosition(x, y, z));
+    if (pineMesh) g.add(pineMesh);
+    // Laderas: una malla de alturas cada 2 m, solo donde el monte se levanta.
+    const hp = [], hc = [], STEP = 2, N = CHUNK * CELL / STEP;
+    const H = [];
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) H.push(heightAt((cx * CHUNK * CELL + i * STEP) / CELL, (cy * CHUNK * CELL + j * STEP) / CELL));
+    const hcol = h => col.set(h < 3 ? 0x4a8040 : h < 10 ? 0x3c6444 : h < 22 ? 0x585c70 : 0x9894b0);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const a = H[j * (N + 1) + i], b = H[j * (N + 1) + i + 1], c = H[(j + 1) * (N + 1) + i], d = H[(j + 1) * (N + 1) + i + 1];
+      if (a + b + c + d < 0.05) continue;
+      const X = cx * CHUNK * CELL + i * STEP, Z = cy * CHUNK * CELL + j * STEP;
+      const v = [[X, a, Z], [X, c, Z + STEP], [X + STEP, b, Z], [X + STEP, b, Z], [X, c, Z + STEP], [X + STEP, d, Z + STEP]];
+      hcol((a + b + c + d) / 4 + (hash(i + cx * 97, j + cy * 89) - 0.5) * 3);
+      v.forEach(([px, py, pz]) => { hp.push(px, py + 0.03, pz); hc.push(col.r, col.g, col.b); });
+    }
+    if (hp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(hp, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(hc, 3));
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, hillMat); m.userData.own = true; g.add(m);
+    }
     const studMesh = studPoints(studs, amberStudMat);
     if (studMesh) g.add(studMesh);
     const midMesh = studPoints(midStuds, whiteStudMat);
@@ -714,7 +748,7 @@
   // --- Cámara ------------------------------------------------------------------------
   let shake = 0, camSnap = true;
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
-  const blocksCam = (x, y) => { const t = cellType(x, y); return t === T.WALL || t === T.IVY || t === T.MONUMENT; };
+  const blocksCam = (x, y) => { const t = cellType(x, y); return t === T.WALL || t === T.IVY || t === T.MONUMENT || t === T.MOUNTAIN; };
   function placeCamera(dt) {
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const want = new THREE.Vector3(), look = new THREE.Vector3();
@@ -760,11 +794,13 @@
     3: [0.62, 0.3, 80, 0xc8f0c0, 0x2a5a24, 0x14182e],
     4: [0.55, 0.5, 120, 0x9ab0ff, 0x1a1c2a, 0x120e2a],
     5: [0, 0, 200, 0x000000, 0x000000, 0x000000],
-    6: [0.85, 0.35, 80, 0xc8ffc8, 0x2f6a3a, 0x0e2a1a]
+    6: [0.36, 0.95, 110, 0xc0d8ff, 0x2a4a2a, 0x1a1e38]
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
   function placeWorld(dt) {
-    car.position.set(player.x, 0, player.z);
+    const sk = sinking ? Math.min(1, sinking.t / 2) : 0;
+    car.position.set(player.x, -sk * 2.6, player.z);
+    car.rotation.x = sk * 0.35;
     car.rotation.y = player.heading;
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const along = player.vx * fx + player.vz * fz;
@@ -791,7 +827,7 @@
   function message(text, secs) { msg = text; msgUntil = clock + secs; }
   function trackZone() {
     const t = cellType(toCell(player.x), toCell(player.z));
-    const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : (t === T.WALL || t === T.IVY) ? T.STREET : t;
+    const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : t === T.MOUNTAIN ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t;
     if (zone === currentZone) return;
     currentZone = zone;
   }
@@ -832,6 +868,28 @@
       m.material = i < lit || (i === lit && light > 0.01 && Math.sin(clock * 9) > 0) ? orbMat : emptyMat;
       m.position.set(Math.cos(a) * 2.9, 1.9 + Math.sin(clock * 1.3 + i) * 0.12, Math.sin(a) * 2.9);
     });
+  }
+
+  // Si entrás al mar, el auto se hunde; volvés a la costa con la mitad de tu luz.
+  let sinking = null, lastSafe = null;
+  function tickWater(dt) {
+    const t = cellType(toCell(player.x), toCell(player.z));
+    if (!sinking) {
+      if (t === T.SEA) { sinking = { t: 0 }; keys.up = keys.down = false; return; }
+      if (t !== T.VOID && !SOLID(t)) lastSafe = { x: player.x, z: player.z, heading: player.heading };
+      return;
+    }
+    sinking.t += dt;
+    player.vx *= Math.exp(-2.5 * dt); player.vz *= Math.exp(-2.5 * dt);
+    if (sinking.t > 2.6) {
+      const back = lastSafe || { x: player.x, z: player.z, heading: player.heading };
+      player.x = back.x - Math.cos(back.heading) * 4; player.z = back.z + Math.sin(back.heading) * 4;
+      player.heading = back.heading + Math.PI;
+      player.vx = player.vz = 0;
+      light = Math.max(0.08, light * 0.5);
+      sinking = null;
+      camSnap = true;
+    }
   }
 
   function tickLight(dt) {
@@ -1042,7 +1100,7 @@
 
   let exposureNow = ADJ.exposure;
   function shade() {
-    exposureNow = ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7);
+    exposureNow = ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
     const W = cols * SS, H = rows * SS;
     renderer.setRenderTarget(rt);
     renderer.clear();
@@ -1093,7 +1151,7 @@
   // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
   const MAP_STYLE = {
     [T.WALL]: ["##", "#e0463c"], [T.IVY]: ["&&", "#8fd26a"], [T.SEA]: ["~~", "#4a86e8"], [T.MONUMENT]: ["!!", "#e8e4f0"],
-    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"]
+    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"]
   };
   function automap() {
     CH.fill(null);
@@ -1282,7 +1340,7 @@
     lastTs = ts;
     clock += dt;
     water.uniforms.uTime.value = clock;
-    if (!state.map) physics(dt);
+    if (!state.map) { if (sinking) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
     tickLight(dt);
     markSeen();
     trackZone();
