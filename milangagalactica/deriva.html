@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Deriva del Arlequín</title>
+<title>Deriva</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -66,8 +66,8 @@
 <div class="wrap">
   <header>
     <p class="eyebrow">milangagalactica · Arlequín</p>
-    <h1>Deriva del Arlequín</h1>
-    <p>Manejá el Arlequín de noche, sin destino. La ciudad es un laberinto que no se termina: cada tanto se abre una avenida, aparece una plaza, llegás a la playa o de golpe estás andando en la nada, y después volvés a entrar al laberinto. Las enredaderas te ayudan a ubicarte.</p>
+    <h1>Deriva</h1>
+    <p>Manejá el Arlequín de noche, sin destino. La ciudad es un laberinto que no se termina: cada tanto se abre una avenida, una plaza, un bosque o la playa. A veces se termina todo y quedás andando en la nada. Ahí no estás solo. Por el camino flotan ideas: las que juntás se quedan con vos.</p>
   </header>
 
   <div class="stage">
@@ -94,7 +94,7 @@
 
   <footer>
     <p>La misma técnica que las láminas: la escena 3D se renderiza a la resolución de la grilla, cada celda toma la luz que le llega y la luz elige el carácter. Las letras no se mueven; el mundo pasa por adentro de la grilla.</p>
-    <p>Las estrellas solo aparecen donde la cámara ve cielo, así que los edificios las tapan. En la nada no hay piso, así que también aparecen abajo.</p>
+    <p>Las estrellas solo aparecen donde la cámara ve cielo, así que los edificios las tapan. Las ideas que juntás quedan guardadas en este navegador.</p>
   </footer>
 </div>
 
@@ -334,11 +334,12 @@
   const { tailMat, wheels } = car.userData;
   car.userData.headMat.emissiveIntensity = 1.3;
   tailMat.emissiveIntensity = 0.5;
-  [-0.55, 0.55].forEach(z => {
+  const headBeams = [-0.55, 0.55].map(z => {
     const beam = new THREE.SpotLight(0xfff2dc, 2.1, 44, 0.42, 0.6, 1.3);
     beam.position.set(2.0, 0.7, z);
     beam.target.position.set(22, -1.2, z * 3);
     car.add(beam, beam.target);
+    return beam;
   });
   // Una luz propia que acompaña al auto desde arriba, para que el Arlequín se lea de noche.
   const carGlow = new THREE.PointLight(0xe8e4ff, 1.6, 9, 1.2);
@@ -346,7 +347,7 @@
   car.add(carGlow);
 
   // Faroles: pocas luces reales que se mudan a los faroles más cercanos al auto.
-  const LAMP_LIGHTS = 6;
+  const LAMP_LIGHTS = 8;
   const lampLights = [];
   for (let i = 0; i < LAMP_LIGHTS; i++) {
     const l = new THREE.PointLight(0xffb45c, 0, 24, 1.4);
@@ -357,9 +358,9 @@
   // --- El mundo: infinito, por zonas -------------------------------------------------
   // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
   // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
-  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13 };
+  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13 };
   const SOLID = t => t >= 10;
-  const ZONE_NAME = { 1: "LABERINTO", 2: "AVENIDA", 3: "PLAZA", 4: "PLAYA", 5: "LA NADA", 10: "LABERINTO", 11: "LABERINTO", 12: "PLAYA", 13: "PLAZA" };
+  const ZONE_NAME = { 1: "LABERINTO", 2: "AVENIDA", 3: "PLAZA", 4: "PLAYA", 5: "LA NADA", 6: "BOSQUE", 10: "LABERINTO", 11: "LABERINTO", 12: "PLAYA", 13: "PLAZA" };
   const mod = (a, n) => ((a % n) + n) % n;
   let seed = 700, sx = 0, sy = 0;
   const hs = (x, y, k) => hash(x + Math.imul(k + 1, 9973) + seed, y + Math.imul(k + 1, 7919) - seed);
@@ -370,7 +371,8 @@
     const s = fbm((x + sx) / 60, (y + sy) / 60, 1.7);
     if (s > 0.69) return T.SEA;
     if (s > 0.64) return T.SAND;
-    if (fbm((x - sy) / 42, (y + sx) / 42, 5.3) > 0.68) return T.VOID;
+    if (fbm((x - sy) / 95, (y + sx) / 95, 5.3) > 0.69) return T.VOID;
+    if (fbm((x + sy) / 50, (y - sx) / 50, 8.1) > 0.63) return T.FOREST;
     return 0;
   }
   function cellType(x, y) {
@@ -415,10 +417,10 @@
     const c = document.createElement("canvas");
     c.width = 96; c.height = 32;
     const g = c.getContext("2d");
-    g.fillStyle = lit ? "#000" : "#fff";
+    g.fillStyle = lit ? "#000" : "#a4a0a8";
     g.fillRect(0, 0, 96, 32);
     for (let k = 0; k < 3; k++) {
-      g.fillStyle = lit ? (hash(k, 3) > 0.4 ? "#ffcf8a" : "#000") : "#3a3a48";
+      g.fillStyle = lit ? (hash(k, 3) > 0.25 ? "#ffcf8a" : "#000") : "#3a3a48";
       g.fillRect(k * 32 + 8, 8, 16, 16);
     }
     const t = new THREE.CanvasTexture(c);
@@ -431,7 +433,7 @@
     if (buildingMats[floors]) return buildingMats[floors];
     const map = FACADE_MAP.clone(), glow = FACADE_GLOW.clone();
     [map, glow].forEach(t => { t.needsUpdate = true; t.repeat.set(1, floors); });
-    return (buildingMats[floors] = mat(0xffffff, { map, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 0.55, roughness: 0.95 }));
+    return (buildingMats[floors] = mat(0xffffff, { map, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 0.7, roughness: 0.95 }));
   }
   const floorMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
   const ivyMat = mat(0x8fd26a, { flatShading: true, roughness: 1, emissive: 0x1d3a12 });
@@ -448,6 +450,20 @@
       .replace("#include <common>", "#include <common>\nuniform float uTime;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(position.x * 0.35 + uTime * 1.3) * 0.22 + sin(position.z * 0.27 - uTime * 0.9) * 0.18 + sin((position.x + position.z) * 0.9 + uTime * 2.1) * 0.06;");
   };
+
+  // Bosque: follaje de colores suaves, esferas y haces de luz, como en Abstract Landscapes.
+  const leafMat = mat(0xffffff, { flatShading: true, roughness: 0.9, emissive: 0x10141a });
+  const LEAF_COLORS = [0x6fbf8a, 0x9ad0a0, 0xe2a6c8, 0x4f9a7a, 0xc9b6ec, 0x7fc4b8];
+  const pearlMat = mat(0xf1eaff, { roughness: 0.18, metalness: 0.35, emissive: 0x3a3258 });
+  const moteMat = new THREE.MeshBasicMaterial({ color: 0xfff3b0 });
+  const MOTE = new THREE.IcosahedronGeometry(0.09, 0);
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xffe9c8, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending });
+  const BEAM = new THREE.CylinderGeometry(0.9, 2.2, 34, 12, 1, true); BEAM.translate(0, 17, 0);
+  const PEARL = new THREE.SphereGeometry(1, 20, 14);
+  // Ideas: esferas con los colores del Arlequín que flotan y se pueden juntar.
+  const IDEA_COLORS = [0xff2a3a, 0x2f6bff, 0xffc21a, 0x2fd85a];
+  const IDEA_GEO = new THREE.IcosahedronGeometry(0.5, 2);
+  const ideaMats = IDEA_COLORS.map(c => new THREE.MeshBasicMaterial({ color: c }));
 
   const BOX = new THREE.BoxGeometry(1, 1, 1); BOX.translate(0, 0.5, 0);
   const POLE = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6); POLE.translate(0, 2.3, 0);
@@ -476,7 +492,7 @@
   const CHUNK = 16;
   const chunks = new Map();
   const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
-  const FLOOR_COLORS = { 1: 0x4c4c5a, 2: 0x57576c, 3: 0x3c5a3a, 4: 0x9c8f74, 10: 0x4c4c5a, 11: 0x4c4c5a, 13: 0x3c5a3a };
+  const FLOOR_COLORS = { 1: 0x55525e, 2: 0x5a5a6e, 3: 0x3c5a3a, 4: 0x9c8f74, 6: 0x2e4a40, 10: 0x55525e, 11: 0x55525e, 13: 0x3c5a3a };
 
   function instanced(geo, material, list, build) {
     if (!list.length) return null;
@@ -496,9 +512,13 @@
     };
     const wp = [];
     const byFloors = {}, ivies = [], trees = [], poles = [], monuments = [];
+    const ideas = [], forest = [], pearls = [], floaters = [], beams = [], motes = [];
     for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
       const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
       const x0 = x * CELL, z0 = y * CELL;
+      const ideaChance = { 1: 0.02, 2: 0.012, 3: 0.08, 4: 0.03, 5: 0.03, 6: 0.06 }[t] || 0;
+      const key = x + "," + y;
+      if (ideaChance && hs(x, y, 20) < ideaChance && !collected.has(key)) ideas.push([key, x0 + 2 + hs(x, y, 21) * 4, z0 + 2 + hs(x, y, 22) * 4, hs(x, y, 23)]);
       if (t === T.VOID) continue;
       if (t === T.SEA) {
         const S = 4, d = CELL / S;
@@ -529,9 +549,17 @@
         const rx = Math.floor(x / 20), ry = Math.floor(y / 20);
         const dx = x - (rx * 20 + 10), dy = y - (ry * 20 + 10);
         if (Math.abs(dx) === 3 && Math.abs(dy) === 3) poles.push([x0 + 4, z0 + 4, 0]);
+      } else if (t === T.FOREST) {
+        // Árboles que se atraviesan: el bosque no choca.
+        for (let k = 0; k < 2; k++) if (hs(x, y, 30 + k) < 0.45) forest.push([x0 + 1 + hs(x, y, 32 + k) * 6, z0 + 1 + hs(x, y, 34 + k) * 6, hs(x, y, 36 + k)]);
+        if (hs(x, y, 38) < 0.16) pearls.push([x0 + 4, 1.4 + hs(x, y, 39) * 4, z0 + 4, 0.4 + hs(x, y, 40) * 0.9]);
+        if (hs(x, y, 41) < 0.05) floaters.push([x0 + 4, 3.5 + hs(x, y, 42) * 3, z0 + 4, hs(x, y, 43)]);
+        if (hs(x, y, 44) < 0.035) beams.push([x0 + 4, z0 + 4, hs(x, y, 45)]);
+        // Luciérnagas: puntitos de luz quietos en el aire.
+        for (let k = 0; k < 3; k++) motes.push([x0 + hs(x, y, 50 + k) * 8, 0.5 + hs(x, y, 53 + k) * 3.5, z0 + hs(x, y, 56 + k) * 8]);
       } else if (t === T.MONUMENT) {
         monuments.push([x0 + 4, z0 + 4]);
-      } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.12) {
+      } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
         poles.push([x0 + 4 + (hs(x, y, 14) < 0.5 ? -3.2 : 3.2), z0 + 4 + (hs(x, y, 15) < 0.5 ? -3.2 : 3.2), 0]);
       }
     }
@@ -569,13 +597,30 @@
       g.add(o, p);
       lamps.push(new THREE.Vector3(x + 2.5, 3.5, z + 2.5));
     });
+    const trunks2 = instanced(TRUNK, trunkMat, forest, ([x, z, r], m) => m.makeScale(0.7, 0.55 + r * 0.6, 0.7).setPosition(x, 0, z));
+    const crowns2 = instanced(CROWN, leafMat, forest, ([x, z, r], m) => { const k = 0.55 + r * 0.6, ky = 1 + r * 0.7; m.makeScale(k, k * ky, k).setPosition(x, (0.55 + r * 0.6) * 2.2 - 3.3 * k * ky + 1.2 * k * ky, z); });
+    if (trunks2) { forest.forEach(([, , r], i) => crowns2.setColorAt(i, col.set(LEAF_COLORS[Math.floor(r * 97) % LEAF_COLORS.length]))); g.add(trunks2, crowns2); }
+    const pearlMesh = instanced(PEARL, pearlMat, pearls, ([x, y, z, k], m) => m.makeScale(k, k, k).setPosition(x, y, z));
+    if (pearlMesh) g.add(pearlMesh);
+    const floatMesh = instanced(IVY_GEO, ivyMat, floaters, ([x, y, z, r], m) => { q4.setFromAxisAngle(p3.set(0.3, 1, 0.2).normalize(), r * TAU); m.compose(p3.set(x, y, z), q4, s3.set(0.35, 0.3, 0.35)); });
+    if (floatMesh) g.add(floatMesh);
+    const moteMesh = instanced(MOTE, moteMat, motes, ([x, y, z], m) => m.makeTranslation(x, y, z));
+    if (moteMesh) g.add(moteMesh);
+    beams.forEach(([x, z, r]) => { const b = new THREE.Mesh(BEAM, beamMat); b.position.set(x, 0, z); b.rotation.set(0.12 * Math.sin(r * 9), 0, 0.12 * Math.cos(r * 9)); g.add(b); });
+    const ideaList = ideas.map(([key, x, z, r]) => {
+      const m = new THREE.Mesh(IDEA_GEO, ideaMats[Math.floor(r * 4)]);
+      m.position.set(x, 1.5, z);
+      g.add(m);
+      return { key, mesh: m, x, z, phase: r * TAU };
+    });
+
     const polesMesh = instanced(POLE, poleMat, poles, ([x, z], m) => m.makeTranslation(x, 0, z));
     const bulbs = instanced(BULB, bulbMat, poles, ([x, z, ax, az], m) => m.makeTranslation(x + (ax || 0) * 0.5, 4.6, z + (az || 0) * 0.5));
     if (polesMesh) g.add(polesMesh, bulbs);
     poles.forEach(([x, z, ax, az]) => lamps.push(new THREE.Vector3(x + (ax || 0) * 0.5, 4.3, z + (az || 0) * 0.5)));
 
     scene.add(g);
-    return { group: g, lamps };
+    return { group: g, lamps, ideas: ideaList };
   }
 
   function disposeChunk(c) {
@@ -686,7 +731,16 @@
   }
 
   // Cada zona tiene su luz: la playa tiene luna, en la nada no hay nada.
-  const ZONE_LIGHT = { 1: [0.16, 0.14, 58], 2: [0.2, 0.16, 70], 3: [0.22, 0.16, 62], 4: [0.42, 0.42, 110], 5: [0, 0, 200] };
+  // [cielo, luna, niebla lejos, color de cielo, color de suelo, color de niebla]
+  const ZONE_LIGHT = {
+    1: [0.22, 0.16, 64, 0x9aa4e8, 0x2a2018, 0x000000],
+    2: [0.24, 0.18, 74, 0x9aa4e8, 0x2a2018, 0x000000],
+    3: [0.28, 0.18, 66, 0xa8c0e0, 0x1e2a18, 0x000000],
+    4: [0.42, 0.42, 110, 0x8aa0ff, 0x10121a, 0x000000],
+    5: [0, 0, 200, 0x000000, 0x000000, 0x000000],
+    6: [0.5, 0.22, 70, 0xffb8d8, 0x1f4a3a, 0x1c2544]
+  };
+  const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
   function placeWorld(dt) {
     car.position.set(player.x, 0, player.z);
     car.rotation.y = player.heading;
@@ -697,6 +751,7 @@
     const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
     hemi.intensity += (z[0] - hemi.intensity) * k;
     moonLight.intensity += (z[1] - moonLight.intensity) * k;
+    hemi.color.lerp(_c1.set(z[3]), k); hemi.groundColor.lerp(_c2.set(z[4]), k); fog.color.lerp(_c3.set(z[5]), k);
     fog.far += ((state.view === "Arriba" ? 120 : z[2]) - fog.far) * k;
     fog.near = fog.far * 0.3;
     // Los faroles más cercanos se quedan con las luces.
@@ -705,7 +760,7 @@
     near.sort((a, b) => (a.x - player.x) ** 2 + (a.z - player.z) ** 2 - ((b.x - player.x) ** 2 + (b.z - player.z) ** 2));
     lampLights.forEach((l, i) => {
       const p = near[i];
-      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.intensity = 2.6; } else l.intensity = 0;
+      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.intensity = 2.3; } else l.intensity = 0;
     });
   }
 
@@ -729,6 +784,157 @@
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx === 0 || dy === 0) seen.add((cx + dx) + "," + (cz + dy));
   }
 
+  // --- Ideas: se juntan y te acompañan -----------------------------------------------------
+  // Quedan guardadas en este navegador: cuántas juntaste y cuáles, por ciudad.
+  let store = { total: 0, worlds: {} };
+  try {
+    const d = JSON.parse(localStorage.getItem("deriva-ideas") || "null");
+    if (d && typeof d.total === "number") store = { total: d.total, worlds: d.worlds || {} };
+  } catch (e) { /* sin almacenamiento */ }
+  const saveIdeas = () => { try { localStorage.setItem("deriva-ideas", JSON.stringify(store)); } catch (e) { /* sin almacenamiento */ } };
+  let collected = new Set();
+
+  // Las ideas que juntaste orbitan alrededor del auto: las ideas ocupan lugar.
+  const orbit = new THREE.Group();
+  scene.add(orbit);
+  const ORBIT_MAX = 18;
+  function syncOrbit() {
+    while (orbit.children.length < Math.min(ORBIT_MAX, store.total)) {
+      const i = orbit.children.length;
+      const m = new THREE.Mesh(IDEA_GEO, ideaMats[i % 4]);
+      m.scale.setScalar(0.42);
+      m.userData = { r: 2.7 + (i % 3) * 0.55, h: 1.1 + (i % 4) * 0.5, sp: 0.55 + (i % 5) * 0.13, ph: i * 2.39 };
+      orbit.add(m);
+    }
+  }
+  function placeOrbit() {
+    orbit.position.set(player.x, 0, player.z);
+    orbit.children.forEach(m => {
+      const u = m.userData, a = clock * u.sp + u.ph;
+      m.position.set(Math.cos(a) * u.r, u.h + Math.sin(clock * 1.3 + u.ph) * 0.25, Math.sin(a) * u.r);
+    });
+  }
+  function tickIdeas() {
+    chunks.forEach(c => c.ideas.forEach(it => {
+      if (it.taken) return;
+      it.mesh.position.y = 1.5 + Math.sin(clock * 1.6 + it.phase) * 0.3;
+      it.mesh.rotation.y = clock * 0.8 + it.phase;
+      const dx = it.x - player.x, dz = it.z - player.z;
+      if (dx * dx + dz * dz > 2.4 * 2.4) return;
+      it.taken = true;
+      it.mesh.visible = false;
+      collected.add(it.key);
+      store.total++;
+      (store.worlds[seed] = store.worlds[seed] || []).push(it.key);
+      saveIdeas();
+      syncOrbit();
+      message(store.total === 1 ? "UNA IDEA" : store.total + " IDEAS", 1.6);
+    }));
+  }
+
+  // --- La nada: el limbo, donde algo te mira ------------------------------------------------
+  const scleraMats = [0xf2eedc, 0xe8c2b8, 0xd8e0f0].map(c => new THREE.MeshBasicMaterial({ color: c, fog: false }));
+  const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000, fog: false });
+  const SCLERA = new THREE.SphereGeometry(1, 18, 12), PUPIL = new THREE.SphereGeometry(0.52, 14, 10);
+  const WHISPERS = ["IT'S STILL THERE", "IDEAS OCCUPY PLACE", "NO ONE GETS HURT", "NOT ME OR THEM", "THE HARLEQUIN LEFT", "IT SEEMED THAT EVERYTHING WAS GOING TO IMPROVE", "BUT IT'S STILL THERE"];
+  const watchers = [];
+  let voidTime = 0, voidK = 0, giant = null, starAmount = 1, whisper = null, nextWhisper = 0;
+
+  function makeWatcher(big) {
+    const g = new THREE.Group(), lids = new THREE.Group();
+    g.add(lids);
+    const r = Math.random(), n = big ? 1 : r < 0.14 ? 3 : r < 0.26 ? 1 : 2;
+    const sm = scleraMats[Math.floor(Math.random() * scleraMats.length)];
+    for (let i = 0; i < n; i++) {
+      const e = new THREE.Group();
+      e.add(new THREE.Mesh(SCLERA, sm));
+      const pupil = new THREE.Mesh(PUPIL, pupilMat);
+      pupil.position.z = 0.68;
+      e.add(pupil);
+      e.position.set((i - (n - 1) / 2) * 2.5, n === 3 && i === 1 ? 1.4 : 0, 0);
+      lids.add(e);
+    }
+    if (big) g.scale.setScalar(11);
+    // Aparecen atrás o al costado, nunca de frente: se ven cuando girás.
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const rel = big ? 0.15 : Math.random() < 0.7 ? side * (0.55 + Math.random() * 0.8) : side * (Math.PI - Math.random() * 0.8);
+    const w = {
+      g, lids, big, rel, open: 0, blinkAt: clock + 1 + Math.random() * 5,
+      angle: player.heading + rel,
+      dist: big ? 95 : 14 + Math.random() * 12, height: big ? 24 : 0.8 + Math.random() * 4
+    };
+    g.position.set(player.x + Math.cos(w.angle) * w.dist, w.height, player.z - Math.sin(w.angle) * w.dist);
+    scene.add(g);
+    return w;
+  }
+
+  function tickVoid(dt) {
+    const inVoid = currentZone === T.VOID && !state.map;
+    voidK += ((inVoid ? 1 : 0) - voidK) * Math.min(1, dt * 0.8);
+    voidTime = inVoid ? voidTime + dt : Math.max(0, voidTime - dt * 3);
+    starAmount = 1 - 0.96 * voidK;
+    const want = inVoid ? Math.min(14, Math.floor(voidTime / 2.5)) : 0;
+    if (watchers.length < want) watchers.push(makeWatcher(false));
+    if (inVoid && voidTime > 22 && !giant) giant = makeWatcher(true);
+    const all = giant ? watchers.concat([giant]) : watchers.slice();
+    all.forEach((w, i) => {
+      if (!w.big) {
+        // Se van metiendo hacia el centro de tu mirada. Si vas hacia ellos, retroceden y se corren.
+        const inFront = Math.abs(w.rel) < 0.32;
+        if (inFront && player.speed > 2) {
+          w.dist = Math.min(42, w.dist + dt * player.speed * 0.9);
+          w.rel += Math.sign(w.rel || 1) * dt * 0.25;
+        } else {
+          w.rel -= Math.sign(w.rel) * dt * 0.018;
+          w.dist += (15 - w.dist) * dt * 0.05;
+        }
+        w.rel += Math.sin(clock * 0.3 + i * 1.7) * dt * 0.02;
+      }
+      w.angle = player.heading + w.rel;
+      const tx = player.x + Math.cos(w.angle) * w.dist, tz = player.z - Math.sin(w.angle) * w.dist;
+      const lag = Math.min(1, dt * (w.big ? 0.5 : 0.9));
+      w.g.position.x += (tx - w.g.position.x) * lag;
+      w.g.position.z += (tz - w.g.position.z) * lag;
+      w.g.position.y = w.height + Math.sin(clock * 0.7 + i) * 0.3;
+      w.g.lookAt(camera.position);
+      // Abren los ojos de a poco, parpadean, y los cierran cuando te vas.
+      w.open += ((inVoid ? 1 : 0) - w.open) * Math.min(1, dt * (inVoid ? 1.2 : 4));
+      let lid = w.open;
+      if (clock > w.blinkAt) {
+        if (clock > w.blinkAt + 0.14) w.blinkAt = clock + 2 + Math.random() * 6;
+        else lid *= 0.06;
+      }
+      w.lids.scale.y = Math.max(0.02, lid);
+      if (!inVoid && w.open < 0.03) {
+        scene.remove(w.g);
+        if (w.big) giant = null; else watchers.splice(watchers.indexOf(w), 1);
+      }
+    });
+    // Los faros titilan, la cámara respira.
+    const flicker = voidK > 0.1 && Math.random() < 0.05 * voidK ? 0.12 : 1;
+    headBeams.forEach(b => { b.intensity = 2.1 * flicker; });
+    camera.fov = 56 + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
+    camera.updateProjectionMatrix();
+    // Susurros: frases sueltas que aparecen en cualquier lugar de la grilla.
+    if (inVoid && voidTime > 6 && clock > nextWhisper) {
+      const text = WHISPERS[Math.floor(Math.random() * WHISPERS.length)];
+      whisper = { text, r: 2 + Math.floor(Math.random() * Math.max(1, rows - 5)), c: 1 + Math.floor(Math.random() * Math.max(1, cols - text.length - 2)), until: clock + 2.2 };
+      nextWhisper = clock + 7 + Math.random() * 6;
+    }
+    if (!inVoid) whisper = null;
+  }
+
+  // En la nada la grilla se descompone: letras que no van y renglones corridos.
+  function glitch() {
+    const n = cols * rows, p = 0.006 * voidK;
+    for (let i = 0; i < n; i++) if (Math.random() < p) { CH[i] = RAMP[1 + Math.floor(Math.random() * (RAMP.length - 1))]; COL[i] = "#7a2b3c"; }
+    if (Math.random() < 0.05 * voidK) {
+      const r = 1 + Math.floor(Math.random() * (rows - 2)), sh = 1 + Math.floor(Math.random() * 3), o = r * cols;
+      const rowC = CH.slice(o, o + cols), rowK = COL.slice(o, o + cols);
+      for (let c = 0; c < cols; c++) { CH[o + c] = rowC[(c + sh) % cols]; COL[o + c] = rowK[(c + sh) % cols]; }
+    }
+  }
+
   function newWorld(s) {
     seed = s | 0;
     sx = (hash(seed, 1) - 0.5) * 4000; sy = (hash(seed, 2) - 0.5) * 4000;
@@ -736,6 +942,11 @@
     chunks.forEach(c => disposeChunk(c));
     chunks.clear();
     seen = new Set();
+    collected = new Set(store.worlds[seed] || []);
+    watchers.forEach(w => scene.remove(w.g));
+    watchers.length = 0;
+    if (giant) { scene.remove(giant.g); giant = null; }
+    voidTime = 0;
     // Arranca en una esquina del laberinto, mirando hacia una calle abierta.
     let start = null;
     for (let r = 0; r < 60 && !start; r++) for (let dy = -r; dy <= r && !start; dy++) for (let dx = -r; dx <= r; dx++) {
@@ -783,7 +994,7 @@
 
   function star(ci, ri, t) {
     const h = hash(ci * 7 + 3, ri * 13 + 9);
-    if (h <= 1 - 0.012 * 2.1) return -1;
+    if (h <= 1 - 0.012 * 2.1 * starAmount) return -1;
     const tw = 0.5 + 0.5 * Math.sin(t * (0.8 + h * 2.5) + h * 50);
     return 0.3 + 0.55 * hash(ci + 3, ri + 99) * (0.55 + 0.45 * tw);
   }
@@ -832,7 +1043,7 @@
   // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
   const MAP_STYLE = {
     [T.WALL]: ["##", "#e0463c"], [T.IVY]: ["&&", "#8fd26a"], [T.SEA]: ["~~", "#4a86e8"], [T.MONUMENT]: ["!!", "#e8e4f0"],
-    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"]
+    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"]
   };
   function automap() {
     CH.fill(null);
@@ -856,6 +1067,14 @@
     }
     const a = ((player.heading % TAU) + TAU) % TAU;
     const arrow = a < Math.PI / 4 || a > 7 * Math.PI / 4 ? ">" : a < 3 * Math.PI / 4 ? "^" : a < 5 * Math.PI / 4 ? "<" : "v";
+    // Las ideas que todavía no juntaste, cerca de lo recorrido.
+    chunks.forEach(ch => ch.ideas.forEach(it => {
+      if (it.taken) return;
+      const x = toCell(it.x), y = toCell(it.z), dx = x - px, dy = y - pz;
+      if (Math.abs(dx) >= halfW || Math.abs(dy) > halfH || !(isSeen(x, y) || isSeen(x + 1, y) || isSeen(x - 1, y) || isSeen(x, y + 1) || isSeen(x, y - 1))) return;
+      const i = (midR + dy) * cols + midC + dx * cw;
+      if (midR + dy >= 1 && midR + dy < rows - 1) { CH[i] = "*"; COL[i] = "#" + it.mesh.material.color.getHexString(); }
+    }));
     CH[midR * cols + midC] = arrow; COL[midR * cols + midC] = "#f2c200";
   }
 
@@ -869,9 +1088,17 @@
         COL[r * cols + c] = HUD;
       }
     };
-    write(ZONE_NAME[currentZone], 0, "left");
-    write((player.dist / 1000).toFixed(1).replace(".", ",") + " KM", 0, "right");
-    write(String(Math.round(player.speed * 3.6)).padStart(3, "0") + " KM/H", rows - 1, "left");
+    const scramble = text => voidK < 0.3 ? text : text.replace(/[^ ]/g, ch => Math.random() < 0.25 * voidK ? RAMP[1 + Math.floor(Math.random() * (RAMP.length - 1))] : ch);
+    write(scramble(ZONE_NAME[currentZone]), 0, "left");
+    write(scramble((player.dist / 1000).toFixed(1).replace(".", ",") + " KM"), 0, "right");
+    write(scramble(String(Math.round(player.speed * 3.6)).padStart(3, "0") + " KM/H"), rows - 1, "left");
+    write("IDEAS " + store.total, rows - 1, "right");
+    if (whisper && clock < whisper.until) {
+      for (let k = 0; k < whisper.text.length; k++) {
+        const i = whisper.r * cols + whisper.c + k;
+        if (whisper.text[k] !== " ") { CH[i] = whisper.text[k]; COL[i] = "#9a8fa8"; }
+      }
+    }
     if (msg && clock < msgUntil) {
       const pad = " " + msg + " ";
       const r = Math.floor(rows / 2);
@@ -977,6 +1204,7 @@
     clock += dt;
     water.uniforms.uTime.value = clock;
     if (!state.map) physics(dt);
+    tickIdeas();
     markSeen();
     trackZone();
     updateChunks(false);
@@ -984,8 +1212,10 @@
     const pdt = lastPaint ? Math.min(0.1, (ts - lastPaint) / 1000) : 0.033;
     lastPaint = ts;
     placeWorld(pdt);
+    placeOrbit();
+    tickVoid(pdt);
     placeCamera(pdt);
-    if (state.map) automap(); else shade();
+    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); }
     hud();
     paint();
   }
@@ -996,6 +1226,7 @@
   setOpt("view", state.view);
   layout();
   newWorld(700);
+  syncOrbit();
   const start = () => { layout(); requestAnimationFrame(loop); };
   if (document.fonts && document.fonts.load) document.fonts.load('16px "IBM Plex Mono"', "abc").then(start, start);
   else start();

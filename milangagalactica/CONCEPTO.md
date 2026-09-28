@@ -181,6 +181,20 @@ vacío.
 - **Las ideas ocupan lugar:** objetos cotidianos en órbita (concepto 2 del
   README) leídos como ideas con volumen.
 
+## Deriva (el juego)
+
+Manejar el Arlequín de noche por una ciudad que no se termina, sin destino.
+
+- **Laberinto:** el barrio, amigable, con faroles y ventanas prendidas.
+- **Avenidas, plazas, playa:** respiros dentro del laberinto.
+- **Bosque:** Abstract Landscapes. Árboles que se atraviesan, esferas y
+  enredaderas flotando, haces de luz, luciérnagas.
+- **La nada:** el limbo. Sin piso y sin estrellas. Ojos que te miran y te
+  siguen sin hacerte nada; la grilla se descompone y aparecen fragmentos
+  de la génesis ("it's still there", "ideas occupy place").
+- **Ideas:** lo que se junta. Las que juntás orbitan alrededor del auto,
+  porque las ideas ocupan lugar.
+
 ## Para charlar
 
 - Traer la segunda foto de Moreno (la de Instagram) para tener el par.
