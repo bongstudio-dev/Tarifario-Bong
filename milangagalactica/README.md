@@ -13,6 +13,10 @@ abre la búsqueda de conceptos. La técnica no se toca; lo que sigue son ideas.
 | `arlequin-ascii.html` | Primera prueba del Arlequín con la misma técnica: cuatro escenas, arranca en modo Color | https://claude.ai/artifact/T2r7fWLWxU8UJ5FGRZRRTU |
 | `deriva.html` | Deriva: el Arlequín maneja de noche por una ciudad infinita (laberinto, avenidas, plazas, bosque, playa y la nada); la luz se gasta y se junta | https://claude.ai/artifact/JKjksFR9wwbNTdnKw2mtud |
 
+Pendiente: migrar `deriva.html` a una página https propia (fuera de claude.ai)
+para que ande el giroscopio del celu. Se probó un rato en el sitio del
+cotizador (#32) y se bajó (#33).
+
 Los dos archivos abren solos en el navegador. El 3D necesita internet para
 cargar Three.js (r128, desde cdnjs) y la fuente IBM Plex Mono (Google Fonts).
 

@@ -70,6 +70,21 @@
     .pad-group { flex-direction: column; }
   }
   .stage:fullscreen { background: var(--bg); padding: 8px; }
+  /* Pantalla llena propia: sirve aunque el navegador no tenga pantalla completa (iPhone). */
+  body.full { overflow: hidden; }
+  body.full header, body.full .opts { display: none; }
+  body.full .stage {
+    position: fixed; inset: 0; z-index: 10; background: var(--bg);
+    flex-direction: row; justify-content: center; align-items: center; gap: 10px;
+    padding: max(6px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+  }
+  body.full .pad { display: flex; width: auto; flex-direction: column; flex-wrap: nowrap; align-self: stretch; justify-content: space-between; }
+  body.full .pad-group { flex-direction: column; }
+  @media (orientation: portrait) {
+    body.full .stage { flex-direction: column; }
+    body.full .pad { flex-direction: row; flex-wrap: wrap; width: 100%; align-self: auto; }
+    body.full .pad-group { flex-direction: row; }
+  }
 </style>
 
 <div class="wrap">
@@ -108,7 +123,7 @@
   const RAMP = " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
   const STAR_CHARS = ".+*";
   const ADJ = { amount: 0.6, contrast: 1.8, exposure: 0.9, gamma: 2, threshold: 0.17 };
-  const DENSITY = { "Baja": 60, "Media": 90, "Alta": 120 };
+  const DENSITY = { "Baja": 60, "Intermedia": 75, "Media": 90, "Alta": 120 };
   const MODES = { "Color": null, "Tinta": "#e9e5f0" };
   const SS = 2;
   const TAU = Math.PI * 2;
@@ -299,7 +314,7 @@
 
   // --- Estado ------------------------------------------------------------------
   const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-  const state = { density: window.innerWidth < 700 || touchDevice ? "Baja" : "Media", mode: "Color", view: "Atrás", map: false };
+  const state = { density: "Intermedia", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
   // --- WebGL -------------------------------------------------------------------
@@ -1292,10 +1307,12 @@
     CH = new Array(N); COL = new Array(N);
     camera.aspect = ratio;
     camera.updateProjectionMatrix();
-    const phoneLandscape = window.matchMedia("(orientation: landscape) and (max-height: 540px)").matches;
-    const padW = phoneLandscape && !window.matchMedia("(hover: hover) and (pointer: fine)").matches ? 150 : 0;
-    const avail = phoneLandscape ? window.innerWidth - padW - 34 : (canvas.parentElement.clientWidth || 800);
-    const maxH = phoneLandscape ? window.innerHeight - 16 : Math.max(260, window.innerHeight * (narrow ? 0.62 : 0.72));
+    const full = document.body.classList.contains("full");
+    const landscape = window.innerWidth > window.innerHeight;
+    const phoneLandscape = full ? landscape : window.matchMedia("(orientation: landscape) and (max-height: 540px)").matches;
+    const padW = (phoneLandscape && !window.matchMedia("(hover: hover) and (pointer: fine)").matches) || (full && landscape) ? 150 : 0;
+    const avail = full && !landscape ? window.innerWidth - 16 : phoneLandscape ? window.innerWidth - padW - 34 : (canvas.parentElement.clientWidth || 800);
+    const maxH = full ? window.innerHeight - (landscape ? 16 : 220) : phoneLandscape ? window.innerHeight - 16 : Math.max(260, window.innerHeight * (narrow ? 0.62 : 0.72));
     const w = Math.min(avail, maxH * ratio);
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.style.width = w + "px";
@@ -1540,12 +1557,17 @@
   canvas.addEventListener("pointercancel", release);
 
   // Pantalla completa y horizontal, donde se pueda.
-  document.getElementById("pad-full").addEventListener("click", async () => {
-    const stage = document.querySelector(".stage");
+  const fullBtn = document.getElementById("pad-full");
+  fullBtn.addEventListener("click", async () => {
+    const on = !document.body.classList.contains("full");
+    document.body.classList.toggle("full", on);
+    fullBtn.textContent = on ? "Salir" : "Pantalla completa";
+    fullBtn.setAttribute("aria-pressed", String(on));
+    // Si el navegador tiene pantalla completa de verdad, la usa además; si no, alcanza con tapar la página.
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else { await stage.requestFullscreen(); try { await screen.orientation.lock("landscape"); } catch (e) { /* no se puede bloquear */ } }
-    } catch (e) { /* sin pantalla completa */ }
+      if (!on && document.fullscreenElement) await document.exitFullscreen();
+      else if (on && document.documentElement.requestFullscreen) { await document.documentElement.requestFullscreen(); try { await screen.orientation.lock("landscape"); } catch (e) { /* no se puede bloquear */ } }
+    } catch (e) { /* sin pantalla completa del navegador */ }
     setTimeout(layout, 200);
   });
   document.addEventListener("fullscreenchange", () => setTimeout(layout, 200));
