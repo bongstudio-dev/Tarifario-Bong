@@ -318,8 +318,8 @@
     // En el monte la avenida se vuelve ruta: sube y baja a lo largo, y a los costados
     // se levantan paredes de montaña que después se funden con el resto del monte.
     const wave = 4.9 + 2.6 * Math.sin(along / 5.5 + sx * 0.01) + 1.4 * Math.sin(along / 2.1 + 1.3) + 0.6 * Math.sin(along / 0.9);
-    const walls = sstep(2.2, 5.5, d) * (1 - sstep(8, 12, d)) * 16;
-    const k = sstep(1.4, 3.2, d);
+    const walls = sstep(1.3, 4.5, d) * (1 - sstep(8, 12, d)) * 16;
+    const k = sstep(0.55, 1.9, d);
     return (wave * (1 - k) + Math.max(wave, hills + walls) * k) * mask;
   }
 
@@ -330,7 +330,7 @@
     // El monte rodea a la nada: para llegar al abismo hay que cruzarlo.
     const f = monteNoise(x, y);
     if (f > 0.69) return T.VOID;
-    if (f > 0.58) return roadInfo(x + 0.5, y + 0.5)[0] < 1.55 ? T.ROAD : heightAt(x + 0.5, y + 0.5) > 1 ? T.MOUNTAIN : T.FOREST;
+    if (f > 0.58) return roadInfo(x + 0.5, y + 0.5)[0] < 0.6 ? T.ROAD : heightAt(x + 0.5, y + 0.5) > 1 ? T.MOUNTAIN : T.FOREST;
     return 0;
   }
   function cellType(x, y) {
@@ -499,8 +499,12 @@
     return inst;
   }
 
+  // El mundo se degenera a medida que se genera: cada pedazo nuevo sale un poco más roto.
+  let generated = 0;
+  const DEGEN_COLORS = [0xff2a3a, 0x2f6bff, 0xffc21a, 0x2fd85a, 0x7a2b3c];
   function buildChunk(cx, cy) {
     const g = new THREE.Group();
+    const degen = clamp((generated++ - 9) / 110, 0, 1);
     const lamps = [];
     const fp = [], fc = [];
     const quad = (x0, z0, x1, z1, y, c) => {
@@ -526,12 +530,13 @@
         }
         continue;
       }
-      quad(x0, z0, x0 + CELL, z0 + CELL, 0, FLOOR_COLORS[t]);
+      // Baldosas que faltan: se ve el vacío abajo.
+      if (!(degen > 0 && hs(x, y, 140) < degen * 0.22 && t !== T.MONUMENT)) quad(x0, z0, x0 + CELL, z0 + CELL, 0, FLOOR_COLORS[t]);
       if (t === T.STREET || t === T.AVENUE) {
         // Donde la calle termina (un edificio, el mar, la nada) va una línea y un mojón.
         const edge = (a, b) => { const n = cellType(x + a, y + b); return SOLID(n) || n === T.VOID; };
         const along = [1.33, 4, 6.67];
-        if (edge(1, 0)) { quad(x0 + 7.35, z0, x0 + 7.5, z0 + CELL, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + 6.9, z0 + a])); }
+        if (hs(x, y, 150) < degen * 0.5) { /* tachas que faltan */ } else if (edge(1, 0)) { quad(x0 + 7.35, z0, x0 + 7.5, z0 + CELL, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + 6.9, z0 + a])); }
         if (edge(-1, 0)) { quad(x0 + 0.5, z0, x0 + 0.65, z0 + CELL, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + 1.1, z0 + a])); }
         if (edge(0, 1)) { quad(x0, z0 + 7.35, x0 + CELL, z0 + 7.5, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + a, z0 + 6.9])); }
         if (edge(0, -1)) { quad(x0, z0 + 0.5, x0 + CELL, z0 + 0.65, 0.02, 0xbdb6a6); along.forEach(a => studs.push([x0 + a, z0 + 1.1])); }
@@ -575,12 +580,20 @@
       } else if (t === T.ROAD) {
         // La ruta: tachas ámbar en los bordes y blancas en el centro, siguiendo las lomas.
         const vert = Math.abs(mod(x + 0.5 - 1.5 + 13, 26) - 13) < Math.abs(mod(y + 0.5 - 1.5 + 11, 22) - 11);
-        const m = vert ? mod(x, 26) : mod(y, 22), at = (px, pz) => [px, pz, groundAt(px, pz)];
+        const at = (px, pz) => [px, pz, groundAt(px, pz)];
+        // Un solo carril: tachas ámbar en los dos bordes y blancas al medio.
         [1.33, 4, 6.67].forEach(a => {
-          if (m === 0) studs.push(vert ? at(x0 + 0.9, z0 + a) : at(x0 + a, z0 + 0.9));
-          if (m === 2) studs.push(vert ? at(x0 + 7.1, z0 + a) : at(x0 + a, z0 + 7.1));
+          if (hs(x, y, 120 + Math.round(a)) < degen * 0.5) return;
+          studs.push(vert ? at(x0 + 0.7, z0 + a) : at(x0 + a, z0 + 0.7));
+          studs.push(vert ? at(x0 + 7.3, z0 + a) : at(x0 + a, z0 + 7.3));
         });
-        if (m === 1) [2, 6].forEach(a => midStuds.push(vert ? at(x0 + 4, z0 + a) : at(x0 + a, z0 + 4)));
+        [2, 6].forEach(a => midStuds.push(vert ? at(x0 + 4, z0 + a) : at(x0 + a, z0 + 4)));
+        // Alumbrado público: una columna por cuadra, alternando de lado.
+        const along = vert ? y : x, side = mod(along, 2) ? 1 : -1;
+        if (hs(x, y, 130) > degen * 0.4) {
+          const px = vert ? x0 + 4 + side * 4.6 : x0 + 4, pz = vert ? z0 + 4 : z0 + 4 + side * 4.6;
+          poles.push([px, pz, vert ? -side : 0, vert ? 0 : -side, groundAt(px, pz) - 0.2]);
+        }
       } else if (t === T.MONUMENT) {
         monuments.push([x0 + 4, z0 + 4]);
       } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
@@ -603,8 +616,13 @@
     }
     Object.keys(byFloors).forEach(f => {
       const list = byFloors[f];
-      const inst = instanced(BOX, buildingMat(+f), list, ([x0, z0], m) => m.makeScale(CELL, f * 3.2, CELL).setPosition(x0 + 4, 0, z0 + 4));
-      list.forEach(([, , c], i) => inst.setColorAt(i, col.set(c)));
+      // Con la degeneración los edificios se inclinan, se hunden y cambian de color.
+      const inst = instanced(BOX, buildingMat(+f), list, ([x0, z0], m) => {
+        const r1 = hash(x0 * 3 + 1, z0 * 7 + 2), r2 = hash(x0 * 5 + 3, z0 * 3 + 9), r3 = hash(x0 + 11, z0 + 13);
+        q4.setFromAxisAngle(p3.set(r1 - 0.5, 0, r2 - 0.5).normalize(), degen * 0.45 * r3);
+        m.compose(p3.set(x0 + 4, -degen * 6 * r2 * r3, z0 + 4), q4, s3.set(CELL, f * 3.2 * (1 - degen * 0.4 * r1), CELL));
+      });
+      list.forEach(([x0, z0, c], i) => inst.setColorAt(i, col.set(hash(x0 + 17, z0 + 19) < degen * 0.3 ? DEGEN_COLORS[Math.floor(hash(x0, z0 + 5) * 5)] : c)));
       g.add(inst);
     });
     const ivy = instanced(IVY_GEO, ivyMat, ivies, ([x, z, r], m) => {
@@ -635,7 +653,7 @@
       if (a + b + c + d < 0.05) continue;
       const X = cx * CHUNK * CELL + i * STEP, Z = cy * CHUNK * CELL + j * STEP;
       const v = [[X, a, Z], [X, c, Z + STEP], [X + STEP, b, Z], [X + STEP, b, Z], [X, c, Z + STEP], [X + STEP, d, Z + STEP]];
-      if (roadInfo((X + 1) / CELL, (Z + 1) / CELL)[0] < 1.5) col.set(0x3c3c4c);
+      if (roadInfo((X + 1) / CELL, (Z + 1) / CELL)[0] < 0.55) col.set(0x3c3c4c);
       else hcol((a + b + c + d) / 4 + (hash(i + cx * 97, j + cy * 89) - 0.5) * 3);
       v.forEach(([px, py, pz]) => { hp.push(px, py + 0.03, pz); hc.push(col.r, col.g, col.b); });
     }
@@ -661,13 +679,15 @@
       return { key, mesh: m, x, z, base, phase: r * TAU };
     });
 
-    const polesMesh = instanced(POLE, poleMat, poles, ([x, z], m) => m.makeTranslation(x, 0, z));
-    const bulbs = instanced(BULB, bulbMat, poles, ([x, z, ax, az], m) => m.makeTranslation(x + (ax || 0) * 0.5, 4.6, z + (az || 0) * 0.5));
+    const polesMesh = instanced(POLE, poleMat, poles, ([x, z, , , y], m) => m.makeTranslation(x, y || 0, z));
+    const bulbs = instanced(BULB, bulbMat, poles, ([x, z, ax, az, y], m) => m.makeTranslation(x + (ax || 0) * 0.5, (y || 0) + 4.6, z + (az || 0) * 0.5));
     if (polesMesh) g.add(polesMesh, bulbs);
-    poles.forEach(([x, z, ax, az]) => lamps.push(new THREE.Vector3(x + (ax || 0) * 0.5, 4.3, z + (az || 0) * 0.5)));
+    poles.forEach(([x, z, ax, az, y]) => lamps.push(new THREE.Vector3(x + (ax || 0) * 0.5, (y || 0) + 4.3, z + (az || 0) * 0.5)));
 
+    // Nace desde el piso.
+    g.scale.y = 0.001;
     scene.add(g);
-    return { group: g, lamps, ideas: ideaList };
+    return { group: g, lamps, ideas: ideaList, born: clock };
   }
 
   function disposeChunk(c) {
@@ -675,11 +695,22 @@
     c.group.children.forEach(o => { if (o.userData.own) o.geometry.dispose(); if (o.isInstancedMesh && o.dispose) o.dispose(); });
   }
 
+  const dying = [];
+  function tickChunks() {
+    chunks.forEach(c => { if (c.group.scale.y < 1) c.group.scale.y = Math.max(0.001, sstep(0, 1.4, clock - c.born)); });
+    for (let i = dying.length - 1; i >= 0; i--) {
+      const c = dying[i], k = 1 - sstep(0, 1.6, clock - c.dying);
+      c.group.scale.y = Math.max(0.001, k);
+      c.group.position.y = -(1 - k) * 3;
+      if (k <= 0) { disposeChunk(c); dying.splice(i, 1); }
+    }
+  }
   function updateChunks(all) {
     const pcx = Math.floor(toCell(player.x) / CHUNK), pcy = Math.floor(toCell(player.z) / CHUNK);
     const want = new Set();
     for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) want.add((pcx + a) + "," + (pcy + b));
-    chunks.forEach((c, k) => { if (!want.has(k)) { disposeChunk(c); chunks.delete(k); } });
+    // Lo que queda atrás no se borra de golpe: se hunde y desaparece.
+    chunks.forEach((c, k) => { if (!want.has(k)) { c.dying = clock; dying.push(c); chunks.delete(k); } });
     for (const k of want) {
       if (chunks.has(k)) continue;
       const [a, b] = k.split(",").map(Number);
@@ -1227,6 +1258,8 @@
     cache.clear();
     chunks.forEach(c => disposeChunk(c));
     chunks.clear();
+    dying.forEach(c => disposeChunk(c)); dying.length = 0;
+    generated = 0;
     seen = new Set();
     collected.clear();
     watchers.forEach(w => scene.remove(w.g));
@@ -1248,6 +1281,7 @@
     player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0;
     currentZone = 1;
     updateChunks(true);
+    chunks.forEach(c => { c.group.scale.y = 1; });
     camSnap = true;
     // El primer orbe queda justo adelante: la primera cosa que se aprende es juntar luz.
     const ox = player.x + Math.cos(player.heading) * 13, oz = player.z - Math.sin(player.heading) * 13;
@@ -1752,6 +1786,7 @@
     markSeen();
     trackZone();
     updateChunks(false);
+    tickChunks();
     if (ts - lastPaint < 33) return;
     const pdt = lastPaint ? Math.min(0.1, (ts - lastPaint) / 1000) : 0.033;
     lastPaint = ts;
