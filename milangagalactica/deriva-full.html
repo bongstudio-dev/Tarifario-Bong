@@ -336,7 +336,7 @@
 
   // --- Estado ------------------------------------------------------------------
   const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-  const state = { assist: true, auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
+  const state = { dist: "Media", assist: true, auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
   // --- WebGL -------------------------------------------------------------------
@@ -392,7 +392,7 @@
   car.add(rearFill, rearFill.target);
 
   // Faroles: pocas luces reales que se mudan a los faroles más cercanos al auto.
-  const LAMP_LIGHTS = 8;
+  const LAMP_LIGHTS = 5;
   const lampLights = [];
   for (let i = 0; i < LAMP_LIGHTS; i++) {
     const l = new THREE.PointLight(0xffb45c, 0, 24, 1.4);
@@ -945,6 +945,24 @@
   }
 
   const dying = [];
+  const DIST = { "Corta": 0.55, "Media": 0.8, "Larga": 1.1 };
+  const _frustum = new THREE.Frustum(), _pm = new THREE.Matrix4(), _box = new THREE.Box3(), _v = new THREE.Vector3();
+  // Los objetos repetidos (edificios, pasto, postes) nunca se descartan solos en este motor:
+  // se decide acá, por pedazo entero, antes de dibujar.
+  function cullChunks() {
+    camera.updateMatrixWorld();
+    _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    _frustum.setFromProjectionMatrix(_pm);
+    const far = fog.far + 24, S = CHUNK * CELL;
+    const test = c => {
+      const [a, b] = c.key;
+      _box.min.set(a * S, -8, b * S); _box.max.set(a * S + S, 90, b * S + S);
+      const near = _box.distanceToPoint(camera.position);
+      c.group.visible = near < far && _frustum.intersectsBox(_box);
+    };
+    chunks.forEach(test);
+    dying.forEach(test);
+  }
   function tickChunks() {
     chunks.forEach(c => { if (c.group.scale.y < 1) c.group.scale.y = Math.max(0.001, sstep(0, 1.4, clock - c.born)); });
     for (let i = dying.length - 1; i >= 0; i--) {
@@ -963,7 +981,7 @@
     for (const k of want) {
       if (chunks.has(k)) continue;
       const [a, b] = k.split(",").map(Number);
-      chunks.set(k, buildChunk(a, b));
+      const nc = buildChunk(a, b); nc.key = [a, b]; chunks.set(k, nc);
       if (!all) break; // uno por cuadro, para que no se trabe
     }
   }
@@ -1198,7 +1216,7 @@
     hemi.intensity += (z[0] - hemi.intensity) * k;
     moonLight.intensity += (z[1] - moonLight.intensity) * k;
     hemi.color.lerp(_c1.set(z[3]), k); hemi.groundColor.lerp(_c2.set(z[4]), k); fog.color.lerp(_c3.set(z[5]), k);
-    fog.far += ((state.view === "Arriba" ? 120 : z[2]) - fog.far) * k;
+    fog.far += ((state.view === "Arriba" ? 120 : z[2] * DIST[state.dist]) - fog.far) * k;
     fog.near = fog.far * 0.3;
     // Los faroles más cercanos se quedan con las luces.
     const near = [];
@@ -1612,6 +1630,7 @@
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(bw * dpr);
     canvas.height = Math.round(bh * dpr);
+    fontFor = { w: 0, px: 0 };
   }
 
   function star(ci, ri, t) {
@@ -1621,15 +1640,50 @@
     return 0.3 + 0.55 * hash(ci + 3, ri + 99) * (0.55 + 0.45 * tw);
   }
 
+  // Lectura asíncrona: se pide la imagen de este cuadro y se usa la del cuadro anterior,
+  // así el procesador no se queda esperando a la placa de video.
+  const gl = renderer.getContext(), GL2 = renderer.capabilities.isWebGL2;
+  const pbo = [null, null];
+  let pboI = 0;
+  function readPixelsAsync(W, H) {
+    if (!GL2) { renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf); return; }
+    const size = W * H * 4;
+    let cur = pbo[pboI];
+    if (!cur || cur.size !== size) {
+      if (cur) gl.deleteBuffer(cur.b);
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, b);
+      gl.bufferData(gl.PIXEL_PACK_BUFFER, size, gl.STREAM_READ);
+      cur = pbo[pboI] = { b, size, ready: false };
+    }
+    // Se pide este cuadro al buffer actual...
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, cur.b);
+    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+    cur.ready = true;
+    // ...y se usa el del cuadro anterior, que la placa ya terminó. El primer cuadro lee el actual.
+    const prev = pbo[1 - pboI];
+    const src = prev && prev.ready && prev.size === size ? prev : cur;
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, src.b);
+    gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buf);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    pboI = 1 - pboI;
+  }
+  const RGB_CACHE = new Array(32 * 32 * 32);
+  // 32 niveles por canal: a la vista es igual y permite juntar letras del mismo color.
+  const rgbStr = (r, g, b) => {
+    const k = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+    return RGB_CACHE[k] || (RGB_CACHE[k] = "rgb(" + ((r >> 3) << 3 | 4) + "," + ((g >> 3) << 3 | 4) + "," + ((b >> 3) << 3 | 4) + ")");
+  };
   let exposureNow = ADJ.exposure;
   function shade() {
     exposureNow = ending && ending.t > 5 ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
     const W = cols * SS, H = rows * SS;
+    cullChunks();
     renderer.setRenderTarget(rt);
     renderer.clear();
     // En el final se ve solo el Arlequín girando en el negro.
     if (ending && ending.t > 5) renderer.render(endScene, endCam); else renderer.render(scene, camera);
-    renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf);
+    readPixelsAsync(W, H);
     renderer.setRenderTarget(null);
     const steps = RAMP.length - 1, ink = MODES[state.mode];
     for (let ri = 0; ri < rows; ri++) {
@@ -1652,7 +1706,7 @@
         CH[i] = RAMP[q];
         if (ink) { COL[i] = ink; continue; }
         const m = Math.max(r, g, b) || 1, kk = (150 + 105 * (q / steps)) / m;
-        COL[i] = "rgb(" + Math.min(255, r * kk | 0) + "," + Math.min(255, g * kk | 0) + "," + Math.min(255, b * kk | 0) + ")";
+        COL[i] = rgbStr(Math.min(255, r * kk | 0), Math.min(255, g * kk | 0), Math.min(255, b * kk | 0));
       }
     }
     // Cielo: estrellas quietas solo donde no hay nada adelante.
@@ -1773,19 +1827,38 @@
     }
   }
 
+  // La letra se ajusta para que su avance mida exactamente una celda; así cada tramo del mismo
+  // color se dibuja de una sola vez y queda alineado a la grilla.
+  const FONT = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+  let fontFor = { w: 0, px: 0 };
   function paint() {
     const cw = canvas.width / cols, chh = canvas.height / rows;
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = chh.toFixed(2) + 'px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
-    ctx.textAlign = "center";
+    if (fontFor.w !== cw) {
+      ctx.font = '100px ' + FONT;
+      const adv = ctx.measureText("MMMMMMMMMM").width / 1000;
+      fontFor = { w: cw, px: Math.min(chh * 1.05, cw / adv) };
+    }
+    ctx.font = fontFor.px.toFixed(2) + 'px ' + FONT;
+    ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    let last = "";
-    for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) {
-      const i = ri * cols + ci, ch = CH[i];
-      if (!ch) continue;
-      if (COL[i] !== last) { ctx.fillStyle = COL[i]; last = COL[i]; }
-      ctx.fillText(ch, (ci + 0.5) * cw, (ri + 0.5) * chh);
+    for (let ri = 0; ri < rows; ri++) {
+      const y = (ri + 0.5) * chh, o = ri * cols;
+      let start = -1, color = null, run = "";
+      for (let ci = 0; ci <= cols; ci++) {
+        const ch = ci < cols ? CH[o + ci] : null;
+        const c = ch ? COL[o + ci] : null;
+        if (ch && start >= 0 && c === color) { run += ch; continue; }
+        if (ch && start >= 0 && c !== color) {
+          ctx.fillStyle = color; ctx.fillText(run, start * cw, y);
+          start = ci; color = c; run = ch; continue;
+        }
+        if (ch) { start = ci; color = c; run = ch; continue; }
+        // Celda vacía: sigue el tramo con un espacio, salvo al final de la fila.
+        if (start >= 0 && ci < cols) { run += " "; continue; }
+        if (start >= 0) { ctx.fillStyle = color; ctx.fillText(run.replace(/ +$/, ""), start * cw, y); start = -1; run = ""; }
+      }
     }
   }
 
@@ -1827,6 +1900,7 @@
       { label: "FRENO AUTO", value: state.assist ? "SÍ" : "NO", act: () => { state.assist = !state.assist; } },
       { label: "CÁMARA", value: state.view.toUpperCase(), act: () => setOpt("view", cyc(VIEWS, state.view)) },
       { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(Object.keys(DENSITY), state.density)) },
+      { label: "DISTANCIA", value: state.dist.toUpperCase(), act: () => { state.dist = cyc(Object.keys(DIST), state.dist); } },
       { label: "MODO", value: state.mode.toUpperCase(), act: () => setOpt("mode", cyc(Object.keys(MODES), state.mode)) },
       { label: "GIROSCOPIO", value: gyro.on ? "SÍ" : gyroBtn.dataset.failed ? "NO HAY" : "NO", act: () => gyroBtn.click() },
       { label: "MAPA", value: state.map ? "SÍ" : "NO", act: () => setOpt("map", !state.map) },
