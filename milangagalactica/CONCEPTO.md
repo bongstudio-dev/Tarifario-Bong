@@ -200,6 +200,9 @@ Manejar el Arlequín de noche por una ciudad que no se termina, sin destino.
   auto (encendidos, la que tenés; apagados, lo que te falta). Sin luz,
   el limbo llega a cualquier lado: aparecen los ojos aunque estés en la
   ciudad.
+- **La ruta de noche:** líneas pintadas al borde de las calles y mojones
+  que brillan apenas, como los ojos de gato. Aunque esté oscuro se ve por
+  dónde sigue el camino. En la nada no hay: ahí perderse es la idea.
 - **Sin explicaciones:** nada de textos ni contadores. El arranque enseña:
   un farol al lado, un orbe justo adelante y una flecha que titila hasta
   que te movés.
