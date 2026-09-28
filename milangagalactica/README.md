@@ -11,7 +11,7 @@ abre la búsqueda de conceptos. La técnica no se toca; lo que sigue son ideas.
 | `ascii-3d.html` | La técnica final: escenas 3D en WebGL dibujadas con caracteres, con panel de ajustes y linterna | https://claude.ai/artifact/2ReTYHQQrGyt5vmZDB32LW |
 | `ascii-2d.html` | La serie 2D anterior. La escena "Órbita" fue la que abrió el camino | https://claude.ai/artifact/DJid3R1uLU7DGS2QBuvzNc |
 | `arlequin-ascii.html` | Primera prueba del Arlequín con la misma técnica: cuatro escenas, arranca en modo Color | https://claude.ai/artifact/T2r7fWLWxU8UJ5FGRZRRTU |
-| `deriva.html` | Deriva: el Arlequín maneja de noche por una ciudad infinita (laberinto, avenidas, plazas, bosque, playa y la nada), juntando ideas | https://claude.ai/artifact/JKjksFR9wwbNTdnKw2mtud |
+| `deriva.html` | Deriva: el Arlequín maneja de noche por una ciudad infinita (laberinto, avenidas, plazas, bosque, playa y la nada); la luz se gasta y se junta | https://claude.ai/artifact/JKjksFR9wwbNTdnKw2mtud |
 
 Los dos archivos abren solos en el navegador. El 3D necesita internet para
 cargar Three.js (r128, desde cdnjs) y la fuente IBM Plex Mono (Google Fonts).

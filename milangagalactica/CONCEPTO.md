@@ -192,8 +192,15 @@ Manejar el Arlequín de noche por una ciudad que no se termina, sin destino.
 - **La nada:** el limbo. Sin piso y sin estrellas. Ojos que te miran y te
   siguen sin hacerte nada; la grilla se descompone y aparecen fragmentos
   de la génesis ("it's still there", "ideas occupy place").
-- **Ideas:** lo que se junta. Las que juntás orbitan alrededor del auto,
-  porque las ideas ocupan lugar.
+- **Luz:** la economía del juego, porque la luz es lo central de la obra.
+  Se gasta al manejar (más rápido en la nada), se junta en orbes y se
+  recarga despacio bajo los faroles, la luz de la gente. La que llevás se
+  ve como puntos que orbitan el auto y en la fuerza de los faros. Sin luz,
+  el limbo llega a cualquier lado: aparecen los ojos aunque estés en la
+  ciudad.
+- **Sin explicaciones:** nada de textos ni contadores. El arranque enseña:
+  un farol al lado, un orbe justo adelante y una flecha que titila hasta
+  que te movés.
 
 ## Para charlar
 

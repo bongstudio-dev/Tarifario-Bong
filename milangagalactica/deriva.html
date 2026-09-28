@@ -31,7 +31,6 @@
   header { display: flex; flex-direction: column; gap: 8px; max-width: 68ch; }
   .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--sun); margin: 0; }
   h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 500; line-height: 1.1; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
-  header p { margin: 0; color: var(--muted); }
 
   .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
   canvas#game { display: block; max-width: 100%; border-radius: 3px; background: var(--plate); touch-action: none; outline: none; }
@@ -43,7 +42,9 @@
     font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
     -webkit-user-select: none; user-select: none; touch-action: none;
   }
-  .pad button { min-width: 64px; min-height: 56px; padding: 0 16px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  .pad button { min-width: 72px; min-height: 60px; padding: 0 16px; font-size: 18px; }
+  /* Con mouse y teclado no hacen falta botones en pantalla. */
+  @media (hover: hover) and (pointer: fine) { .pad { display: none; } }
   .pad button[data-down="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; border-block: 1px solid var(--line); width: 100%; }
   .ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -56,46 +57,30 @@
   .pad button:focus-visible, .opts button:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
   @media (hover: hover) { .opts button:hover, .pad button:hover { border-color: var(--muted); } }
 
-  .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 28px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
-  .keys kbd { font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
-  footer { color: var(--muted); font-size: 12px; max-width: 68ch; display: flex; flex-direction: column; gap: 8px; }
-  footer p { margin: 0; }
   .nogl { padding: 16px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
 </style>
 
 <div class="wrap">
   <header>
-    <p class="eyebrow">milangagalactica · Arlequín</p>
+    <p class="eyebrow">milangagalactica</p>
     <h1>Deriva</h1>
-    <p>Manejá el Arlequín de noche, sin destino. La ciudad es un laberinto que no se termina: cada tanto se abre una avenida, una plaza, un bosque o la playa. A veces se termina todo y quedás andando en la nada. Ahí no estás solo. Por el camino flotan ideas: las que juntás se quedan con vos.</p>
   </header>
 
   <div class="stage">
-    <canvas id="game" tabindex="0" role="img" aria-label="Juego en caracteres: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
+    <canvas id="game" tabindex="0" role="img" aria-label="Deriva: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
     <div class="pad" id="pad">
       <div class="pad-group">
         <button type="button" id="pad-left" data-key="left" aria-label="Doblar a la izquierda">◀</button>
         <button type="button" id="pad-right" data-key="right" aria-label="Doblar a la derecha">▶</button>
       </div>
       <div class="pad-group">
-        <button type="button" id="pad-brake" data-key="down">Freno</button>
-        <button type="button" id="pad-gas" data-key="up">Acelerar</button>
+        <button type="button" id="pad-brake" data-key="down" aria-label="Frenar">▼</button>
+        <button type="button" id="pad-gas" data-key="up" aria-label="Acelerar">▲</button>
       </div>
     </div>
     <div class="opts" id="opts"></div>
   </div>
 
-  <ul class="keys">
-    <li><kbd>W</kbd> <kbd>↑</kbd> acelerar · <kbd>S</kbd> <kbd>↓</kbd> frenar y marcha atrás</li>
-    <li><kbd>A</kbd> <kbd>D</kbd> <kbd>←</kbd> <kbd>→</kbd> doblar · <kbd>Espacio</kbd> freno de mano</li>
-    <li><kbd>C</kbd> cámara de atrás o desde arriba</li>
-    <li><kbd>M</kbd> mapa de lo que ya recorriste · <kbd>R</kbd> otra ciudad</li>
-  </ul>
-
-  <footer>
-    <p>La misma técnica que las láminas: la escena 3D se renderiza a la resolución de la grilla, cada celda toma la luz que le llega y la luz elige el carácter. Las letras no se mueven; el mundo pasa por adentro de la grilla.</p>
-    <p>Las estrellas solo aparecen donde la cámara ve cielo, así que los edificios las tapan. Las ideas que juntás quedan guardadas en este navegador.</p>
-  </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -460,10 +445,9 @@
   const beamMat = new THREE.MeshBasicMaterial({ color: 0xffe9c8, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending });
   const BEAM = new THREE.CylinderGeometry(0.9, 2.2, 34, 12, 1, true); BEAM.translate(0, 17, 0);
   const PEARL = new THREE.SphereGeometry(1, 20, 14);
-  // Ideas: esferas con los colores del Arlequín que flotan y se pueden juntar.
-  const IDEA_COLORS = [0xff2a3a, 0x2f6bff, 0xffc21a, 0x2fd85a];
-  const IDEA_GEO = new THREE.IcosahedronGeometry(0.5, 2);
-  const ideaMats = IDEA_COLORS.map(c => new THREE.MeshBasicMaterial({ color: c }));
+  // Luz: orbes que brillan solos, visibles aunque todo esté oscuro.
+  const ORB_GEO = new THREE.IcosahedronGeometry(0.55, 2);
+  const orbMat = new THREE.MeshBasicMaterial({ color: 0xfff1c4 });
 
   const BOX = new THREE.BoxGeometry(1, 1, 1); BOX.translate(0, 0.5, 0);
   const POLE = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6); POLE.translate(0, 2.3, 0);
@@ -516,7 +500,7 @@
     for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
       const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
       const x0 = x * CELL, z0 = y * CELL;
-      const ideaChance = { 1: 0.02, 2: 0.012, 3: 0.08, 4: 0.03, 5: 0.03, 6: 0.06 }[t] || 0;
+      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07 }[t] || 0;
       const key = x + "," + y;
       if (ideaChance && hs(x, y, 20) < ideaChance && !collected.has(key)) ideas.push([key, x0 + 2 + hs(x, y, 21) * 4, z0 + 2 + hs(x, y, 22) * 4, hs(x, y, 23)]);
       if (t === T.VOID) continue;
@@ -608,7 +592,7 @@
     if (moteMesh) g.add(moteMesh);
     beams.forEach(([x, z, r]) => { const b = new THREE.Mesh(BEAM, beamMat); b.position.set(x, 0, z); b.rotation.set(0.12 * Math.sin(r * 9), 0, 0.12 * Math.cos(r * 9)); g.add(b); });
     const ideaList = ideas.map(([key, x, z, r]) => {
-      const m = new THREE.Mesh(IDEA_GEO, ideaMats[Math.floor(r * 4)]);
+      const m = new THREE.Mesh(ORB_GEO, orbMat);
       m.position.set(x, 1.5, z);
       g.add(m);
       return { key, mesh: m, x, z, phase: r * TAU };
@@ -784,51 +768,50 @@
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx === 0 || dy === 0) seen.add((cx + dx) + "," + (cz + dy));
   }
 
-  // --- Ideas: se juntan y te acompañan -----------------------------------------------------
-  // Quedan guardadas en este navegador: cuántas juntaste y cuáles, por ciudad.
-  let store = { total: 0, worlds: {} };
-  try {
-    const d = JSON.parse(localStorage.getItem("deriva-ideas") || "null");
-    if (d && typeof d.total === "number") store = { total: d.total, worlds: d.worlds || {} };
-  } catch (e) { /* sin almacenamiento */ }
-  const saveIdeas = () => { try { localStorage.setItem("deriva-ideas", JSON.stringify(store)); } catch (e) { /* sin almacenamiento */ } };
-  let collected = new Set();
+  // --- Luz: se junta, se gasta, y sin luz aparece el limbo ------------------------------------
+  let light = 0.45, flash = 0, started = false;
+  const collected = new Set();
 
-  // Las ideas que juntaste orbitan alrededor del auto: las ideas ocupan lugar.
+  // La luz que llevás se ve alrededor del auto: puntos que orbitan, más o menos según cuánta quede.
   const orbit = new THREE.Group();
   scene.add(orbit);
   const ORBIT_MAX = 18;
-  function syncOrbit() {
-    while (orbit.children.length < Math.min(ORBIT_MAX, store.total)) {
-      const i = orbit.children.length;
-      const m = new THREE.Mesh(IDEA_GEO, ideaMats[i % 4]);
-      m.scale.setScalar(0.42);
-      m.userData = { r: 2.7 + (i % 3) * 0.55, h: 1.1 + (i % 4) * 0.5, sp: 0.55 + (i % 5) * 0.13, ph: i * 2.39 };
-      orbit.add(m);
-    }
+  for (let i = 0; i < ORBIT_MAX; i++) {
+    const m = new THREE.Mesh(ORB_GEO, orbMat);
+    m.scale.setScalar(0.34);
+    m.userData = { r: 2.6 + (i % 3) * 0.5, h: 1.0 + (i % 4) * 0.45, sp: 0.55 + (i % 5) * 0.13, ph: i * 2.39 };
+    orbit.add(m);
   }
   function placeOrbit() {
     orbit.position.set(player.x, 0, player.z);
-    orbit.children.forEach(m => {
+    const n = Math.round(light * ORBIT_MAX);
+    orbit.children.forEach((m, i) => {
       const u = m.userData, a = clock * u.sp + u.ph;
+      m.visible = i < n || (i === n && light > 0.01 && Math.sin(clock * 9) > 0);
       m.position.set(Math.cos(a) * u.r, u.h + Math.sin(clock * 1.3 + u.ph) * 0.25, Math.sin(a) * u.r);
     });
   }
-  function tickIdeas() {
+
+  function tickLight(dt) {
+    if (state.map) return;
+    // Manejar gasta luz; la nada la gasta más rápido. Bajo un farol se recarga despacio.
+    let drain = player.speed > 1 ? 0.011 : 0.004;
+    if (currentZone === T.VOID) drain *= 3;
+    let lamp = false;
+    chunks.forEach(c => c.lamps.forEach(p => { if (!lamp && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 7.5 * 7.5) lamp = true; }));
+    light = clamp(light - (started ? drain * dt : 0) + (lamp ? 0.06 * dt : 0), 0, 1);
+    flash = Math.max(0, flash - dt * 2.5);
     chunks.forEach(c => c.ideas.forEach(it => {
       if (it.taken) return;
       it.mesh.position.y = 1.5 + Math.sin(clock * 1.6 + it.phase) * 0.3;
-      it.mesh.rotation.y = clock * 0.8 + it.phase;
+      it.mesh.scale.setScalar(1 + Math.sin(clock * 3 + it.phase) * 0.15);
       const dx = it.x - player.x, dz = it.z - player.z;
-      if (dx * dx + dz * dz > 2.4 * 2.4) return;
+      if (dx * dx + dz * dz > 2.6 * 2.6) return;
       it.taken = true;
       it.mesh.visible = false;
       collected.add(it.key);
-      store.total++;
-      (store.worlds[seed] = store.worlds[seed] || []).push(it.key);
-      saveIdeas();
-      syncOrbit();
-      message(store.total === 1 ? "UNA IDEA" : store.total + " IDEAS", 1.6);
+      light = Math.min(1, light + 0.2);
+      flash = 1;
     }));
   }
 
@@ -869,7 +852,7 @@
   }
 
   function tickVoid(dt) {
-    const inVoid = currentZone === T.VOID && !state.map;
+    const inVoid = (currentZone === T.VOID || light < 0.03) && !state.map;
     voidK += ((inVoid ? 1 : 0) - voidK) * Math.min(1, dt * 0.8);
     voidTime = inVoid ? voidTime + dt : Math.max(0, voidTime - dt * 3);
     starAmount = 1 - 0.96 * voidK;
@@ -911,8 +894,10 @@
       }
     });
     // Los faros titilan, la cámara respira.
-    const flicker = voidK > 0.1 && Math.random() < 0.05 * voidK ? 0.12 : 1;
-    headBeams.forEach(b => { b.intensity = 2.1 * flicker; });
+    // Los faros dependen de la luz que te queda; con poca, titilan.
+    const flicker = (voidK > 0.1 && Math.random() < 0.05 * voidK) || (light < 0.2 && Math.random() < (0.2 - light) * 0.6) ? 0.12 : 1;
+    headBeams.forEach(b => { b.intensity = 2.3 * flicker * (light < 0.01 ? 0 : 0.12 + 0.88 * light); b.angle = 0.3 + 0.14 * light; });
+    carGlow.intensity = 0.5 + 1.1 * light;
     camera.fov = 56 + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
     camera.updateProjectionMatrix();
     // Susurros: frases sueltas que aparecen en cualquier lugar de la grilla.
@@ -942,7 +927,7 @@
     chunks.forEach(c => disposeChunk(c));
     chunks.clear();
     seen = new Set();
-    collected = new Set(store.worlds[seed] || []);
+    collected.clear();
     watchers.forEach(w => scene.remove(w.g));
     watchers.length = 0;
     if (giant) { scene.remove(giant.g); giant = null; }
@@ -951,7 +936,7 @@
     let start = null;
     for (let r = 0; r < 60 && !start; r++) for (let dy = -r; dy <= r && !start; dy++) for (let dx = -r; dx <= r; dx++) {
       const x = 1 + 2 * dx, y = 1 + 2 * dy;
-      if (cellType(x, y) === T.STREET && zoneAt(x, y) === 0) { start = [x, y]; break; }
+      if (cellType(x, y) === T.STREET && zoneAt(x, y) === 0 && hs(x, y, 13) < 0.3 && mod(x, 26) >= 3 && mod(y, 22) >= 3) { start = [x, y]; break; }
     }
     start = start || [1, 1];
     player.x = toWorld(start[0]); player.z = toWorld(start[1]);
@@ -962,7 +947,15 @@
     currentZone = 1;
     updateChunks(true);
     camSnap = true;
-    message("DERIVA", 2.4);
+    // El primer orbe queda justo adelante: la primera cosa que se aprende es juntar luz.
+    const ox = player.x + Math.cos(player.heading) * 13, oz = player.z - Math.sin(player.heading) * 13;
+    const home = chunks.get(Math.floor(toCell(ox) / CHUNK) + "," + Math.floor(toCell(oz) / CHUNK));
+    if (home) {
+      const m = new THREE.Mesh(ORB_GEO, orbMat);
+      m.position.set(ox, 1.5, oz);
+      home.group.add(m);
+      home.ideas.push({ key: "inicio", mesh: m, x: ox, z: oz, phase: 0 });
+    }
   }
 
   // --- Grilla ---------------------------------------------------------------------------------
@@ -999,7 +992,9 @@
     return 0.3 + 0.55 * hash(ci + 3, ri + 99) * (0.55 + 0.45 * tw);
   }
 
+  let exposureNow = ADJ.exposure;
   function shade() {
+    exposureNow = ADJ.exposure * (0.72 + 0.28 * light) * (1 + flash * 0.7);
     const W = cols * SS, H = rows * SS;
     renderer.setRenderTarget(rt);
     renderer.clear();
@@ -1019,7 +1014,7 @@
         r /= n; g /= n; b /= n;
         A[i] = a / n > 8 ? 1 : 0;
         const raw = Math.max(r, g, b) / 255;
-        let l = clamp((raw * ADJ.exposure - 0.5) * ADJ.contrast + 0.5, 0, 1);
+        let l = clamp((raw * exposureNow - 0.5) * ADJ.contrast + 0.5, 0, 1);
         l = Math.pow(l, ADJ.gamma);
         if (raw < 0.004 || l < ADJ.threshold) { CH[i] = null; continue; }
         const off = hash(ci * 3 + 11, ri * 5 + 7) - 0.5;
@@ -1073,7 +1068,7 @@
       const x = toCell(it.x), y = toCell(it.z), dx = x - px, dy = y - pz;
       if (Math.abs(dx) >= halfW || Math.abs(dy) > halfH || !(isSeen(x, y) || isSeen(x + 1, y) || isSeen(x - 1, y) || isSeen(x, y + 1) || isSeen(x, y - 1))) return;
       const i = (midR + dy) * cols + midC + dx * cw;
-      if (midR + dy >= 1 && midR + dy < rows - 1) { CH[i] = "*"; COL[i] = "#" + it.mesh.material.color.getHexString(); }
+      if (midR + dy >= 1 && midR + dy < rows - 1) { CH[i] = "*"; COL[i] = "#fff1c4"; }
     }));
     CH[midR * cols + midC] = arrow; COL[midR * cols + midC] = "#f2c200";
   }
@@ -1088,11 +1083,11 @@
         COL[r * cols + c] = HUD;
       }
     };
-    const scramble = text => voidK < 0.3 ? text : text.replace(/[^ ]/g, ch => Math.random() < 0.25 * voidK ? RAMP[1 + Math.floor(Math.random() * (RAMP.length - 1))] : ch);
-    write(scramble(ZONE_NAME[currentZone]), 0, "left");
-    write(scramble((player.dist / 1000).toFixed(1).replace(".", ",") + " KM"), 0, "right");
-    write(scramble(String(Math.round(player.speed * 3.6)).padStart(3, "0") + " KM/H"), rows - 1, "left");
-    write("IDEAS " + store.total, rows - 1, "right");
+    // Antes de moverse, una sola flecha que titila arriba del auto.
+    if (!started && Math.sin(clock * 5) > -0.2 && !state.map) {
+      const i = Math.floor(rows * 0.3) * cols + Math.floor(cols / 2);
+      CH[i] = "↑"; COL[i] = HUD;
+    }
     if (whisper && clock < whisper.until) {
       for (let k = 0; k < whisper.text.length; k++) {
         const i = whisper.r * cols + whisper.c + k;
@@ -1104,7 +1099,8 @@
       const r = Math.floor(rows / 2);
       // El mensaje limpia su fila para leerse sobre la escena.
       for (let c = Math.floor((cols - pad.length) / 2); c < Math.floor((cols + pad.length) / 2); c++) if (c >= 0 && c < cols) CH[r * cols + c] = null;
-      write(pad, r, "center");
+      const shown = voidK < 0.3 ? pad : pad.replace(/[^ ]/g, ch => Math.random() < 0.25 * voidK ? RAMP[1 + Math.floor(Math.random() * (RAMP.length - 1))] : ch);
+      write(shown, r, "center");
     }
   }
 
@@ -1130,7 +1126,7 @@
   let engaged = false;
   window.addEventListener("keydown", e => {
     const k = KEYMAP[e.code];
-    if (k) { keys[k] = true; if (engaged) e.preventDefault(); return; }
+    if (k) { keys[k] = true; started = true; if (engaged) e.preventDefault(); return; }
     if (e.code === "KeyC") setOpt("view", state.view === "Atrás" ? "Arriba" : "Atrás");
     if (e.code === "KeyM") setOpt("map", !state.map);
     if (e.code === "KeyR") newWorld((Math.random() * 1e9) | 0);
@@ -1143,7 +1139,7 @@
 
   document.querySelectorAll("#pad button").forEach(btn => {
     const k = btn.dataset.key;
-    const on = e => { e.preventDefault(); keys[k] = true; btn.dataset.down = "true"; try { btn.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ } };
+    const on = e => { e.preventDefault(); keys[k] = true; started = true; btn.dataset.down = "true"; try { btn.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ } };
     const off = () => { keys[k] = false; btn.dataset.down = "false"; };
     btn.addEventListener("pointerdown", on);
     btn.addEventListener("pointerup", off);
@@ -1204,7 +1200,7 @@
     clock += dt;
     water.uniforms.uTime.value = clock;
     if (!state.map) physics(dt);
-    tickIdeas();
+    tickLight(dt);
     markSeen();
     trackZone();
     updateChunks(false);
@@ -1226,7 +1222,6 @@
   setOpt("view", state.view);
   layout();
   newWorld(700);
-  syncOrbit();
   const start = () => { layout(); requestAnimationFrame(loop); };
   if (document.fonts && document.fonts.load) document.fonts.load('16px "IBM Plex Mono"', "abc").then(start, start);
   else start();
