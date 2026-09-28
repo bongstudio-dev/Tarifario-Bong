@@ -230,7 +230,7 @@
 
   // --- Estado ------------------------------------------------------------------
   const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-  const state = { density: "Intermedia", mode: "Color", view: "Atrás", map: false };
+  const state = { auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
   // --- WebGL -------------------------------------------------------------------
@@ -291,7 +291,7 @@
   // --- El mundo: infinito, por zonas -------------------------------------------------
   // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
   // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
-  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14 };
+  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, ROAD: 7, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14 };
   const SOLID = t => t >= 10 && t !== T.SEA && t !== T.MOUNTAIN;
   const mod = (a, n) => ((a % n) + n) % n;
   let seed = 700, sx = 0, sy = 0;
@@ -302,12 +302,25 @@
   const sstep = (a, b, x) => { const k = clamp((x - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
   const monteNoise = (x, y) => fbm((x + sy) / 40, (y - sx) / 40, 8.1);
   // Altura del monte en metros, en coordenadas de cuadra: sube lejos de la ciudad y baja antes de la nada.
+  // Distancia (en cuadras) al eje de la avenida más cercana y posición a lo largo de ella.
+  const roadInfo = (x, y) => {
+    const dx = Math.abs(mod(x - 1.5 + 13, 26) - 13), dy = Math.abs(mod(y - 1.5 + 11, 22) - 11);
+    return dx < dy ? [dx, y] : [dy, x];
+  };
   function heightAt(x, y) {
     const f = monteNoise(x, y);
     const mask = sstep(0.585, 0.62, f) * (1 - sstep(0.645, 0.675, f));
     if (mask <= 0) return 0;
     const m = fbm((x + sx) / 13, (y + sy) / 13, 11.3);
-    return Math.max(0, (m - 0.46) * 150) * mask;
+    const hills = Math.max(0, (m - 0.46) * 150);
+    const [d, along] = roadInfo(x, y);
+    if (d > 12) return hills * mask;
+    // En el monte la avenida se vuelve ruta: sube y baja a lo largo, y a los costados
+    // se levantan paredes de montaña que después se funden con el resto del monte.
+    const wave = 4.9 + 2.6 * Math.sin(along / 5.5 + sx * 0.01) + 1.4 * Math.sin(along / 2.1 + 1.3) + 0.6 * Math.sin(along / 0.9);
+    const walls = sstep(2.2, 5.5, d) * (1 - sstep(8, 12, d)) * 16;
+    const k = sstep(1.4, 3.2, d);
+    return (wave * (1 - k) + Math.max(wave, hills + walls) * k) * mask;
   }
 
   function zoneAt(x, y) {
@@ -317,7 +330,7 @@
     // El monte rodea a la nada: para llegar al abismo hay que cruzarlo.
     const f = monteNoise(x, y);
     if (f > 0.69) return T.VOID;
-    if (f > 0.58) return heightAt(x + 0.5, y + 0.5) > 1 ? T.MOUNTAIN : T.FOREST;
+    if (f > 0.58) return roadInfo(x + 0.5, y + 0.5)[0] < 1.55 ? T.ROAD : heightAt(x + 0.5, y + 0.5) > 1 ? T.MOUNTAIN : T.FOREST;
     return 0;
   }
   function cellType(x, y) {
@@ -407,7 +420,7 @@
   function studPoints(list, material) {
     if (!list.length) return null;
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(list.flatMap(([x, z]) => [x, 0.12, z]), 3));
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(list.flatMap(([x, z, y]) => [x, (y || 0) + 0.12, z]), 3));
     const pts = new THREE.Points(geo, material);
     pts.userData.own = true;
     return pts;
@@ -416,8 +429,33 @@
   const BEAM = new THREE.CylinderGeometry(0.9, 2.2, 34, 12, 1, true); BEAM.translate(0, 17, 0);
   // Monte: laderas facetadas, pasto y pinos sueltos.
   const hillMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
-  const grassMat = mat(0xffffff, { roughness: 1, flatShading: true });
-  const BLADE = new THREE.ConeGeometry(0.14, 0.8, 3); BLADE.translate(0, 0.4, 0);
+  const grassMat = mat(0xffffff, { roughness: 1, side: THREE.DoubleSide });
+  grassMat.onBeforeCompile = sh => {
+    sh.uniforms.uTime = water.uniforms.uTime;
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nuniform float uTime;")
+      .replace("#include <project_vertex>", `
+        vec4 mvPosition = vec4( transformed, 1.0 );
+        #ifdef USE_INSTANCING
+          mvPosition = instanceMatrix * mvPosition;
+        #endif
+        // Ráfagas que cruzan el campo: el viento es el mismo para todas las hojas.
+        float gust = sin(uTime * 1.6 + mvPosition.x * 0.31 + mvPosition.z * 0.23) * 0.45 + sin(uTime * 2.9 + mvPosition.x * 0.8 - mvPosition.z * 0.5) * 0.15;
+        float bend = position.y * position.y;
+        mvPosition.x += gust * bend;
+        mvPosition.z += gust * 0.5 * bend;
+        mvPosition = modelViewMatrix * mvPosition;
+        gl_Position = projectionMatrix * mvPosition;`);
+  };
+  // Una hoja: tira fina, afinada en la punta y curvada.
+  const BLADE = (() => {
+    const g = new THREE.PlaneGeometry(0.1, 1, 1, 4);
+    g.translate(0, 0.5, 0);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setX(i, p.getX(i) * (1 - y * 0.85) + 0.22 * y * y); }
+    g.computeVertexNormals();
+    return g;
+  })();
   const pineMat = mat(0x2f5a3a, { roughness: 1, flatShading: true });
   const PINE = new THREE.ConeGeometry(1.3, 5, 6); PINE.translate(0, 3.2, 0);
   const GRASS_COLORS = [0x5f9a4a, 0x7ab85a, 0x4a8a44, 0x8fbf5a, 0x6aa86a];
@@ -452,7 +490,7 @@
   const CHUNK = 16;
   const chunks = new Map();
   const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
-  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x3a6a34, 14: 0x3a6a34, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
+  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x3a6a34, 7: 0x3c3c4c, 14: 0x3a6a34, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
 
   function instanced(geo, material, list, build) {
     if (!list.length) return null;
@@ -476,7 +514,7 @@
     for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
       const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
       const x0 = x * CELL, z0 = y * CELL;
-      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07, 14: 0.06 }[t] || 0;
+      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07, 7: 0.04, 14: 0.06 }[t] || 0;
       const key = x + "," + y;
       if (ideaChance && hs(x, y, 20) < ideaChance && !collected.has(key)) ideas.push([key, x0 + 2 + hs(x, y, 21) * 4, z0 + 2 + hs(x, y, 22) * 4, hs(x, y, 23)]);
       if (t === T.VOID) continue;
@@ -526,13 +564,23 @@
         if (Math.abs(dx) === 3 && Math.abs(dy) === 3) poles.push([x0 + 4, z0 + 4, 0]);
       } else if (t === T.FOREST) {
         // Pasto alto y algún pino suelto; nada choca.
-        for (let k = 0; k < 9; k++) grass.push([x0 + hs(x, y, 60 + k) * 8, z0 + hs(x, y, 70 + k) * 8, hs(x, y, 80 + k)]);
-        if (hs(x, y, 30) < 0.07) pines.push([x0 + 1 + hs(x, y, 32) * 6, 0, z0 + 1 + hs(x, y, 34) * 6, hs(x, y, 36)]);
+        for (let k = 0; k < 16; k++) { const gx = x0 + hs(x, y, 60 + k) * 8, gz = z0 + hs(x, y, 70 + k) * 8; grass.push([gx, gz, hs(x, y, 80 + k), groundAt(gx, gz)]); }
+        if (hs(x, y, 30) < 0.07) { const px = x0 + 1 + hs(x, y, 32) * 6, pz = z0 + 1 + hs(x, y, 34) * 6; pines.push([px, groundAt(px, pz) - 0.4, pz, hs(x, y, 36)]); }
         if (hs(x, y, 44) < 0.02) beams.push([x0 + 4, z0 + 4, hs(x, y, 45)]);
         // Luciérnagas: puntitos de luz quietos en el aire.
-        for (let k = 0; k < 3; k++) motes.push([x0 + hs(x, y, 50 + k) * 8, 0.5 + hs(x, y, 53 + k) * 3.5, z0 + hs(x, y, 56 + k) * 8]);
+        for (let k = 0; k < 3; k++) { const mx = x0 + hs(x, y, 50 + k) * 8, mz = z0 + hs(x, y, 56 + k) * 8; motes.push([mx, groundAt(mx, mz) + 0.5 + hs(x, y, 53 + k) * 3.5, mz]); }
       } else if (t === T.MOUNTAIN) {
-        if (hs(x, y, 31) < 0.18) { const px = x0 + 1 + hs(x, y, 33) * 6, pz = z0 + 1 + hs(x, y, 35) * 6; pines.push([px, heightAt(px / CELL, pz / CELL) - 0.4, pz, hs(x, y, 37)]); }
+        if (hs(x, y, 31) < 0.18) { const px = x0 + 1 + hs(x, y, 33) * 6, pz = z0 + 1 + hs(x, y, 35) * 6; pines.push([px, groundAt(px, pz) - 0.4, pz, hs(x, y, 37)]); }
+        for (let k = 0; k < 8; k++) { const gx = x0 + hs(x, y, 90 + k) * 8, gz = z0 + hs(x, y, 100 + k) * 8; grass.push([gx, gz, hs(x, y, 110 + k), groundAt(gx, gz)]); }
+      } else if (t === T.ROAD) {
+        // La ruta: tachas ámbar en los bordes y blancas en el centro, siguiendo las lomas.
+        const vert = Math.abs(mod(x + 0.5 - 1.5 + 13, 26) - 13) < Math.abs(mod(y + 0.5 - 1.5 + 11, 22) - 11);
+        const m = vert ? mod(x, 26) : mod(y, 22), at = (px, pz) => [px, pz, groundAt(px, pz)];
+        [1.33, 4, 6.67].forEach(a => {
+          if (m === 0) studs.push(vert ? at(x0 + 0.9, z0 + a) : at(x0 + a, z0 + 0.9));
+          if (m === 2) studs.push(vert ? at(x0 + 7.1, z0 + a) : at(x0 + a, z0 + 7.1));
+        });
+        if (m === 1) [2, 6].forEach(a => midStuds.push(vert ? at(x0 + 4, z0 + a) : at(x0 + a, z0 + 4)));
       } else if (t === T.MONUMENT) {
         monuments.push([x0 + 4, z0 + 4]);
       } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
@@ -573,7 +621,7 @@
       g.add(o, p);
       lamps.push(new THREE.Vector3(x + 2.5, 3.5, z + 2.5));
     });
-    const grassMesh = instanced(BLADE, grassMat, grass, ([x, z, r], m) => { q4.setFromAxisAngle(p3.set(Math.sin(r * 40), 0, Math.cos(r * 40)).normalize(), 0.25 * r); m.compose(p3.set(x, 0, z), q4, s3.set(1, 0.6 + r * 0.9, 1)); });
+    const grassMesh = instanced(BLADE, grassMat, grass, ([x, z, r, gy], m) => { q4.setFromAxisAngle(p3.set(0, 1, 0), r * TAU); m.compose(p3.set(x, gy || 0, z), q4, s3.set(1 + r * 0.6, 0.7 + r * 0.9, 1)); });
     if (grassMesh) { grass.forEach(([, , r], i) => grassMesh.setColorAt(i, col.set(GRASS_COLORS[Math.floor(r * 53) % GRASS_COLORS.length]))); g.add(grassMesh); }
     const pineMesh = instanced(PINE, pineMat, pines, ([x, y, z, r], m) => m.makeScale(0.8 + r * 0.6, 0.8 + r * 0.9, 0.8 + r * 0.6).setPosition(x, y, z));
     if (pineMesh) g.add(pineMesh);
@@ -581,13 +629,14 @@
     const hp = [], hc = [], STEP = 2, N = CHUNK * CELL / STEP;
     const H = [];
     for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) H.push(heightAt((cx * CHUNK * CELL + i * STEP) / CELL, (cy * CHUNK * CELL + j * STEP) / CELL));
-    const hcol = h => col.set(h < 3 ? 0x4a8040 : h < 10 ? 0x3c6444 : h < 22 ? 0x585c70 : 0x9894b0);
+    const hcol = h => col.set(h < 3 ? 0x5a9a4a : h < 10 ? 0x4f8050 : h < 22 ? 0x70748a : 0xb0acc8);
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       const a = H[j * (N + 1) + i], b = H[j * (N + 1) + i + 1], c = H[(j + 1) * (N + 1) + i], d = H[(j + 1) * (N + 1) + i + 1];
       if (a + b + c + d < 0.05) continue;
       const X = cx * CHUNK * CELL + i * STEP, Z = cy * CHUNK * CELL + j * STEP;
       const v = [[X, a, Z], [X, c, Z + STEP], [X + STEP, b, Z], [X + STEP, b, Z], [X, c, Z + STEP], [X + STEP, d, Z + STEP]];
-      hcol((a + b + c + d) / 4 + (hash(i + cx * 97, j + cy * 89) - 0.5) * 3);
+      if (roadInfo((X + 1) / CELL, (Z + 1) / CELL)[0] < 1.5) col.set(0x3c3c4c);
+      else hcol((a + b + c + d) / 4 + (hash(i + cx * 97, j + cy * 89) - 0.5) * 3);
       v.forEach(([px, py, pz]) => { hp.push(px, py + 0.03, pz); hc.push(col.r, col.g, col.b); });
     }
     if (hp.length) {
@@ -663,16 +712,17 @@
     // El botón de freno frena y, si seguís apretando con el auto quieto, va marcha atrás.
     const braking = keys.down || brake.held;
     if (brake.held) acc = along > 0.5 ? -30 * traction : (along > -MAX_REV ? -9 : 0);
-    else if (started && !keys.up && !keys.down && along < CRUISE) acc = 12 * traction;
+    else if (gas.held) acc = along < MAX_FWD ? 16 * traction : 0;
+    else if (state.auto && started && !keys.up && !keys.down && along < CRUISE) acc = 12 * traction;
     if (keys.down && player.air) acc = 0;
     along += acc * dt - 9.8 * Math.sin(player.pitch) * dt;
-    along -= along * (keys.up || braking || started ? 0.25 : 0.9) * dt * traction;
+    along -= along * (keys.up || braking || gas.held || (state.auto && started) ? 0.25 : 0.9) * dt * traction;
     if (keys.hand) along -= Math.sign(along) * Math.min(Math.abs(along), 14 * dt);
 
     const keySteer = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
     const want = keySteer || (steerT.active ? steerT.x : gyro.on ? gyro.steer : 0);
     player.steer += (want - player.steer) * Math.min(1, dt * 7);
-    const offroad = currentZone === T.FOREST;
+    const here = cellType(toCell(player.x), toCell(player.z)), offroad = here === T.FOREST || here === T.MOUNTAIN;
     const grip = player.air ? 0.2 : keys.hand ? 1.2 : offroad ? 3.2 : 9;
     const k = Math.exp(-grip * dt);
     const turn = player.steer * clamp(along / 6, -1, 1) * (1.9 - 0.9 * Math.min(1, Math.abs(along) / MAX_FWD));
@@ -813,7 +863,7 @@
     3: [0.62, 0.3, 80, 0xc8f0c0, 0x2a5a24, 0x14182e],
     4: [0.55, 0.5, 120, 0x9ab0ff, 0x1a1c2a, 0x120e2a],
     5: [0, 0, 200, 0x000000, 0x000000, 0x000000],
-    6: [0.36, 0.95, 110, 0xc0d8ff, 0x2a4a2a, 0x1a1e38]
+    6: [1.45, 1.05, 160, 0xd0e4ff, 0x4a7a44, 0x1a1e38]
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
   function placeWorld(dt) {
@@ -847,7 +897,7 @@
   function message(text, secs) { msg = text; msgUntil = clock + secs; }
   function trackZone() {
     const t = cellType(toCell(player.x), toCell(player.z));
-    const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : t === T.MOUNTAIN ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t;
+    const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : t === T.MOUNTAIN || t === T.ROAD ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t;
     if (zone === currentZone) return;
     currentZone = zone;
   }
@@ -1304,7 +1354,7 @@
   // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
   const MAP_STYLE = {
     [T.WALL]: ["##", "#e0463c"], [T.IVY]: ["&&", "#8fd26a"], [T.SEA]: ["~~", "#4a86e8"], [T.MONUMENT]: ["!!", "#e8e4f0"],
-    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"]
+    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"], [T.ROAD]: ["= ", "#b08a5a"]
   };
   function automap() {
     CH.fill(null);
@@ -1426,7 +1476,7 @@
   // Deslizás el dedo de costado para doblar; el botón de abajo a la derecha frena.
   const CRUISE = 15;
   const steerT = { active: false, id: null, x0: 0, y0: 0, px: 0, x: 0 };
-  const brake = { held: false, id: null };
+  const brake = { held: false, id: null }, gas = { held: false, id: null };
   const menu = { open: false, rows: [], box: null };
   const AMBER = "#ff9a3c", DIM = "#6e3c1c", MUTED = "#8d8ca6";
   const cellOf = e => {
@@ -1438,6 +1488,8 @@
   // Cajas: el botón del menú arriba a la derecha y el freno abajo a la derecha.
   const MENU_BOX = () => ({ top: 1, left: cols - 9, h: 3, w: 7 });
   const BRAKE_BOX = () => ({ top: rows - 8, left: cols - 14, h: 6, w: 12 });
+  // Sin autoavance aparece el acelerador, arriba del freno.
+  const GAS_BOX = () => ({ top: rows - 15, left: cols - 14, h: 6, w: 12 });
   const inside = (p, b, pad) => p.r >= b.top - pad && p.r < b.top + b.h + pad && p.c >= b.left - pad && p.c < b.left + b.w + pad;
   function drawBox(b, color, fill) {
     for (let r = b.top; r < b.top + b.h; r++) for (let c = b.left; c < b.left + b.w; c++) put(r, c, fill || null, color);
@@ -1450,6 +1502,7 @@
   function menuItems() {
     const cyc = (list, v) => list[(list.indexOf(v) + 1) % list.length];
     return [
+      { label: "AUTOAVANCE", value: state.auto ? "SÍ" : "NO", act: () => { state.auto = !state.auto; } },
       { label: "CÁMARA", value: state.view.toUpperCase(), act: () => setOpt("view", cyc(VIEWS, state.view)) },
       { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(Object.keys(DENSITY), state.density)) },
       { label: "MODO", value: state.mode.toUpperCase(), act: () => setOpt("mode", cyc(Object.keys(MODES), state.mode)) },
@@ -1472,6 +1525,11 @@
       const b = BRAKE_BOX();
       drawBox(b, brake.held ? AMBER : DIM, brake.held ? "░" : null);
       text(b.top + Math.floor(b.h / 2) - 1, b.left + Math.floor(b.w / 2) - 1, "▼", brake.held ? "#fff1c4" : AMBER);
+      if (!state.auto) {
+        const g = GAS_BOX();
+        drawBox(g, gas.held ? AMBER : DIM, gas.held ? "░" : null);
+        text(g.top + Math.floor(g.h / 2) - 1, g.left + Math.floor(g.w / 2) - 1, "▲", gas.held ? "#fff1c4" : AMBER);
+      }
       // Volante: una barra con la perilla donde está el dedo. Antes del primer toque, un fantasma que va y viene.
       const ghost = !started && touchDevice;
       if (steerT.active || ghost) {
@@ -1515,6 +1573,7 @@
     started = true;
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
     if (inside(p, BRAKE_BOX(), 1)) { brake.held = true; brake.id = e.pointerId; return; }
+    if (!state.auto && inside(p, GAS_BOX(), 0)) { gas.held = true; gas.id = e.pointerId; return; }
     if (!steerT.active) { steerT.active = true; steerT.id = e.pointerId; steerT.x0 = p.px; steerT.y0 = p.py; steerT.x = 0; }
   });
   canvas.addEventListener("pointermove", e => {
@@ -1533,11 +1592,13 @@
       return;
     }
     if (e.pointerId === brake.id) { brake.held = false; brake.id = null; }
+    if (e.pointerId === gas.id) { gas.held = false; gas.id = null; }
     if (e.pointerId === steerT.id) { steerT.active = false; steerT.x = 0; steerT.id = null; }
   };
   canvas.addEventListener("pointerup", endTouch);
   canvas.addEventListener("pointercancel", e => {
     if (e.pointerId === brake.id) { brake.held = false; brake.id = null; }
+    if (e.pointerId === gas.id) { gas.held = false; gas.id = null; }
     if (e.pointerId === steerT.id) { steerT.active = false; steerT.x = 0; steerT.id = null; }
   });
   canvas.addEventListener("contextmenu", e => e.preventDefault());
