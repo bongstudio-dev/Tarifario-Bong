@@ -1420,6 +1420,15 @@
     endCam.position.set(0, 2.4, 9.5);
     endCam.lookAt(0, 0, 0);
   })();
+  // Encuadra el auto entero: en vertical la cámara se aleja para que entre de punta a punta.
+  function frameEndCam(lift) {
+    const hfov = Math.atan(Math.tan(17.5 * Math.PI / 180) * ratio);
+    const d = Math.max(ratio > 1 ? 10.5 : 9.5, 2.35 / Math.tan(Math.min(hfov, 17.5 * Math.PI / 180)));
+    endCam.aspect = ratio;
+    endCam.position.set(0, 2.4 * d / 9.5, d);
+    endCam.lookAt(0, lift || 0, 0);
+    endCam.updateProjectionMatrix();
+  }
   function startEnding() {
     ending = { t: 0 };
     keys.up = keys.down = keys.left = keys.right = keys.hand = false;
@@ -1429,7 +1438,7 @@
     ending.t += dt;
     player.vx *= Math.exp(-3 * dt); player.vz *= Math.exp(-3 * dt);
     endTurn.rotation.y = ending.t * 0.35;
-    endCam.aspect = ratio; endCam.updateProjectionMatrix();
+    frameEndCam(0);
     if (ending.t > 14) {
       ending = null;
       newWorld((Math.random() * 1e9) | 0);
@@ -1676,13 +1685,13 @@
   };
   let exposureNow = ADJ.exposure;
   function shade() {
-    exposureNow = ending && ending.t > 5 ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
+    exposureNow = title || (ending && ending.t > 5) ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
     const W = cols * SS, H = rows * SS;
     cullChunks();
     renderer.setRenderTarget(rt);
     renderer.clear();
     // En el final se ve solo el Arlequín girando en el negro.
-    if (ending && ending.t > 5) renderer.render(endScene, endCam); else renderer.render(scene, camera);
+    if (title || (ending && ending.t > 5)) renderer.render(endScene, endCam); else renderer.render(scene, camera);
     readPixelsAsync(W, H);
     renderer.setRenderTarget(null);
     const steps = RAMP.length - 1, ink = MODES[state.mode];
@@ -1791,6 +1800,7 @@
   }
 
   function hud() {
+    if (title) { titleScreen(); return; }
     if (ending) return;
     hudBase();
     overlay();
@@ -1961,8 +1971,47 @@
     menu.box = { top, left, bottom: top + h - 1, right: left + inner + 1 };
   }
 
+  // --- Pantalla de título -------------------------------------------------------------------
+  let title = true;
+  const BIG = {
+    D: ["████ ", "█   █", "█   █", "█   █", "████ "],
+    E: ["█████", "█    ", "████ ", "█    ", "█████"],
+    R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
+    I: ["█████", "  █  ", "  █  ", "  █  ", "█████"],
+    V: ["█   █", "█   █", "█   █", " █ █ ", "  █  "],
+    A: [" ███ ", "█   █", "█████", "█   █", "█   █"]
+  };
+  const CAR_COLORS = ["#ff2a3a", "#3c6bff", "#ffc21a", "#2fe0d0"];
+  const PLAY_BOX = () => { const w = 15; return { top: Math.min(rows - 4, Math.round(rows * 0.85)), left: Math.floor((cols - w) / 2), h: 3, w }; };
+  function titleScreen() {
+    const center = (r, str, color) => text(r, Math.floor((cols - str.length) / 2), str, color);
+    // Leyenda arriba.
+    center(Math.round(rows * 0.1), "la luz da vida a todo", "#c9b98e");
+    // DERIVA en letras grandes: cada bloque es un carácter denso, con un brillo que baja.
+    const sc = (cols >= 72 && rows >= 60) || cols >= 110 ? 2 : 1, word = "DERIVA", lw = 6 * sc, top = Math.round(rows * (sc === 2 ? 0.15 : 0.16));
+    const left = Math.floor((cols - word.length * lw + sc) / 2);
+    for (let k = 0; k < word.length; k++) BIG[word[k]].forEach((line, y) => {
+      for (let yy = 0; yy < sc; yy++) for (let x = 0; x < line.length; x++) for (let xx = 0; xx < sc; xx++) {
+        if (line[x] === " ") continue;
+        const r = top + y * sc + yy, c = left + k * lw + x * sc + xx;
+        // Todos caracteres densos; el brillo baja como una luz que recorre las letras.
+        const glow = 0.5 + 0.5 * Math.sin(clock * 1.6 - r * 0.45 - c * 0.06);
+        put(r, c, glow > 0.66 ? "$" : glow > 0.33 ? "@" : "B", glow > 0.8 ? "#fff6e0" : glow > 0.45 ? "#e9e5f0" : "#b8b4c8");
+      }
+    });
+    // milangagalactica con los colores del auto, con una ola de brillo que la recorre.
+    const name = "milangagalactica", nr = Math.round(rows * (rows >= 60 ? 0.74 : 0.8)), nc = Math.floor((cols - name.length) / 2);
+    for (let k = 0; k < name.length; k++) put(nr, nc + k, name[k], Math.sin(clock * 2.2 - k * 0.45) > 0.85 ? "#fff6e0" : CAR_COLORS[k % 4]);
+    // Botón de jugar que late.
+    const b = PLAY_BOX(), on = Math.sin(clock * 3) > -0.3;
+    drawBox(b, on ? AMBER : DIM);
+    text(b.top + 1, b.left + 4, "▶ JUGAR", on ? "#fff1c4" : AMBER);
+  }
+  function startGame() { title = false; camSnap = true; }
+
   canvas.addEventListener("pointerdown", e => {
     engaged = true;
+    if (title) { if (inside(cellOf(e), PLAY_BOX(), 3)) startGame(); return; }
     const p = cellOf(e);
     if (!menu.open && inside(p, MENU_BOX(), 1)) { menu.tapBtn = true; return; }
     if (menu.open) return;
@@ -2000,6 +2049,7 @@
   canvas.addEventListener("contextmenu", e => e.preventDefault());
 
   window.addEventListener("keydown", e => {
+    if (title) { if (e.code === "Enter" || e.code === "Space") { startGame(); e.preventDefault(); } return; }
     if (e.code === "Escape") { menu.open = !menu.open; return; }
     const k = KEYMAP[e.code];
     if (k) { keys[k] = true; started = true; if (engaged) e.preventDefault(); return; }
@@ -2141,7 +2191,8 @@
     lastTs = ts;
     clock += dt;
     water.uniforms.uTime.value = clock;
-    if (!state.map && !menu.open) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
+    if (title) { endTurn.rotation.y = clock * 0.35; frameEndCam(ratio > 1 ? 0.9 : 0.25); }
+    if (!title && !state.map && !menu.open) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
     tickHorizon();
     tickEnding(dt);
     tickLight(dt);
