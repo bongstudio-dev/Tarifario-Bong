@@ -1,0 +1,78 @@
+9c9
+< <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+---
+> <style>@font-face{font-family:"IBM Plex Mono";font-weight:400;src:url("package/files/ibm-plex-mono-latin-400-normal.woff2") format("woff2");}@font-face{font-family:"IBM Plex Mono";font-weight:500;src:url("package/files/ibm-plex-mono-latin-500-normal.woff2") format("woff2");}</style>
+87a88
+>   body{padding:0!important;margin:0} header,.pad,.opts{display:none!important} .wrap,.stage{display:block!important;max-width:none!important;gap:0!important} canvas#game{border-radius:0!important}
+833,834c834,835
+<       want.set(player.x - fx * 0.1 - rx * 0.36, player.y + 1.32, player.z - fz * 0.1 - rz * 0.36);
+<       look.set(want.x + fx * 12, player.y + 0.95 + Math.tan(player.pitch) * 12, want.z + fz * 12);
+---
+>       want.set(player.x - fx * 0.1 - rx * 0.36, player.y + 1.55, player.z - fz * 0.1 - rz * 0.36);
+>       look.set(want.x + fx * 12, player.y + 1.45 + Math.tan(player.pitch) * 12, want.z + fz * 12);
+838,841c839,840
+<       let back = 6.8;
+<       for (let s = 0.5; s <= 6.8; s += 0.5) {
+<         if (blocksCam(toCell(player.x - fx * s), toCell(player.z - fz * s))) { back = Math.max(1.5, s - 1); break; }
+<       }
+---
+>       // Para el video: cámara alta y fija, como un dron que sigue al auto.
+>       const back = 11;
+843,844c842,843
+<       want.set(wx, Math.max(player.y + 2.1 + back * 0.12, groundAt(wx, wz) + 1.6), wz);
+<       look.set(player.x + fx * 6, player.y + 1.0, player.z + fz * 6);
+---
+>       want.set(wx, Math.max(player.y + 7, groundAt(wx, wz) + 3), wz);
+>       look.set(player.x + fx * 12, player.y + 0.5, player.z + fz * 12);
+1169c1168
+<     const rel = big ? 0.15 : Math.random() < 0.7 ? side * (0.55 + Math.random() * 0.8) : side * (Math.PI - Math.random() * 0.8);
+---
+>     const rel = big ? 0.1 : side * (0.1 + Math.random() * 0.34);
+1173c1172
+<       dist: big ? 95 : 14 + Math.random() * 12, height: big ? 24 : 0.8 + Math.random() * 4
+---
+>       dist: big ? 80 : 9 + Math.random() * 8, height: big ? 20 : 0.8 + Math.random() * 5
+1199c1198
+<           w.dist += (15 - w.dist) * dt * 0.05;
+---
+>           w.dist += (11 - w.dist) * dt * 0.05;
+1231c1230
+<     camera.fov = 56 + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
+---
+>     camera.fov = 74 + (Math.sin(clock * 0.37) * 5 + Math.sin(clock * 1.9) * 0.8) * voidK;
+1298c1297
+<     ratio = narrow ? 4 / 5 : 16 / 9;
+---
+>     ratio = 9 / 16;
+1318c1317
+<     canvas.style.width = w + "px";
+---
+>     canvas.style.width = "540px";
+1320,1321c1319,1320
+<     canvas.width = Math.round(w * dpr);
+<     canvas.height = Math.round((w / ratio) * dpr);
+---
+>     canvas.width = 1080;
+>     canvas.height = 1920;
+1634,1636c1633
+<     requestAnimationFrame(loop);
+<     if (document.hidden) { lastTs = ts; return; }
+<     const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
+---
+>     const dt = 1 / 30;
+1647,1648c1644
+<     if (ts - lastPaint < 33) return;
+<     const pdt = lastPaint ? Math.min(0.1, (ts - lastPaint) / 1000) : 0.033;
+---
+>     const pdt = 1 / 30;
+1661a1658,1663
+>   window.__t = {
+>     player, keys, gyro, state, T, CELL, CHUNK, cellType, toWorld, toCell, SOLID, zoneAt, monteNoise, beacons, chunks, groundAt, setOpt, newWorld,
+>     step() { loop(0); }, start() { started = true; }, light: v => { if (v !== undefined) light = v; return light; }, cap: v => { if (v !== undefined) cap = v; return cap; },
+>     zone: () => currentZone, ending: () => ending && ending.t, near: () => near,
+>     go(x, z, h) { player.x = x; player.z = z; player.heading = h || 0; player.vx = player.vz = 0; player.y = groundAt(x, z); player.vy = 0; camSnap = true; updateChunks(true); }
+>   };
+1665c1667
+<   const start = () => { layout(); requestAnimationFrame(loop); };
+---
+>   const start = () => { layout(); window.__ready = true; };
