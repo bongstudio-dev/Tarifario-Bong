@@ -9,10 +9,13 @@ Arte exploratorio de **objetos en lugares donde no deberían estar**.
 
 ## El origen: la calle Moreno
 
-**Moreno es una calle.** Ahí empezó todo.
+**Moreno es una calle de Bahía Blanca.** Ahí empezó todo. Pero podría ser
+cualquier lado: no importa la dirección, importa que es un lugar común,
+de barrio, donde de pronto aparece algo que no debería estar.
 
 1. Una foto en la calle Moreno: `fotos/moreno-origen.jpg`.
-2. Otra vez que pasé por ahí saqué una foto parecida, pero distinta.
+2. Otra vez que pasé por ahí saqué una foto parecida, pero distinta (está
+   en Instagram, @milangagalactica).
 3. Con esas dos fotos construí un concepto artístico y una colección.
 4. Después vinieron los NFT (*Ideas of Moreno*, *Moreno 700*).
 
@@ -159,7 +162,7 @@ vacío.
 
 ## Para charlar
 
-- ¿La calle Moreno es de Tres Arroyos? ¿Dónde está la segunda foto?
+- Traer la segunda foto de Moreno (la de Instagram) para tener el par.
 - ¿Qué relación hay entre la foto de Moreno y el Arlequín? ¿El Golf estuvo
   en esa calle?
 - ¿El Arlequín entra en la serie ASCII o queda como línea aparte?
