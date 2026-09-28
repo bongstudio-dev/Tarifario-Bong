@@ -187,11 +187,18 @@ Manejar el Arlequín de noche por una ciudad que no se termina, sin destino.
 
 - **Laberinto:** el barrio, amigable, con faroles y ventanas prendidas.
 - **Avenidas, plazas, playa:** respiros dentro del laberinto.
-- **Monte:** valles de pasto por donde se maneja, montañas que no se
-  atraviesan y se ven desde lejos, pinos sueltos, luciérnagas. En el
-  corazón del monte está la nada: para llegar al abismo hay que cruzarlo.
-- **El mar:** si entrás, el auto se hunde y volvés a la costa con la mitad
-  de tu luz.
+- **Monte:** valles de pasto y montañas que se suben como en un rally: el
+  auto sigue el terreno, se inclina, salta en las crestas, derrapa y levanta
+  polvo. En el corazón del monte está la nada.
+- **El mar:** si entrás, el auto se hunde, se va la luz y aparece el limbo.
+  Si salís con muy poca luz, no volvés a la costa: caés en la nada.
+- **Sin luz, la nada:** cuando la luz se termina, unos segundos de limbo y
+  aparecés adentro de la nada.
+- **El horizonte de eventos:** en el centro de cada nada hay un punto de luz
+  máxima, con un haz que sube al cielo y se ve desde lejos. Acercarse da luz
+  y calma a los ojos. Al llegar termina la deriva: todo se vuelve luz,
+  después negro, queda el Arlequín girando solo entre estrellas (como la
+  primera lámina) y empieza otra ciudad.
 - **La nada:** el limbo. Sin piso y sin estrellas. Ojos que te miran y te
   siguen sin hacerte nada; la grilla se descompone y aparecen fragmentos
   de la génesis ("it's still there", "ideas occupy place").

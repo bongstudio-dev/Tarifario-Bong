@@ -344,7 +344,7 @@
   // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
   // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
   const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14 };
-  const SOLID = t => t >= 10 && t !== T.SEA;
+  const SOLID = t => t >= 10 && t !== T.SEA && t !== T.MOUNTAIN;
   const mod = (a, n) => ((a % n) + n) % n;
   let seed = 700, sx = 0, sy = 0;
   const hs = (x, y, k) => hash(x + Math.imul(k + 1, 9973) + seed, y + Math.imul(k + 1, 7919) - seed);
@@ -528,7 +528,7 @@
     for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
       const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
       const x0 = x * CELL, z0 = y * CELL;
-      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07 }[t] || 0;
+      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07, 14: 0.06 }[t] || 0;
       const key = x + "," + y;
       if (ideaChance && hs(x, y, 20) < ideaChance && !collected.has(key)) ideas.push([key, x0 + 2 + hs(x, y, 21) * 4, z0 + 2 + hs(x, y, 22) * 4, hs(x, y, 23)]);
       if (t === T.VOID) continue;
@@ -658,9 +658,10 @@
     beams.forEach(([x, z, r]) => { const b = new THREE.Mesh(BEAM, beamMat); b.position.set(x, 0, z); b.rotation.set(0.12 * Math.sin(r * 9), 0, 0.12 * Math.cos(r * 9)); g.add(b); });
     const ideaList = ideas.map(([key, x, z, r]) => {
       const m = new THREE.Mesh(ORB_GEO, orbMat);
-      m.position.set(x, 1.5, z);
+      const base = groundAt(x, z) + 1.5;
+      m.position.set(x, base, z);
       g.add(m);
-      return { key, mesh: m, x, z, phase: r * TAU };
+      return { key, mesh: m, x, z, base, phase: r * TAU };
     });
 
     const polesMesh = instanced(POLE, poleMat, poles, ([x, z], m) => m.makeTranslation(x, 0, z));
@@ -691,26 +692,37 @@
   }
 
   // --- El auto ---------------------------------------------------------------------
-  const player = { x: 0, z: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0, dist: 0 };
+  const player = { x: 0, z: 0, y: 0, vy: 0, air: false, pitch: 0, roll: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0, dist: 0 };
+  // Suelo del monte: la misma malla de 2 m que se dibuja, interpolada.
+  function groundAt(wx, wz) {
+    const S = 2, gx = Math.floor(wx / S), gz = Math.floor(wz / S), u = wx / S - gx, v = wz / S - gz;
+    const h = (i, j) => heightAt((gx + i) * S / CELL, (gz + j) * S / CELL);
+    const a = h(0, 0), b = h(1, 0), c = h(0, 1), d = h(1, 1);
+    return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
+  }
   const MAX_FWD = 24, MAX_REV = 8;
   function physics(dt) {
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     let along = player.vx * fx + player.vz * fz;
     const latx = player.vx - fx * along, latz = player.vz - fz * along;
 
+    // Rally: en el aire no hay tracción; en las subidas se frena y en las bajadas se acelera.
+    const traction = player.air ? 0.05 : 1;
     let acc = 0;
-    if (keys.up) acc = along < MAX_FWD ? 16 : 0;
+    if (keys.up) acc = along < MAX_FWD ? 16 * traction : 0;
     if (keys.down) acc = along > 0.5 ? -30 : (along > -MAX_REV ? -9 : 0);
-    along += acc * dt;
-    along -= along * (keys.up || keys.down ? 0.25 : 0.9) * dt;
+    if (keys.down && player.air) acc = 0;
+    along += acc * dt - 9.8 * Math.sin(player.pitch) * dt;
+    along -= along * (keys.up || keys.down ? 0.25 : 0.9) * dt * traction;
     if (keys.hand) along -= Math.sign(along) * Math.min(Math.abs(along), 14 * dt);
 
     const want = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
     player.steer += (want - player.steer) * Math.min(1, dt * 7);
-    const grip = keys.hand ? 1.2 : 9;
+    const offroad = currentZone === T.FOREST;
+    const grip = player.air ? 0.2 : keys.hand ? 1.2 : offroad ? 3.2 : 9;
     const k = Math.exp(-grip * dt);
     const turn = player.steer * clamp(along / 6, -1, 1) * (1.9 - 0.9 * Math.min(1, Math.abs(along) / MAX_FWD));
-    player.heading += turn * dt * (keys.hand ? 1.35 : 1);
+    player.heading += turn * dt * (keys.hand ? 1.35 : offroad ? 1.15 : 1) * (player.air ? 0.2 : 1);
 
     const nfx = Math.cos(player.heading), nfz = -Math.sin(player.heading);
     player.vx = nfx * along + latx * k;
@@ -718,8 +730,33 @@
     player.x += player.vx * dt;
     player.z += player.vz * dt;
     collide();
+    terrain(dt);
     player.speed = Math.hypot(player.vx, player.vz);
     player.dist += player.speed * dt;
+  }
+
+  // Altura, inclinación y saltos: el auto sigue el terreno y sale volando en las crestas.
+  function terrain(dt) {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading), rx = -fz, rz = fx;
+    const g = groundAt(player.x, player.z);
+    player.vy -= 24 * dt;
+    player.y += player.vy * dt;
+    if (player.y <= g) {
+      const landed = player.air && player.vy < -6;
+      const hf = groundAt(player.x + fx * 1.3, player.z + fz * 1.3), hb = groundAt(player.x - fx * 1.3, player.z - fz * 1.3);
+      const climb = (hf - hb) / 2.6 * (player.vx * fx + player.vz * fz); // cuánto sube el suelo por segundo
+      player.y = g;
+      player.vy = Math.max(player.vy, climb);
+      player.air = false;
+      if (landed) shake = Math.min(1, shake + 0.6);
+      const hl = groundAt(player.x - rx * 0.8, player.z - rz * 0.8), hr = groundAt(player.x + rx * 0.8, player.z + rz * 0.8);
+      const k = Math.min(1, dt * 12);
+      player.pitch += (Math.atan2(hf - hb, 2.6) - player.pitch) * k;
+      player.roll += (Math.atan2(hl - hr, 1.6) - player.roll) * k;
+    } else {
+      player.air = player.y > g + 0.25;
+      player.pitch *= Math.exp(-dt * 0.8);
+    }
   }
 
   // Dos círculos (trompa y cola) contra las cuadras sólidas vecinas: edificios, enredaderas, el mar.
@@ -748,20 +785,20 @@
   // --- Cámara ------------------------------------------------------------------------
   let shake = 0, camSnap = true;
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
-  const blocksCam = (x, y) => { const t = cellType(x, y); return t === T.WALL || t === T.IVY || t === T.MONUMENT || t === T.MOUNTAIN; };
+  const blocksCam = (x, y) => { const t = cellType(x, y); return t === T.WALL || t === T.IVY || t === T.MONUMENT; };
   function placeCamera(dt) {
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const want = new THREE.Vector3(), look = new THREE.Vector3();
     if (state.view === "Arriba") {
       camera.up.set(0, 0, -1);
-      want.set(player.x + fx * 3, 22, player.z + fz * 3 + 0.01);
-      look.set(player.x + fx * 3, 0, player.z + fz * 3);
+      want.set(player.x + fx * 3, player.y + 22, player.z + fz * 3 + 0.01);
+      look.set(player.x + fx * 3, player.y, player.z + fz * 3);
     } else if (state.view === "Adentro") {
       // Desde el asiento: el capó adelante y la calle por el parabrisas.
       camera.up.set(0, 1, 0);
       const rx = fz * -1, rz = fx; // derecha del auto
-      want.set(player.x - fx * 0.1 - rx * 0.36, 1.32, player.z - fz * 0.1 - rz * 0.36);
-      look.set(want.x + fx * 12, 0.95, want.z + fz * 12);
+      want.set(player.x - fx * 0.1 - rx * 0.36, player.y + 1.32, player.z - fz * 0.1 - rz * 0.36);
+      look.set(want.x + fx * 12, player.y + 0.95 + Math.tan(player.pitch) * 12, want.z + fz * 12);
     } else {
       camera.up.set(0, 1, 0);
       // La cámara va atrás del auto, pero nunca adentro de una manzana.
@@ -769,8 +806,9 @@
       for (let s = 0.5; s <= 6.8; s += 0.5) {
         if (blocksCam(toCell(player.x - fx * s), toCell(player.z - fz * s))) { back = Math.max(1.5, s - 1); break; }
       }
-      want.set(player.x - fx * back, 2.1 + back * 0.12, player.z - fz * back);
-      look.set(player.x + fx * 6, 1.0, player.z + fz * 6);
+      const wx = player.x - fx * back, wz = player.z - fz * back;
+      want.set(wx, Math.max(player.y + 2.1 + back * 0.12, groundAt(wx, wz) + 1.6), wz);
+      look.set(player.x + fx * 6, player.y + 1.0, player.z + fz * 6);
     }
     const inside = state.view === "Adentro";
     const k = camSnap || inside ? 1 : 1 - Math.exp(-dt * 6);
@@ -786,6 +824,33 @@
     moon.position.copy(camera.position).addScaledVector(MOON_DIR, 260);
   }
 
+  // Polvo: puntos que quedan atrás cuando el auto anda rápido por el monte.
+  const DUST_N = 60;
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(DUST_N * 3).fill(-999), 3));
+  const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xb8a07a, size: 2, sizeAttenuation: false, transparent: true, opacity: 0.9 }));
+  scene.add(dustPts);
+  const dustLife = new Float32Array(DUST_N), dustVel = new Float32Array(DUST_N * 3);
+  let dustNext = 0;
+  function dust(dt) {
+    const pos = dustGeo.attributes.position.array;
+    if (currentZone === T.FOREST && !player.air && player.speed > 7) {
+      for (let n = 0; n < 2; n++) {
+        const i = dustNext = (dustNext + 1) % DUST_N, fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
+        pos[i * 3] = player.x - fx * 2 + (Math.random() - 0.5) * 1.6; pos[i * 3 + 1] = player.y + 0.3; pos[i * 3 + 2] = player.z - fz * 2 + (Math.random() - 0.5) * 1.6;
+        dustVel[i * 3] = -fx * 2 + (Math.random() - 0.5) * 2; dustVel[i * 3 + 1] = 1 + Math.random() * 1.5; dustVel[i * 3 + 2] = -fz * 2 + (Math.random() - 0.5) * 2;
+        dustLife[i] = 0.8 + Math.random() * 0.6;
+      }
+    }
+    for (let i = 0; i < DUST_N; i++) {
+      if (dustLife[i] <= 0) { pos[i * 3 + 1] = -999; continue; }
+      dustLife[i] -= dt;
+      pos[i * 3] += dustVel[i * 3] * dt; pos[i * 3 + 1] += dustVel[i * 3 + 1] * dt; pos[i * 3 + 2] += dustVel[i * 3 + 2] * dt;
+      dustVel[i * 3 + 1] -= 2 * dt;
+    }
+    dustGeo.attributes.position.needsUpdate = true;
+  }
+
   // Cada zona tiene su luz: la playa tiene luna, en la nada no hay nada.
   // [cielo, luna, niebla lejos, color de cielo, color de suelo, color de niebla]
   const ZONE_LIGHT = {
@@ -799,9 +864,10 @@
   const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
   function placeWorld(dt) {
     const sk = sinking ? Math.min(1, sinking.t / 2) : 0;
-    car.position.set(player.x, -sk * 2.6, player.z);
-    car.rotation.x = sk * 0.35;
-    car.rotation.y = player.heading;
+    car.position.set(player.x, player.y - sk * 2.6, player.z);
+    car.rotation.order = "YZX";
+    car.rotation.set(player.roll + sk * 0.35, player.heading, player.pitch);
+    dust(dt);
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const along = player.vx * fx + player.vz * fz;
     wheels.forEach((w, i) => { w.rotation.z -= along * 0.016; if (i < 2) w.rotation.y = player.steer * 0.4; });
@@ -872,6 +938,32 @@
 
   // Si entrás al mar, el auto se hunde; volvés a la costa con la mitad de tu luz.
   let sinking = null, lastSafe = null;
+  // Busca una cuadra adentro de la nada (con nada alrededor) cerca del auto.
+  function deepVoidNear() {
+    const sx0 = toCell(player.x), sy0 = toCell(player.z);
+    for (let r = 1; r < 260; r++) for (let d = -r; d <= r; d += 1) for (const [x, y] of [[sx0 + d, sy0 - r], [sx0 + d, sy0 + r], [sx0 - r, sy0 + d], [sx0 + r, sy0 + d]]) {
+      if (cellType(x, y) !== T.VOID) continue;
+      let ok = true;
+      for (let b = -2; b <= 2 && ok; b++) for (let a = -2; a <= 2; a++) if (cellType(x + a, y + b) !== T.VOID) { ok = false; break; }
+      if (ok) return [x, y];
+    }
+    return null;
+  }
+  // Caer en la nada: la grilla se rompe y aparecés adentro, a oscuras.
+  function fallIntoVoid() {
+    const v = deepVoidNear();
+    if (!v) return false;
+    player.x = toWorld(v[0]); player.z = toWorld(v[1]);
+    player.heading = Math.random() * TAU;
+    player.vx = player.vz = 0; player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0;
+    currentZone = T.VOID;
+    voidK = 1;
+    camSnap = true;
+    updateChunks(true);
+    return true;
+  }
+  let darkT = 0;
+
   function tickWater(dt) {
     const t = cellType(toCell(player.x), toCell(player.z));
     if (!sinking) {
@@ -880,13 +972,16 @@
       return;
     }
     sinking.t += dt;
+    light = Math.max(0, light - 0.3 * dt);
     player.vx *= Math.exp(-2.5 * dt); player.vz *= Math.exp(-2.5 * dt);
     if (sinking.t > 2.6) {
+      // Si el agua te dejó casi sin luz, no volvés a la costa: caés en la nada.
+      if (light < 0.25 && fallIntoVoid()) { sinking = null; light = 0; return; }
       const back = lastSafe || { x: player.x, z: player.z, heading: player.heading };
       player.x = back.x - Math.cos(back.heading) * 4; player.z = back.z + Math.sin(back.heading) * 4;
       player.heading = back.heading + Math.PI;
       player.vx = player.vz = 0;
-      light = Math.max(0.08, light * 0.5);
+      light = Math.max(0.08, light * 0.6);
       sinking = null;
       camSnap = true;
     }
@@ -899,14 +994,17 @@
     if (currentZone === T.VOID) drain *= 3;
     let lamp = false;
     chunks.forEach(c => c.lamps.forEach(p => { if (!lamp && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 7.5 * 7.5) lamp = true; }));
-    light = clamp(light - (started ? drain * dt : 0) + (lamp ? 0.06 * dt : 0), 0, cap);
+    light = clamp(light - (started ? drain * dt : 0) + (lamp ? 0.06 * dt : 0) + near * 0.35 * dt, 0, cap);
+    // Sin luz, la nada te alcanza: unos segundos de limbo y caés adentro.
+    if (light < 0.01 && currentZone !== T.VOID && !sinking && !ending) { darkT += dt; if (darkT > 3.5) { darkT = 0; fallIntoVoid(); } }
+    else darkT = 0;
     flash = Math.max(0, flash - dt * 2.5);
     chunks.forEach(c => c.ideas.forEach(it => {
       if (it.taken) return;
-      it.mesh.position.y = 1.5 + Math.sin(clock * 1.6 + it.phase) * 0.3;
+      it.mesh.position.y = (it.base || 1.5) + Math.sin(clock * 1.6 + it.phase) * 0.3;
       it.mesh.scale.setScalar(1 + Math.sin(clock * 3 + it.phase) * 0.15);
       const dx = it.x - player.x, dz = it.z - player.z;
-      if (dx * dx + dz * dz > 2.6 * 2.6) return;
+      if (dx * dx + dz * dz > 2.6 * 2.6 || Math.abs((it.base || 1.5) - 1.5 - player.y) > 3) return;
       it.taken = true;
       it.mesh.visible = false;
       collected.add(it.key);
@@ -916,6 +1014,98 @@
       flash = 1;
       try { localStorage.setItem("deriva-luz", String(cap)); } catch (e) { /* sin almacenamiento */ }
     }));
+  }
+
+  // --- El horizonte de eventos: un punto de luz máxima en el centro de cada nada -----------
+  // Está donde la nada es más profunda. Un haz de luz sube al cielo y se ve desde lejos.
+  const singCache = new Map();
+  function singularities(cx, cy) {
+    const key = cx + "," + cy;
+    if (singCache.has(key)) return singCache.get(key);
+    const out = [];
+    for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
+      const x = cx * CHUNK + i, y = cy * CHUNK + j, f = monteNoise(x, y);
+      if (f < 0.73 || zoneAt(x, y) !== T.VOID) continue;
+      let top = true;
+      for (let b = -5; b <= 5 && top; b++) for (let a = -5; a <= 5; a++) if ((a || b) && monteNoise(x + a, y + b) > f) { top = false; break; }
+      if (top) out.push([toWorld(x), toWorld(y)]);
+    }
+    singCache.set(key, out);
+    return out;
+  }
+  const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+  const haloMat = new THREE.MeshBasicMaterial({ color: 0xfff4d8, transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  const pillarMat = new THREE.MeshBasicMaterial({ color: 0xfff1d0, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  const CORE = new THREE.SphereGeometry(1.4, 20, 14), HALO = new THREE.SphereGeometry(7, 20, 14);
+  const PILLAR = new THREE.CylinderGeometry(0.5, 2.5, 420, 12, 1, true); PILLAR.translate(0, 210, 0);
+  const beacons = new Map();
+  let near = 0, nearest = null;
+  function tickHorizon() {
+    const pcx = Math.floor(toCell(player.x) / CHUNK), pcy = Math.floor(toCell(player.z) / CHUNK);
+    const want = new Set();
+    for (let b = -3; b <= 3; b++) for (let a = -3; a <= 3; a++) singularities(pcx + a, pcy + b).forEach(([x, z]) => want.add(x + "," + z));
+    beacons.forEach((g, k) => { if (!want.has(k)) { scene.remove(g); beacons.delete(k); } });
+    want.forEach(k => {
+      if (beacons.has(k)) return;
+      const [x, z] = k.split(",").map(Number), g = new THREE.Group();
+      const core = new THREE.Mesh(CORE, coreMat), halo = new THREE.Mesh(HALO, haloMat), pillar = new THREE.Mesh(PILLAR, pillarMat);
+      core.position.y = halo.position.y = 3;
+      g.add(core, halo, pillar);
+      g.position.set(x, 0, z);
+      scene.add(g);
+      beacons.set(k, g);
+    });
+    nearest = null;
+    let best = Infinity;
+    beacons.forEach(g => { const d = Math.hypot(g.position.x - player.x, g.position.z - player.z); if (d < best) { best = d; nearest = g; } });
+    near = nearest ? 1 - clamp(best / 70, 0, 1) : 0;
+    beacons.forEach(g => { const s = 1 + Math.sin(clock * 2.2) * 0.08; g.children[1].scale.setScalar(s); });
+    if (nearest && best < 4 && !ending && !sinking) startEnding();
+  }
+
+  // --- El final: todo se vuelve luz, después negro, y queda el Arlequín girando solo -----------
+  let ending = null;
+  const endScene = new THREE.Scene();
+  const endCam = new THREE.PerspectiveCamera(35, 16 / 9, 0.1, 100);
+  const endTurn = new THREE.Group();
+  (() => {
+    const golf = buildGolf();
+    golf.position.y = -0.72;
+    golf.userData.headMat.emissiveIntensity = 1.2;
+    endTurn.add(golf);
+    endScene.add(endTurn);
+    const key = new THREE.DirectionalLight(0xffffff, 1.15); key.position.set(-3, 4, 5);
+    const rim = new THREE.DirectionalLight(0x9fb4ff, 0.45); rim.position.set(4, 2, -4);
+    endScene.add(key, rim, new THREE.AmbientLight(0xffffff, 0.05));
+    endCam.position.set(0, 2.4, 9.5);
+    endCam.lookAt(0, 0, 0);
+  })();
+  function startEnding() {
+    ending = { t: 0 };
+    keys.up = keys.down = keys.left = keys.right = keys.hand = false;
+  }
+  function tickEnding(dt) {
+    if (!ending) return;
+    ending.t += dt;
+    player.vx *= Math.exp(-3 * dt); player.vz *= Math.exp(-3 * dt);
+    endTurn.rotation.y = ending.t * 0.35;
+    endCam.aspect = ratio; endCam.updateProjectionMatrix();
+    if (ending.t > 14) {
+      ending = null;
+      newWorld((Math.random() * 1e9) | 0);
+    }
+  }
+  // Blanco que se come la grilla, después negro.
+  function endingOverlay() {
+    if (!ending) return;
+    const t = ending.t, n = cols * rows;
+    if (t < 3.2) {
+      const p = clamp((t - 0.8) / 2, 0, 1);
+      for (let i = 0; i < n; i++) if (hash(i, 7) < p) { CH[i] = RAMP[RAMP.length - 1 - Math.floor(hash(i, 9) * 4)]; COL[i] = "#fff6e0"; }
+    } else if (t < 5) {
+      const p = 1 - clamp((t - 3.2) / 1.6, 0, 1);
+      for (let i = 0; i < n; i++) if (hash(i, 7) < p) { CH[i] = RAMP[RAMP.length - 1 - Math.floor(hash(i, 9) * 4)]; COL[i] = "#fff6e0"; } else CH[i] = null;
+    }
   }
 
   // --- La nada: el limbo, donde algo te mira ------------------------------------------------
@@ -955,7 +1145,8 @@
   }
 
   function tickVoid(dt) {
-    const inVoid = (currentZone === T.VOID || light < 0.03) && !state.map;
+    // Cerca del horizonte la luz calma todo: los ojos se cierran y la grilla se ordena.
+    const inVoid = (currentZone === T.VOID || light < 0.03 || !!sinking) && !state.map && near < 0.45 && !ending;
     voidK += ((inVoid ? 1 : 0) - voidK) * Math.min(1, dt * 0.8);
     voidTime = inVoid ? voidTime + dt : Math.max(0, voidTime - dt * 3);
     starAmount = 1 - 0.96 * voidK;
@@ -1050,6 +1241,7 @@
     const open = dirs.find(([a, b]) => !solidAt(start[0] + a, start[1] + b)) || dirs[0];
     player.heading = open[2];
     player.vx = player.vz = 0; player.steer = 0; player.dist = 0;
+    player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0;
     currentZone = 1;
     updateChunks(true);
     camSnap = true;
@@ -1059,6 +1251,7 @@
     if (home) {
       const m = new THREE.Mesh(ORB_GEO, orbMat);
       m.position.set(ox, 1.5, oz);
+      m.userData.base = 1.5;
       home.group.add(m);
       home.ideas.push({ key: "inicio", mesh: m, x: ox, z: oz, phase: 0 });
     }
@@ -1100,11 +1293,12 @@
 
   let exposureNow = ADJ.exposure;
   function shade() {
-    exposureNow = ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
+    exposureNow = ending && ending.t > 5 ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
     const W = cols * SS, H = rows * SS;
     renderer.setRenderTarget(rt);
     renderer.clear();
-    renderer.render(scene, camera);
+    // En el final se ve solo el Arlequín girando en el negro.
+    if (ending && ending.t > 5) renderer.render(endScene, endCam); else renderer.render(scene, camera);
     renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf);
     renderer.setRenderTarget(null);
     const steps = RAMP.length - 1, ink = MODES[state.mode];
@@ -1213,6 +1407,7 @@
   }
 
   function hud() {
+    if (ending) return;
     if (state.view === "Adentro" && !state.map) dashboard();
     const write = (text, r, align) => {
       const c0 = align === "right" ? cols - text.length - 1 : align === "center" ? Math.floor((cols - text.length) / 2) : 1;
@@ -1340,7 +1535,9 @@
     lastTs = ts;
     clock += dt;
     water.uniforms.uTime.value = clock;
-    if (!state.map) { if (sinking) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
+    if (!state.map) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
+    tickHorizon();
+    tickEnding(dt);
     tickLight(dt);
     markSeen();
     trackZone();
@@ -1352,7 +1549,7 @@
     placeOrbit();
     tickVoid(pdt);
     placeCamera(pdt);
-    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); }
+    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); }
     hud();
     paint();
   }
