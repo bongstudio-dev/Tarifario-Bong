@@ -336,7 +336,7 @@
 
   // --- Estado ------------------------------------------------------------------
   const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-  const state = { auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
+  const state = { assist: true, auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
   // --- WebGL -------------------------------------------------------------------
@@ -385,9 +385,11 @@
   carGlow.position.set(-1.2, 4.2, 0);
   car.add(carGlow);
   // Relleno trasero: la cola del auto queda de espaldas a la luna; esta luz viaja atrás y la ilumina.
-  const rearFill = new THREE.PointLight(0xfff0e8, 1.4, 9, 1.4);
-  rearFill.position.set(-4.2, 1.6, 0);
-  car.add(rearFill);
+  // Es un foco angosto que apunta solo al portón, para no quemar el piso entre la cámara y el auto.
+  const rearFill = new THREE.SpotLight(0xfff0e8, 2.2, 9, 0.3, 0.5, 1.2);
+  rearFill.position.set(-5, 1.5, 0);
+  rearFill.target.position.set(-1.8, 1.0, 0);
+  car.add(rearFill, rearFill.target);
 
   // Faroles: pocas luces reales que se mudan a los faroles más cercanos al auto.
   const LAMP_LIGHTS = 8;
@@ -401,7 +403,7 @@
   // --- El mundo: infinito, por zonas -------------------------------------------------
   // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
   // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
-  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, ROAD: 7, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14 };
+  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, ROAD: 7, BRIDGE: 8, PARK: 9, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14, FERRIS: 15 };
   const SOLID = t => t >= 10 && t !== T.SEA && t !== T.MOUNTAIN;
   const mod = (a, n) => ((a % n) + n) % n;
   let seed = 700, sx = 0, sy = 0;
@@ -421,14 +423,14 @@
     const f = monteNoise(x, y);
     const mask = sstep(0.585, 0.62, f) * (1 - sstep(0.645, 0.675, f));
     if (mask <= 0) return 0;
-    const m = fbm((x + sx) / 13, (y + sy) / 13, 11.3);
-    const hills = Math.max(0, (m - 0.46) * 150);
+    const m = fbm((x + sx) / 16, (y + sy) / 16, 11.3);
+    const hills = Math.max(0, (m - 0.44) * 62);
     const [d, along] = roadInfo(x, y);
     if (d > 12) return hills * mask;
     // En el monte la avenida se vuelve ruta: sube y baja a lo largo, y a los costados
     // se levantan paredes de montaña que después se funden con el resto del monte.
-    const wave = 4.9 + 2.6 * Math.sin(along / 5.5 + sx * 0.01) + 1.4 * Math.sin(along / 2.1 + 1.3) + 0.6 * Math.sin(along / 0.9);
-    const walls = sstep(1.3, 4.5, d) * (1 - sstep(8, 12, d)) * 16;
+    const wave = 2.6 + 1.7 * Math.sin(along / 5.5 + sx * 0.01) + 0.9 * Math.sin(along / 2.1 + 1.3) + 0.3 * Math.sin(along / 0.9);
+    const walls = sstep(1.3, 4.5, d) * (1 - sstep(8, 12, d)) * 8;
     const k = sstep(0.55, 1.9, d);
     return (wave * (1 - k) + Math.max(wave, hills + walls) * k) * mask;
   }
@@ -454,12 +456,17 @@
   }
   function computeCell(x, y) {
     const z = zoneAt(x, y);
-    if (z) return z;
-    // Plazas: una por región de 20 × 20 cuadras, a veces.
-    const rx = Math.floor(x / 20), ry = Math.floor(y / 20);
-    if (hs(rx, ry, 1) < 0.34) {
+    if (z) {
+      // Donde una avenida llega al mar, sigue como puente colgante.
+      if (z === T.SEA && (mod(x, 26) === 1 || mod(y, 22) === 1)) return T.BRIDGE;
+      return z;
+    }
+    // Plazas: una por región de 20 × 20 cuadras, a veces. Algunas son parque de diversiones, con noria.
+    const rx = Math.floor(x / 20), ry = Math.floor(y / 20), pr = hs(rx, ry, 1);
+    if (pr < 0.46) {
       const dx = x - (rx * 20 + 10), dy = y - (ry * 20 + 10);
-      if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
+      if (pr >= 0.34 && Math.abs(dx) <= 3 && Math.abs(dy) <= 3) return dx === 0 && dy === 0 ? T.FERRIS : T.PARK;
+      if (pr < 0.34 && Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
         if (dx === 0 && dy === 0) return T.MONUMENT;
         if (Math.abs(dx) + Math.abs(dy) === 5 && hs(x, y, 12) < 0.3) return T.IVY;
         return T.PLAZA;
@@ -476,6 +483,8 @@
     return hs(x, y, 4) < 0.07 ? T.IVY : T.WALL;
   }
   const solidAt = (x, y) => SOLID(cellType(x, y));
+  // Microcentro: alrededor del arranque y en algunos núcleos; ahí las torres son altas.
+  const downtown = (x, y) => Math.max(0, 1 - Math.hypot(x, y) / 16) + sstep(0.64, 0.72, fbm((x + sx) / 28, (y + sy) / 28, 3.3));
   const toWorld = c => (c + 0.5) * CELL;
   const toCell = v => Math.floor(v / CELL);
 
@@ -568,7 +577,7 @@
   })();
   const pineMat = mat(0x2f5a3a, { roughness: 1, flatShading: true });
   const PINE = new THREE.ConeGeometry(1.3, 5, 6); PINE.translate(0, 3.2, 0);
-  const GRASS_COLORS = [0x5f9a4a, 0x7ab85a, 0x4a8a44, 0x8fbf5a, 0x6aa86a];
+  const GRASS_COLORS = [0x3a6a30, 0x4c7a3a, 0x2e5a2c, 0x587a38, 0x426c40];
   // Luz: orbes que brillan solos, visibles aunque todo esté oscuro.
   const ORB_GEO = new THREE.IcosahedronGeometry(0.55, 2);
   const orbMat = new THREE.MeshBasicMaterial({ color: 0xfff1c4 });
@@ -600,13 +609,72 @@
   const CHUNK = 16;
   const chunks = new Map();
   const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
-  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x3a6a34, 7: 0x3c3c4c, 14: 0x3a6a34, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
+  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x2e5028, 7: 0x3c3c4c, 8: 0x4a4452, 9: 0x3a2a4c, 14: 0x2e5028, 15: 0x3a2a4c, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
 
   function instanced(geo, material, list, build) {
     if (!list.length) return null;
     const inst = new THREE.InstancedMesh(geo, material, list.length);
     list.forEach((item, i) => { build(item, m4); inst.setMatrixAt(i, m4); });
     return inst;
+  }
+
+  // --- Luces de la ciudad: semáforos, balizas, puentes, parque ---------------------------------
+  const pointsOf = (list, material) => {
+    if (!list.length) return null;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(list.flat(), 3));
+    const p = new THREE.Points(geo, material); p.userData.own = true; return p;
+  };
+  const TL_COLORS = [[0xff2a20, 0x3a0806], [0xffb020, 0x3a2806], [0x30ff70, 0x063a14]];
+  const TL_MATS = [0, 1, 2, 3].map(() => TL_COLORS.map(([on]) => new THREE.PointsMaterial({ color: on, size: 4, sizeAttenuation: false })));
+  const beaconMat = new THREE.PointsMaterial({ color: 0xff2a20, size: 4, sizeAttenuation: false });
+  const bulbPointsMat = new THREE.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true });
+  const towerMat = mat(0xc8c2d8, { roughness: 0.6, emissive: 0x1a1628 });
+  const FUN_COLORS = [0xff4ab0, 0x40e0ff, 0xffe040, 0xb070ff, 0x60ff90];
+  // Noria: aro y rayos hechos de luces de colores, cabinas que brillan, gira lento.
+  function buildFerris(x, z, turned, parent) {
+    const R = 11, AX = 13, root = new THREE.Group(), wheel = new THREE.Group();
+    root.position.set(x, 0, z);
+    if (turned) root.rotation.y = Math.PI / 2;
+    const legMat = mat(0xb8b0d0, { roughness: 0.6, emissive: 0x141020 });
+    [-1.8, 1.8].forEach(zz => [-1, 1].forEach(sd => {
+      const leg = new THREE.Mesh(BOX, legMat);
+      leg.scale.set(0.5, AX / Math.cos(0.3), 0.5);
+      leg.position.set(sd * AX * Math.tan(0.3), 0, zz);
+      leg.rotation.z = sd * 0.3;
+      root.add(leg);
+    }));
+    wheel.position.y = AX;
+    const pos = [], cl = [];
+    for (let i = 0; i < 96; i++) { const a = i / 96 * TAU; [-0.9, 0.9].forEach(zz => { pos.push(Math.cos(a) * R, Math.sin(a) * R, zz); col.set(FUN_COLORS[i % 5]); cl.push(col.r, col.g, col.b); }); }
+    for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; for (let r = 1.5; r < R; r += 1.4) { pos.push(Math.cos(a) * r, Math.sin(a) * r, 0); col.set(0xffe2a8); cl.push(col.r, col.g, col.b); } }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(cl, 3));
+    const rim = new THREE.Points(geo, bulbPointsMat); rim.userData.own = true;
+    wheel.add(rim);
+    const cabins = [];
+    for (let k = 0; k < 12; k++) {
+      const a = k / 12 * TAU, c = new THREE.Mesh(BOX, new THREE.MeshStandardMaterial({ color: FUN_COLORS[k % 5], emissive: FUN_COLORS[k % 5], emissiveIntensity: 0.7 }));
+      c.scale.set(1.3, 1.3, 1.6);
+      c.position.set(Math.cos(a) * R, Math.sin(a) * R - 1.6, 0);
+      wheel.add(c); cabins.push(c);
+    }
+    const hub = new THREE.Mesh(BOX, new THREE.MeshBasicMaterial({ color: 0xfff1c4 }));
+    hub.scale.set(1.2, 1.2, 2.2); hub.position.y = -0.6; wheel.add(hub);
+    root.add(wheel);
+    parent.add(root);
+    return { wheel, cabins, phase: x * 0.013 };
+  }
+  // Una vez por cuadro: semáforos, balizas y norias.
+  function tickCity() {
+    for (let gr = 0; gr < 4; gr++) {
+      const t = (clock + gr * 2.3) % 9, state3 = t < 4 ? 2 : t < 5 ? 1 : 0; // verde, amarillo, rojo
+      for (let c = 0; c < 3; c++) TL_MATS[gr][c].color.setHex(TL_COLORS[c][c === state3 ? 0 : 1]);
+    }
+    beaconMat.color.setHex(Math.sin(clock * 3) > 0 ? 0xff2a20 : 0x2a0404);
+    const spin = list => list.forEach(c => c.anim && c.anim.forEach(f => { f.wheel.rotation.z = clock * 0.12 + f.phase; }));
+    spin(chunks); spin(dying);
   }
 
   // El mundo se degenera a medida que se genera: cada pedazo nuevo sale un poco más roto.
@@ -625,10 +693,11 @@
     const wp = [];
     const byFloors = {}, ivies = [], trees = [], poles = [], monuments = [];
     const ideas = [], beams = [], motes = [], studs = [], midStuds = [], grass = [], pines = [];
+    const roofLights = [], tlights = [], tlPoles = [], towers = [], beams2 = [], cableBulbs = [], parkBulbs = [], anim = [];
     for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
       const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
       const x0 = x * CELL, z0 = y * CELL;
-      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07, 7: 0.04, 14: 0.06 }[t] || 0;
+      const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07, 7: 0.04, 8: 0.08, 9: 0.12, 14: 0.06 }[t] || 0;
       const key = x + "," + y;
       if (ideaChance && hs(x, y, 20) < ideaChance && !collected.has(key)) ideas.push([key, x0 + 2 + hs(x, y, 21) * 4, z0 + 2 + hs(x, y, 22) * 4, hs(x, y, 23)]);
       if (t === T.VOID) continue;
@@ -668,8 +737,14 @@
       } else if (t === T.WALL) {
         const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
         const r = hs(x, y, 5);
-        const floors = nearAvenue ? 4 + Math.floor(r * 5) : 1 + Math.floor(Math.pow(r, 1.6) * 5);
+        const dn = downtown(x, y);
+        const floors = dn > 0.45 ? 7 + Math.floor(r * 15 * Math.min(1, dn)) : nearAvenue ? 4 + Math.floor(r * 5) : 1 + Math.floor(Math.pow(r, 1.6) * 5);
         (byFloors[floors] = byFloors[floors] || []).push([x0, z0, PALETTE[Math.floor(hs(x, y, 6) * PALETTE.length)]]);
+        // Las torres llevan luz roja de balizamiento arriba.
+        if (floors >= 9) {
+          const r1 = hash(x0 * 3 + 1, z0 * 7 + 2), r2 = hash(x0 * 5 + 3, z0 * 3 + 9), r3 = hash(x0 + 11, z0 + 13);
+          roofLights.push([x0 + 4, z0 + 4, floors * 3.2 * (1 - degen * 0.4 * r1) - degen * 6 * r2 * r3 + 0.4]);
+        }
       } else if (t === T.IVY) {
         ivies.push([x0 + 4, z0 + 4, hs(x, y, 7)]);
       } else if (t === T.PLAZA) {
@@ -704,9 +779,47 @@
           const px = vert ? x0 + 4 + side * 4.6 : x0 + 4, pz = vert ? z0 + 4 : z0 + 4 + side * 4.6;
           poles.push([px, pz, vert ? -side : 0, vert ? 0 : -side, groundAt(px, pz) - 0.2]);
         }
+      } else if (t === T.BRIDGE) {
+        // Puente colgante: tablero de un carril, torres cada 12 cuadras y cables llenos de luces.
+        const vert = mod(x, 26) === 1, along = vert ? y : x;
+        const L = (a, lat, h) => vert ? [x0 + 4 + lat, z0 + a, h] : [x0 + a, z0 + 4 + lat, h];
+        [1.33, 4, 6.67].forEach(a => { studs.push(L(a, -3.3, 0)); studs.push(L(a, 3.3, 0)); });
+        [2, 6].forEach(a => midStuds.push(L(a, 0, 0)));
+        if (mod(along, 3) === 0) { const p = L(4, mod(along, 6) ? 3.9 : -3.9, 0); poles.push([p[0], p[1], vert ? (p[0] > x0 + 4 ? -1 : 1) : 0, vert ? 0 : (p[1] > z0 + 4 ? -1 : 1), 0]); }
+        if (mod(along, 12) === 0) {
+          const H = 30, next = vert ? cellType(x, y + 12) : cellType(x + 12, y), prev = vert ? cellType(x, y - 12) : cellType(x - 12, y);
+          [-5.2, 5.2].forEach(lat => {
+            towers.push(L(4, lat, H));
+            cableBulbs.push({ p: L(4, lat, H + 0.8), red: true });
+            // Cable principal hasta la torre siguiente, con péndolas cada 4 m.
+            if (next === T.BRIDGE) for (let s = 0; s <= 96; s += 1.6) {
+              const u = s / 96, h = H - 25 * 4 * u * (1 - u);
+              cableBulbs.push({ p: L(4 + s, lat, h) });
+              if (Math.round(s / 1.6) % 3 === 0) for (let k = 1; k < 4; k++) cableBulbs.push({ p: L(4 + s, lat, h * k / 4), dim: true });
+            }
+            // Tirantes hacia tierra cuando la torre es la primera o la última.
+            if (next !== T.BRIDGE) for (let s = 0; s <= 40; s += 1.6) cableBulbs.push({ p: L(4 + s, lat, H * (1 - s / 40)) });
+            if (prev !== T.BRIDGE) for (let s = 0; s <= 40; s += 1.6) cableBulbs.push({ p: L(4 - s, lat, H * (1 - s / 40)) });
+          });
+          beams2.push([L(4, 0, H - 2), vert], [L(4, 0, 12), vert]);
+        }
+      } else if (t === T.PARK) {
+        // Parque de diversiones: guirnaldas de colores y faroles.
+        for (let k = 0; k < 7; k++) parkBulbs.push([x0 + hs(x, y, 150 + k) * 8, 3 + Math.sin(k * 0.9 + x) * 0.6, z0 + 4 + Math.sin(k * 1.3 + y) * 3, Math.floor(hs(x, y, 160 + k) * 5)]);
+        if (hs(x, y, 170) < 0.07) poles.push([x0 + 4, z0 + 4, 0]);
+      } else if (t === T.FERRIS) {
+        anim.push(buildFerris(x0 + 4, z0 + 4, hs(x, y, 171) < 0.5, g));
       } else if (t === T.MONUMENT) {
         monuments.push([x0 + 4, z0 + 4]);
-      } else if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
+      }
+      // Semáforos: en algunas esquinas del laberinto y en los cruces de avenidas.
+      const avCross = t === T.AVENUE && mod(x, 26) === 0 && mod(y, 22) === 0;
+      if (avCross || (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 180) < 0.2)) {
+        const px = x0 + 0.9, pz = z0 + 0.9, grp = Math.floor(hs(x, y, 181) * 4);
+        tlPoles.push([px, pz]);
+        [0, 1, 2].forEach(c => tlights.push([px, 3.9 - c * 0.45, pz, grp, c]));
+      }
+      if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
         poles.push([x0 + 4 + (hs(x, y, 14) < 0.5 ? -3.2 : 3.2), z0 + 4 + (hs(x, y, 15) < 0.5 ? -3.2 : 3.2), 0]);
       }
     }
@@ -757,7 +870,7 @@
     const hp = [], hc = [], STEP = 2, N = CHUNK * CELL / STEP;
     const H = [];
     for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) H.push(heightAt((cx * CHUNK * CELL + i * STEP) / CELL, (cy * CHUNK * CELL + j * STEP) / CELL));
-    const hcol = h => col.set(h < 3 ? 0x5a9a4a : h < 10 ? 0x4f8050 : h < 22 ? 0x70748a : 0xb0acc8);
+    const hcol = h => col.set(h < 2.5 ? 0x406e36 : h < 6 ? 0x386232 : h < 10 ? 0x505a30 : 0x6a5a3c);
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       const a = H[j * (N + 1) + i], b = H[j * (N + 1) + i + 1], c = H[(j + 1) * (N + 1) + i], d = H[(j + 1) * (N + 1) + i + 1];
       if (a + b + c + d < 0.05) continue;
@@ -794,10 +907,36 @@
     if (polesMesh) g.add(polesMesh, bulbs);
     poles.forEach(([x, z, ax, az, y]) => lamps.push(new THREE.Vector3(x + (ax || 0) * 0.5, (y || 0) + 4.3, z + (az || 0) * 0.5)));
 
+    // Balizas rojas, semáforos, torres del puente, guirnaldas.
+    const rl = pointsOf(roofLights.map(([x, z, y]) => [x, y, z]), beaconMat); if (rl) g.add(rl);
+    for (let gr = 0; gr < 4; gr++) for (let c = 0; c < 3; c++) {
+      const pts = pointsOf(tlights.filter(q => q[3] === gr && q[4] === c).map(([x, y, z]) => [x, y, z]), TL_MATS[gr][c]);
+      if (pts) g.add(pts);
+    }
+    const tlp = instanced(POLE, poleMat, tlPoles, ([x, z], m) => m.makeScale(1, 0.9, 1).setPosition(x, 0, z));
+    if (tlp) g.add(tlp);
+    const tw = instanced(BOX, towerMat, towers, ([x, z, h], m) => m.makeScale(1.3, h, 1.3).setPosition(x, 0, z));
+    if (tw) g.add(tw);
+    const bm = instanced(BOX, towerMat, beams2, ([[x, z, h], vert], m) => m.makeScale(vert ? 11.8 : 1, 1, vert ? 1 : 11.8).setPosition(x, h, z));
+    if (bm) g.add(bm);
+    if (cableBulbs.length) {
+      const geo = new THREE.BufferGeometry(), pos = [], cl = [];
+      cableBulbs.forEach(({ p, red, dim }) => { pos.push(p[0], p[2], p[1]); col.set(red ? 0xff2a20 : dim ? 0x9a7a50 : 0xffe2a8); cl.push(col.r, col.g, col.b); });
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(cl, 3));
+      const pts = new THREE.Points(geo, bulbPointsMat); pts.userData.own = true; g.add(pts);
+    }
+    if (parkBulbs.length) {
+      const geo = new THREE.BufferGeometry(), pos = [], cl = [];
+      parkBulbs.forEach(([x, y, z, c]) => { pos.push(x, y, z); col.set(FUN_COLORS[c]); cl.push(col.r, col.g, col.b); });
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(cl, 3));
+      const pts = new THREE.Points(geo, bulbPointsMat); pts.userData.own = true; g.add(pts);
+    }
     // Nace desde el piso.
     g.scale.y = 0.001;
     scene.add(g);
-    return { group: g, lamps, ideas: ideaList, born: clock };
+    return { group: g, lamps, ideas: ideaList, born: clock, anim };
   }
 
   function disposeChunk(c) {
@@ -830,7 +969,17 @@
   }
 
   // --- El auto ---------------------------------------------------------------------
-  const player = { x: 0, z: 0, y: 0, vy: 0, air: false, pitch: 0, roll: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0, dist: 0 };
+  const player = { x: 0, z: 0, y: 0, vy: 0, air: false, pitch: 0, roll: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0, dist: 0, slip: 0, assist: false };
+  let suspKick = 0;
+  // Freno asistido: mira adelante (tres rayos, el ancho del auto) y devuelve la distancia libre.
+  function clearAhead() {
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading), rx = -fz, rz = fx;
+    for (let d = 2; d <= 30; d += 1) for (const o of [-0.85, 0, 0.85]) {
+      const t = cellType(toCell(player.x + fx * d + rx * o), toCell(player.z + fz * d + rz * o));
+      if (SOLID(t) || t === T.SEA) return d;
+    }
+    return 99;
+  }
   // Suelo del monte: la misma malla de 2 m que se dibuja, interpolada.
   function groundAt(wx, wz) {
     const S = 2, gx = Math.floor(wx / S), gz = Math.floor(wz / S), u = wx / S - gx, v = wz / S - gz;
@@ -838,11 +987,12 @@
     const a = h(0, 0), b = h(1, 0), c = h(0, 1), d = h(1, 1);
     return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
   }
-  const MAX_FWD = 24, MAX_REV = 8;
+  const MAX_FWD = 27, MAX_REV = 8;
   function physics(dt) {
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     let along = player.vx * fx + player.vz * fz;
     const latx = player.vx - fx * along, latz = player.vz - fz * along;
+    player.slip = Math.hypot(latx, latz);
 
     // Rally: en el aire no hay tracción; en las subidas se frena y en las bajadas se acelera.
     const traction = player.air ? 0.05 : 1;
@@ -855,6 +1005,12 @@
     if (brake.held) acc = along > 0.5 ? -30 * traction : (along > -MAX_REV ? -9 : 0);
     else if (gas.held) acc = along < MAX_FWD ? 16 * traction : 0;
     else if (state.auto && started && !keys.up && !keys.down && along < CRUISE) acc = 12 * traction;
+    // Asistencia arcade: si hay algo adelante, frena suave para no chocar.
+    player.assist = false;
+    if (state.assist && along > 1 && !player.air) {
+      const safe = Math.sqrt(2 * 11 * Math.max(0, clearAhead() - 4.2));
+      if (along > safe) { acc = Math.min(acc, -Math.min(30, (along - safe) * 5 + 4)); player.assist = true; }
+    }
     if (keys.down && player.air) acc = 0;
     along += acc * dt - 9.8 * Math.sin(player.pitch) * dt;
     along -= along * (keys.up || braking || gas.held || (state.auto && started) ? 0.25 : 0.9) * dt * traction;
@@ -893,7 +1049,7 @@
       player.y = g;
       player.vy = Math.max(player.vy, climb);
       player.air = false;
-      if (landed) shake = Math.min(1, shake + 0.6);
+      if (landed) { shake = Math.min(1, shake + 0.6); suspKick = Math.min(4, -player.vy * 0.2 + 2); }
       const hl = groundAt(player.x - rx * 0.8, player.z - rz * 0.8), hr = groundAt(player.x + rx * 0.8, player.z + rz * 0.8);
       const k = Math.min(1, dt * 12);
       player.pitch += (Math.atan2(hf - hb, 2.6) - player.pitch) * k;
@@ -969,29 +1125,48 @@
     moon.position.copy(camera.position).addScaledVector(MOON_DIR, 260);
   }
 
+  const susp = { p: 0, vp: 0, r: 0, vr: 0, y: 0, vy: 0, along: 0, heading: 0, accL: 0 };
+  function tickSusp(dt) {
+    if (dt <= 0) return;
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading), along = player.vx * fx + player.vz * fz;
+    susp.accL += ((along - susp.along) / dt - susp.accL) * Math.min(1, dt * 10);
+    susp.along = along;
+    const dh = Math.atan2(Math.sin(player.heading - susp.heading), Math.cos(player.heading - susp.heading));
+    susp.heading = player.heading;
+    const latA = along * dh / dt;
+    const spring = (k, target) => { susp["v" + k] += ((target - susp[k]) * 34 - susp["v" + k] * 4.2) * dt; susp[k] += susp["v" + k] * dt; };
+    spring("p", clamp(susp.accL * 0.0065, -0.055, 0.045));
+    spring("r", clamp(-latA * 0.005, -0.065, 0.065));
+    if (suspKick) { susp.vy -= suspKick; suspKick = 0; }
+    spring("y", 0);
+  }
   // Polvo: puntos que quedan atrás cuando el auto anda rápido por el monte.
-  const DUST_N = 60;
+  const DUST_N = 180;
   const dustGeo = new THREE.BufferGeometry();
   dustGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(DUST_N * 3).fill(-999), 3));
-  const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xb8a07a, size: 2, sizeAttenuation: false, transparent: true, opacity: 0.9 }));
+  const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xc27cff, size: 5, sizeAttenuation: false, transparent: true, opacity: 0.95, fog: false }));
+  dustPts.frustumCulled = false; // las partículas se mueven: no usar la caja calculada al inicio
   scene.add(dustPts);
   const dustLife = new Float32Array(DUST_N), dustVel = new Float32Array(DUST_N * 3);
   let dustNext = 0;
   function dust(dt) {
     const pos = dustGeo.attributes.position.array;
-    if (currentZone === T.FOREST && !player.air && player.speed > 7) {
-      for (let n = 0; n < 2; n++) {
-        const i = dustNext = (dustNext + 1) % DUST_N, fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
-        pos[i * 3] = player.x - fx * 2 + (Math.random() - 0.5) * 1.6; pos[i * 3 + 1] = player.y + 0.3; pos[i * 3 + 2] = player.z - fz * 2 + (Math.random() - 0.5) * 1.6;
-        dustVel[i * 3] = -fx * 2 + (Math.random() - 0.5) * 2; dustVel[i * 3 + 1] = 1 + Math.random() * 1.5; dustVel[i * 3 + 2] = -fz * 2 + (Math.random() - 0.5) * 2;
-        dustLife[i] = 0.8 + Math.random() * 0.6;
-      }
+    // Humo violeta de las ruedas de atrás: al derrapar, al frenar de mano, al arrancar fuerte y en la tierra.
+    const drift = player.slip > 2.4, burn = susp.accL > 8 && player.speed < 13, dirt = currentZone === T.FOREST && player.speed > 7;
+    const n = player.air || sinking ? 0 : (drift ? 3 : 0) + (keys.hand && player.speed > 3 ? 2 : 0) + (burn ? 2 : 0) + (dirt ? 1 : 0);
+    const fx = Math.cos(player.heading), fz = -Math.sin(player.heading), rx = -fz, rz = fx;
+    for (let e = 0; e < n; e++) {
+      const i = dustNext = (dustNext + 1) % DUST_N, side = e % 2 ? 0.78 : -0.78;
+      pos[i * 3] = player.x - fx * 1.35 + rx * side + (Math.random() - 0.5) * 0.4; pos[i * 3 + 1] = player.y + 0.25; pos[i * 3 + 2] = player.z - fz * 1.35 + rz * side + (Math.random() - 0.5) * 0.4;
+      dustVel[i * 3] = -fx * 1.5 + (Math.random() - 0.5) * 1.6; dustVel[i * 3 + 1] = 0.6 + Math.random() * 1.2; dustVel[i * 3 + 2] = -fz * 1.5 + (Math.random() - 0.5) * 1.6;
+      dustLife[i] = 1 + Math.random() * 0.8;
     }
     for (let i = 0; i < DUST_N; i++) {
       if (dustLife[i] <= 0) { pos[i * 3 + 1] = -999; continue; }
       dustLife[i] -= dt;
       pos[i * 3] += dustVel[i * 3] * dt; pos[i * 3 + 1] += dustVel[i * 3 + 1] * dt; pos[i * 3 + 2] += dustVel[i * 3 + 2] * dt;
-      dustVel[i * 3 + 1] -= 2 * dt;
+      dustVel[i * 3 + 1] -= 0.3 * dt;
+      dustVel[i * 3] *= 1 - dt * 1.5; dustVel[i * 3 + 2] *= 1 - dt * 1.5;
     }
     dustGeo.attributes.position.needsUpdate = true;
   }
@@ -1004,19 +1179,20 @@
     3: [0.62, 0.3, 80, 0xc8f0c0, 0x2a5a24, 0x14182e],
     4: [0.55, 0.5, 120, 0x9ab0ff, 0x1a1c2a, 0x120e2a],
     5: [0, 0, 200, 0x000000, 0x000000, 0x000000],
-    6: [1.45, 1.05, 160, 0xd0e4ff, 0x4a7a44, 0x1a1e38]
+    6: [0.55, 0.55, 160, 0xd0e4ff, 0x3a5a36, 0x1a1e38]
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
   function placeWorld(dt) {
     const sk = sinking ? Math.min(1, sinking.t / 2) : 0;
-    car.position.set(player.x, player.y - sk * 2.6, player.z);
+    tickSusp(dt);
+    car.position.set(player.x, player.y - sk * 2.6 + susp.y, player.z);
     car.rotation.order = "YZX";
-    car.rotation.set(player.roll + sk * 0.35, player.heading, player.pitch);
+    car.rotation.set(player.roll + sk * 0.35 + susp.r, player.heading, player.pitch + susp.p);
     dust(dt);
     const fx = Math.cos(player.heading), fz = -Math.sin(player.heading);
     const along = player.vx * fx + player.vz * fz;
     wheels.forEach((w, i) => { w.rotation.z -= along * 0.016; if (i < 2) w.rotation.y = player.steer * 0.4; });
-    tailMat.emissiveIntensity = keys.down || brake.held ? 2.6 : 1.0;
+    tailMat.emissiveIntensity = keys.down || brake.held || player.assist ? 2.6 : 1.0;
     if (car.userData.syncHalos) car.userData.syncHalos();
     const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
     hemi.intensity += (z[0] - hemi.intensity) * k;
@@ -1039,7 +1215,7 @@
   function message(text, secs) { msg = text; msgUntil = clock + secs; }
   function trackZone() {
     const t = cellType(toCell(player.x), toCell(player.z));
-    const zone = t === T.SEA ? T.SAND : t === T.MONUMENT ? T.PLAZA : t === T.MOUNTAIN || t === T.ROAD ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t;
+    const zone = t === T.SEA || t === T.BRIDGE ? T.SAND : t === T.MONUMENT || t === T.PARK || t === T.FERRIS ? T.PLAZA : t === T.MOUNTAIN || t === T.ROAD ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t;
     if (zone === currentZone) return;
     currentZone = zone;
   }
@@ -1499,7 +1675,7 @@
   // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
   const MAP_STYLE = {
     [T.WALL]: ["##", "#e0463c"], [T.IVY]: ["&&", "#8fd26a"], [T.SEA]: ["~~", "#4a86e8"], [T.MONUMENT]: ["!!", "#e8e4f0"],
-    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"], [T.ROAD]: ["= ", "#b08a5a"]
+    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"], [T.ROAD]: ["= ", "#b08a5a"], [T.BRIDGE]: ["==", "#ffe2a8"], [T.PARK]: ["* ", "#ff4ab0"], [T.FERRIS]: ["@@", "#40e0ff"]
   };
   function automap() {
     CH.fill(null);
@@ -1619,7 +1795,7 @@
   let engaged = false;
   // --- Controles hechos de caracteres: volante, freno y menú -----------------------------------
   // Deslizás el dedo de costado para doblar; el botón de abajo a la derecha frena.
-  const CRUISE = 15;
+  const CRUISE = 17.5;
   const steerT = { active: false, id: null, x0: 0, y0: 0, px: 0, x: 0 };
   const brake = { held: false, id: null }, gas = { held: false, id: null };
   const menu = { open: false, rows: [], box: null };
@@ -1648,6 +1824,7 @@
     const cyc = (list, v) => list[(list.indexOf(v) + 1) % list.length];
     return [
       { label: "AUTOAVANCE", value: state.auto ? "SÍ" : "NO", act: () => { state.auto = !state.auto; } },
+      { label: "FRENO AUTO", value: state.assist ? "SÍ" : "NO", act: () => { state.assist = !state.assist; } },
       { label: "CÁMARA", value: state.view.toUpperCase(), act: () => setOpt("view", cyc(VIEWS, state.view)) },
       { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(Object.keys(DENSITY), state.density)) },
       { label: "MODO", value: state.mode.toUpperCase(), act: () => setOpt("mode", cyc(Object.keys(MODES), state.mode)) },
@@ -1898,6 +2075,7 @@
     trackZone();
     updateChunks(false);
     tickChunks();
+    tickCity();
     if (ts - lastPaint < 33) return;
     const pdt = lastPaint ? Math.min(0.1, (ts - lastPaint) / 1000) : 0.033;
     lastPaint = ts;
@@ -1915,7 +2093,7 @@
 
   setOpt("view", state.view);
   layout();
-  newWorld(700);
+  newWorld((Math.random() * 1e9) | 0);
   const start = () => { layout(); requestAnimationFrame(loop); };
   if (document.fonts && document.fonts.load) document.fonts.load('16px "IBM Plex Mono"', "abc").then(start, start);
   else start();
