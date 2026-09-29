@@ -1245,6 +1245,9 @@
     const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
     hemi.intensity += (z[0] - hemi.intensity) * k;
     moonLight.intensity += (z[1] - moonLight.intensity) * k;
+    if (!abyss || abyss.stage === 2 || abyss.stage === 4) moonYaw *= Math.exp(-dt * 0.3);
+    const cy = Math.cos(moonYaw), sy0 = Math.sin(moonYaw);
+    moonLight.position.set(-30 * cy + -60 * sy0, 60, 30 * sy0 + -60 * cy);
     hemi.color.lerp(_c1.set(z[3]), k); hemi.groundColor.lerp(_c2.set(z[4]), k); fogColor.lerp(_c3.set(z[5]), k);
     fogFar += ((state.view === "Arriba" ? 120 : z[2] * DIST[state.dist]) - fogFar) * k;
     // En la transición la niebla se cierra negra hasta pegarse al auto: el mundo se va, el auto queda.
@@ -1258,7 +1261,7 @@
     near.sort((a, b) => (a.x - player.x) ** 2 + (a.z - player.z) ** 2 - ((b.x - player.x) ** 2 + (b.z - player.z) ** 2));
     lampLights.forEach((l, i) => {
       const p = near[i];
-      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.intensity = 2.3; } else l.intensity = 0;
+      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.intensity = 2.3 * (1 - abyssDark()); } else l.intensity = 0;
     });
   }
 
@@ -1510,10 +1513,10 @@
     }
     return null;
   }
-  function enterTunnel() {
+  function enterTunnel(spot) {
     tunnelIn = -1;
     const v = Math.max(9, Math.min(MAX_FWD, player.speed));
-    const t = tunnelSpot();
+    const t = spot || tunnelSpot();
     if (!t) return;
     clearTunnel();
     const ax = toWorld(t.x), az = toWorld(t.y), bx = toWorld(t.x + t.dx * t.L), bz = toWorld(t.y + t.dy * t.L);
@@ -1538,12 +1541,14 @@
     tunnel.userData.ring = ring;
     scene.add(tunnel);
     player.x = ax; player.z = az;
+    moonYaw = wrapA(moonYaw + Math.atan2(-uz, ux) - player.heading);
     player.heading = Math.atan2(-uz, ux);
     player.vx = ux * v; player.vz = uz * v; player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0; player.steer = 0;
     currentZone = T.VOID;
     voidK = 0;
     camSnap = true;
     light = Math.max(light, cap * 0.6);
+    adoptPrepared();
     updateChunks(true);
   }
   // Cada mundo dura 30 segundos. Después, un rato en el abismo (todo negro) y el siguiente.
@@ -1581,7 +1586,7 @@
       if (cellType(fx, fy) !== T.FERRIS) return null;
       for (const [a, b] of DIRS) for (let d = 9; d >= 7; d--) {
         const sx0 = fx + a * d, sy0 = fy + b * d;
-        if (runOf(sx0, sy0, -a, -b, d - 4, t => !SOLID(t) && t !== T.SEA)) return { x: sx0, y: sy0, h: heading(-a, -b) };
+        if (runOf(sx0, sy0, -a, -b, d - 4, t => !SOLID(t) && t !== T.SEA && t !== T.VOID)) return { x: sx0, y: sy0, h: heading(-a, -b) };
       }
       return null;
     },
@@ -1618,10 +1623,7 @@
     for (let tries = 0; tries < order.length; tries++) {
       mapI++;
       if (mapI >= order.length) {
-        // Recorriste todos: otra ciudad, otro orden.
-        const keep = { score, lastGet, runT, runLight }, last = order[order.length - 1];
-        newWorld((Math.random() * 1e9) | 0, true);
-        ({ score, lastGet, runT, runLight } = keep);
+        const last = order[order.length - 1];
         // Mezcla de verdad, sin repetir el mundo del que venís.
         order = FIRST_ORDER.slice();
         for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
@@ -1646,6 +1648,7 @@
     if (abyss || ending || title) return;
     if (kind === "map" && (tunnel || tunnelIn > 0)) return;
     abyss = { t: 0, stage: 0, kind };
+    planDest(kind === "tunnel" ? "tunnel" : "void");
   }
   // Un lugar hondo de la nada, lejos del horizonte, con una recta libre para seguir andando.
   // Lejos del haz del horizonte, para que el tránsito no termine el juego sin querer.
@@ -1668,13 +1671,71 @@
   // Pasar a otro lugar sin frenar: misma velocidad, el auto sigue donde estaba en la pantalla.
   function moveTo(spot) {
     const v = Math.max(9, Math.min(MAX_FWD, player.speed));
+    // La luna gira con el auto, así la luz sobre él no salta; después vuelve despacio a su lugar.
+    moonYaw = wrapA(moonYaw + spot.h - player.heading);
     player.x = toWorld(spot.x); player.z = toWorld(spot.y); player.heading = spot.h;
     player.vx = Math.cos(spot.h) * v; player.vz = -Math.sin(spot.h) * v;
     player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0;
     sinking = null; lastSafe = null; darkT = 0;
     camSnap = true;
+    adoptPrepared();
     updateChunks(true);
     trackZone();
+  }
+  const wrapA = a => Math.atan2(Math.sin(a), Math.cos(a));
+  let moonYaw = 0, dest = null;
+  // Elige a dónde vas apenas empieza a oscurecer; el mundo de allá se arma mientras tanto.
+  function planDest(kind) {
+    let spot = null, ord = order, i = mapI;
+    if (kind === "void") { spot = voidSpot(); if (!spot) kind = "map"; }
+    if (kind === "tunnel") { const t = tunnelSpot(); if (t) spot = { x: t.x, y: t.y, h: heading(t.dx, t.dy), t }; }
+    if (kind === "map") for (let tries = 0; tries < FIRST_ORDER.length * 2 && !spot; tries++) {
+      i++;
+      if (i >= ord.length) {
+        // Recorriste todos: vuelve a empezar, en otro orden y sin repetir el último.
+        const last = ord[ord.length - 1];
+        ord = FIRST_ORDER.slice();
+        for (let j = ord.length - 1; j > 0; j--) { const r = Math.floor(Math.random() * (j + 1)); [ord[j], ord[r]] = [ord[r], ord[j]]; }
+        if (ord[0] === last) ord.push(ord.shift());
+        i = 0;
+      }
+      spot = findSpot(ord[i]);
+    }
+    const built = new Map(), keys = [];
+    if (spot) {
+      const pcx = Math.floor(spot.x / CHUNK), pcy = Math.floor(spot.y / CHUNK);
+      for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) keys.push([pcx + a, pcy + b]);
+    }
+    dest = { kind, spot, ord, i, built, keys };
+  }
+  // Un pedazo por cuadro, para que no se trabe. Quedan lejos y en la niebla: no se ven.
+  function prepareStep() {
+    if (!dest) return;
+    for (const [a, b] of dest.keys) {
+      const k = a + "," + b;
+      if (chunks.has(k) || dest.built.has(k)) continue;
+      const nc = buildChunk(a, b); nc.key = [a, b];
+      dest.built.set(k, nc);
+      return;
+    }
+  }
+  function adoptPrepared() {
+    if (!dest) return;
+    // Los pedazos preparados pasan a ser el mundo; crecen desde el piso mientras se abre la niebla.
+    dest.built.forEach((c, k) => { if (!chunks.has(k)) { c.born = clock; c.group.scale.y = 0.001; chunks.set(k, c); } else disposeChunk(c); });
+    dest.built.clear();
+  }
+  function dropDest() { if (dest) { dest.built.forEach(c => disposeChunk(c)); dest = null; } }
+  // El cambio, con todo negro: al lugar planeado.
+  function swap() {
+    const d = dest;
+    if (!d || !d.spot) { dropDest(); nextMap(); lastGet = clock; return "map"; }
+    if (d.kind === "tunnel") { enterTunnel(d.spot.t); dest = null; return "tunnel"; }
+    moveTo(d.spot);
+    dest = null;
+    if (d.kind === "void") { currentZone = T.VOID; voidTime = 13; return "void"; }
+    order = d.ord; mapI = d.i; lastGet = clock;
+    return "map";
   }
   function intoVoid() {
     const spot = voidSpot();
@@ -1693,49 +1754,20 @@
       a.t += dt;
       // Cerrado del todo: cambia lo que hay alrededor.
       const closed = a.t > CLOSE + 0.15;
-      if ((a.stage === 0 || a.stage === 3) && closed) startWipe();
-      if (a.stage === 0 && closed) {
-        if (a.kind === "tunnel") { enterTunnel(); next(4); }
-        else if (intoVoid()) next(1);
-        else { nextMap(); lastGet = clock; next(4); }
-      } else if (a.stage === 1 && a.t > OPEN) next(2);
-      else if (a.stage === 2 && (a.t > VOID_STAY || currentZone !== T.VOID)) next(3);
-      else if (a.stage === 3 && closed) {
-        if (a.kind === "tunnel") enterTunnel(); else { nextMap(); lastGet = clock; }
-        next(4);
-      } else if (a.stage === 4 && a.t > OPEN) { abyss = null; mapTime = 0; }
+      if (a.stage === 0 || a.stage === 3) prepareStep();
+      if (a.stage === 0 && closed) next(swap() === "void" ? 1 : 4);
+      else if (a.stage === 1 && a.t > OPEN) next(2);
+      else if (a.stage === 2 && (a.t > VOID_STAY || currentZone !== T.VOID)) { next(3); planDest(a.kind === "tunnel" ? "tunnel" : "map"); }
+      else if (a.stage === 3 && closed) { swap(); next(4); }
+      else if (a.stage === 4 && a.t > OPEN) { abyss = null; mapTime = 0; }
       return;
     }
     if (tunnel || tunnelIn > 0 || sinking || !started) return;
     mapTime += dt;
     if (mapTime > MAP_SECS) startAbyss();
   }
-  let wipe = null;
-  function startWipe() {
-    wipe = { t0: clock, cols, rows, ch: CH.slice(), col: COL.slice() };
-  }
-  function wipeOverlay() {
-    if (!wipe) return;
-    if (wipe.cols !== cols || wipe.rows !== rows) { wipe = null; return; }
-    const k = (clock - wipe.t0) / 0.55;
-    if (k >= 1) { wipe = null; return; }
-    // La franja avanza de izquierda a derecha, un poco inclinada; lo que queda atrás ya es el lugar nuevo.
-    const e = k * k * (3 - 2 * k), x = -8 + e * (cols + 16);
-    for (let r = 0; r < rows; r++) {
-      const xr = x - (r / rows) * 6;
-      for (let c = 0; c < cols; c++) {
-        const i = r * cols + c, d = c - xr;
-        if (d > 2) { CH[i] = wipe.ch[i]; COL[i] = wipe.col[i]; }
-        else if (d > -2) {
-          const h = hash(i, Math.floor(clock * 30));
-          CH[i] = d > 0.5 ? (h < 0.5 ? "$" : "@") : h < 0.5 ? ":" : ".";
-          COL[i] = d > 0.5 ? "#fff1c4" : "#c98a4a";
-        }
-      }
-    }
-  }
   function tickTunnel() {
-    if (tunnelIn > 0 && abyss && abyss.kind === "map" && abyss.stage === 2) { abyss.kind = "tunnel"; abyss.stage = 3; abyss.t = 0; }
+    if (tunnelIn > 0 && abyss && abyss.kind === "map" && abyss.stage === 2) { abyss.kind = "tunnel"; abyss.stage = 3; abyss.t = 0; planDest("tunnel"); }
     if (tunnelIn > 0 && !abyss && !ending && !sinking) startAbyss("tunnel");
     if (tunnel) tunnel.userData.ring.scale.setScalar(1 + Math.sin(clock * 2.2) * 0.06);
   }
@@ -2024,7 +2056,7 @@
     watchers.length = 0;
     if (giant) { scene.remove(giant.g); giant = null; }
     voidTime = 0;
-    clearTunnel(); runLight = 0; tunnelIn = -1;
+    clearTunnel(); runLight = 0; tunnelIn = -1; dropDest(); moonYaw = 0;
     if (!keepRun) { score = 0; runT = 0; lastGet = clock; order = FIRST_ORDER.slice(); mapI = 0; abyss = null; }
     mapTime = 0; popups.length = 0;
     // Arranca en una esquina del laberinto, mirando hacia una calle abierta.
@@ -2708,7 +2740,7 @@
     placeOrbit();
     tickVoid(pdt);
     placeCamera(pdt);
-    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); wipeOverlay(); }
+    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); }
     hud();
     paint();
   }
