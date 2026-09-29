@@ -1014,8 +1014,12 @@
       x.fillText("YPF", w / 2, h / 2 + 4);
     });
   }
+  const ypfHalo = new THREE.MeshBasicMaterial({
+    color: 0x3a6cff, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    map: canvasTex("halo", 8, 64, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(0.5, "rgba(255,255,255,1)"); gr.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = gr; x.fillRect(0, 0, w, h); })
+  });
   function buildYPF(k, b, g, lamps) {
-    const { d, W } = bigFrame(b), B = 0x2a62ff;
+    const { d, W } = bigFrame(b), B = 0x3f78ff;
     kitQuad(k.p, k.c, W(-16, 0, 0.05), W(16, 0, 0.05), W(16, 24, 0.05), W(-16, 24, 0.05), 0x8a8c90);
     // Guías pintadas en el piso de la playa.
     for (let i = -3; i <= 3; i++) kitQuad(k.p, k.c, W(i * 4 - 0.08, 3, 0.07), W(i * 4 + 0.08, 3, 0.07), W(i * 4 + 0.08, 18, 0.07), W(i * 4 - 0.08, 18, 0.07), 0xd8d4c8);
@@ -1026,10 +1030,21 @@
       const v = 5.2 + r * 3.4, u = c * 5;
       kitQuad(k.gp, k.gc, W(u - 1.8, v, 6.08), W(u + 1.8, v, 6.08), W(u + 1.8, v + 0.3, 6.08), W(u - 1.8, v + 0.3, 6.08), 0xf2f6ff);
     }
-    lbox(k.gp, k.gc, W, -13.1, 3.35, 6.5, 13.1, 3.5, 7.9, B);
-    lbox(k.gp, k.gc, W, -13.1, 18.5, 6.5, 13.1, 18.65, 7.9, B);
-    lbox(k.gp, k.gc, W, -13.1, 3.35, 6.5, -12.95, 18.65, 7.9, B);
-    lbox(k.gp, k.gc, W, 12.95, 3.35, 6.5, 13.1, 18.65, 7.9, B);
+    // La cenefa azul: brilla fuerte, con una franja de LED más clara, un halo que se derrama
+    // y luces azules de verdad que tiñen la marquesina, el piso y el auto.
+    lbox(k.gp, k.gc, W, -13.1, 3.35, 6.3, 13.1, 3.5, 8.1, B);
+    lbox(k.gp, k.gc, W, -13.1, 18.5, 6.3, 13.1, 18.65, 8.1, B);
+    lbox(k.gp, k.gc, W, -13.1, 3.35, 6.3, -12.95, 18.65, 8.1, B);
+    lbox(k.gp, k.gc, W, 12.95, 3.35, 6.3, 13.1, 18.65, 8.1, B);
+    const L = 0xa8c4ff;
+    lface(k.gp, k.gc, W, -13.1, 13.1, 6.55, 6.75, 3.32, L);
+    lface(k.gp, k.gc, W, -13.1, 13.1, 7.65, 7.85, 3.32, L);
+    const side = [-d[1], d[0]];
+    facePlane(g, ypfHalo, 28.5, 4.2, W, 0, 3.0, 7.2, d);
+    facePlane(g, ypfHalo, 28.5, 4.2, W, 0, 19.0, 7.2, d);
+    facePlane(g, ypfHalo, 17.5, 4.2, W, -13.45, 11, 7.2, side);
+    facePlane(g, ypfHalo, 17.5, 4.2, W, 13.45, 11, 7.2, side);
+    [[-9, 2.6], [9, 2.6], [0, 19.3]].forEach(([u, v]) => { const l = new THREE.Vector3(...W(u, v, 6.6)); l.tint = 0x3a6cff; l.power = 4.2; lamps.push(l); });
     const m = texMat("ypf", ypfTex());
     facePlane(g, m, 4.4, 2.2, W, 0, 3.3, 7.2, d);
     facePlane(g, m, 3.0, 1.5, W, -13.15, 11, 7.2, [-d[1], d[0]], Math.PI);
@@ -1746,7 +1761,7 @@
     near.sort((a, b) => (a.x - player.x) ** 2 + (a.z - player.z) ** 2 - ((b.x - player.x) ** 2 + (b.z - player.z) ** 2));
     lampLights.forEach((l, i) => {
       const p = near[i];
-      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.intensity = 2.3 * (1 - abyssDark()); } else l.intensity = 0;
+      if (p && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 60 * 60) { l.position.copy(p); l.color.setHex(p.tint || 0xffb45c); l.intensity = (p.power || 2.3) * (1 - abyssDark()); } else l.intensity = 0;
     });
   }
 
