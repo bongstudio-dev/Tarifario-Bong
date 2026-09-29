@@ -1036,17 +1036,44 @@
       }
     });
   }
+  // La silueta de las islas, sacada de un mapa: blanco sobre transparente para pintarla en el cartel.
+  let islasMask = null;
+  const islasWait = [];
+  const ISLAS = new Image();
+  ISLAS.onload = () => {
+    const c = document.createElement("canvas"); c.width = ISLAS.width; c.height = ISLAS.height;
+    const x = c.getContext("2d"); x.drawImage(ISLAS, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height);
+    for (let i = 0; i < d.data.length; i += 4) { const v = d.data[i]; d.data[i] = d.data[i + 1] = d.data[i + 2] = 244; d.data[i + 3] = 255 - v; }
+    x.putImageData(d, 0, 0);
+    islasMask = c;
+    islasWait.splice(0).forEach(f => f());
+  };
+  ISLAS.src = "data:image/png;base64,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";
   function malvinasTex(v) {
+    const tex = malvinasBase(v);
+    if (!tex.conIslas) {
+      tex.conIslas = true;
+      const paint = () => {
+        const x = tex.image.getContext("2d"), m = islasMask, h = 150, w = h * m.width / m.height;
+        x.drawImage(m, (tex.image.width - w) / 2, 78, w, h);
+        tex.needsUpdate = true;
+      };
+      if (islasMask) paint(); else islasWait.push(paint);
+    }
+    return tex;
+  }
+  function malvinasBase(v) {
     return canvasTex("malvinas" + v, 400, 300, (x, w, h) => {
       x.fillStyle = "#1f50b0"; roundRect(x, 0, 0, w, h, 18); x.fill();
       x.strokeStyle = "#f4f4ee"; x.lineWidth = 7; roundRect(x, 9, 9, w - 18, h - 18, 12); x.stroke();
-      x.fillStyle = "#f4f4ee"; x.font = "bold 36px Arial, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
-      x.fillText("ISLAS MALVINAS", w / 2 - 24, 52);
-      x.fillStyle = "#74acdf"; x.fillRect(w - 78, 36, 48, 30); x.fillStyle = "#fff"; x.fillRect(w - 78, 46, 48, 10);
-      // Las dos islas.
+      // Título y bandera, centrados juntos.
+      x.fillStyle = "#f4f4ee"; x.font = "bold 32px Arial, sans-serif"; x.textAlign = "left"; x.textBaseline = "middle";
+      const tw = x.measureText("ISLAS MALVINAS").width, x0 = (w - tw - 14 - 44) / 2;
+      x.fillText("ISLAS MALVINAS", x0, 52);
+      x.fillStyle = "#74acdf"; x.fillRect(x0 + tw + 14, 38, 44, 28); x.fillStyle = "#fff"; x.fillRect(x0 + tw + 14, 47, 44, 10);
+      x.textAlign = "center";
       x.fillStyle = "#f4f4ee";
-      const blob = (cx, cy, rx, ry, seed) => { x.beginPath(); for (let i = 0; i <= 18; i++) { const a = i / 18 * TAU, rr = 1 + (hash(i + seed, 7) - 0.5) * 0.7; x.lineTo(cx + Math.cos(a) * rx * rr, cy + Math.sin(a) * ry * rr); } x.fill(); };
-      blob(140, 150, 62, 34, 3); blob(262, 142, 66, 38, 11); blob(96, 178, 14, 9, 21);
       x.font = "bold 40px Arial, sans-serif"; x.fillText((1300 + Math.floor(hash(v, 93) * 1500)).toLocaleString("es-AR").replace(".", "") + " Km", w / 2, 250);
     });
   }
