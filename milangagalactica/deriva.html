@@ -39,7 +39,7 @@
   const RAMP = " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
   const STAR_CHARS = ".+*";
   const ADJ = { amount: 0.6, contrast: 1.8, exposure: 0.9, gamma: 2, threshold: 0.17 };
-  const DENSITY = { "Baja": 60, "Intermedia": 75, "Media": 90, "Alta": 120 };
+  const DENSITY = { "Baja": 60, "Intermedia": 75, "Media": 90, "Alta": 120, "Muy alta": 160, "Máxima": 200 };
   const MODES = { "Color": null, "Tinta": "#e9e5f0" };
   const SS = 2;
   const TAU = Math.PI * 2;
@@ -336,6 +336,8 @@
 
   // --- Estado ------------------------------------------------------------------
   const touchDevice = window.matchMedia("(pointer: coarse)").matches;
+  // En la compu hay dos densidades más; en el celu no, porque no le da el motor.
+  const DENS_LIST = Object.keys(DENSITY).filter(k => !touchDevice || DENSITY[k] <= 120);
   const state = { vibe: true, dist: "Media", assist: true, auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
@@ -2014,7 +2016,7 @@
       { label: "AUTOAVANCE", value: state.auto ? "SÍ" : "NO", act: () => { state.auto = !state.auto; } },
       { label: "FRENO AUTO", value: state.assist ? "SÍ" : "NO", act: () => { state.assist = !state.assist; } },
       { label: "CÁMARA", value: state.view.toUpperCase(), act: () => setOpt("view", cyc(VIEWS, state.view)) },
-      { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(Object.keys(DENSITY), state.density)) },
+      { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(DENS_LIST, state.density)) },
       { label: "DISTANCIA", value: state.dist.toUpperCase(), act: () => { state.dist = cyc(Object.keys(DIST), state.dist); } },
       { label: "MODO", value: state.mode.toUpperCase(), act: () => setOpt("mode", cyc(Object.keys(MODES), state.mode)) },
       { label: "VIBRACIÓN", value: state.vibe ? "SÍ" : "NO", act: () => { state.vibe = !state.vibe; } },
@@ -2278,7 +2280,7 @@
   }
   const VIEWS = ["Atrás", "Adentro", "Arriba"];
   addSeg("Cámara", "view", VIEWS);
-  addSeg("Densidad", "density", Object.keys(DENSITY));
+  addSeg("Densidad", "density", DENS_LIST);
   addSeg("Modo", "mode", Object.keys(MODES));
   const mapBtn = document.createElement("button");
   mapBtn.type = "button"; mapBtn.id = "btn-map";
