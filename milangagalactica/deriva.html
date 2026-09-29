@@ -478,6 +478,33 @@
     cache.set(key, t);
     return t;
   }
+  // Plaza o parque en esta cuadra.
+  function inPlaza(x, y) {
+    const rx = Math.floor(x / 20), ry = Math.floor(y / 20), pr = hs(rx, ry, 1);
+    return pr < 0.46 && Math.abs(x - (rx * 20 + 10)) <= 3 && Math.abs(y - (ry * 20 + 10)) <= 3;
+  }
+  // Terrenos grandes al costado de las avenidas (4 × 3 cuadras): ahí van la YPF y el VEA.
+  // Del lado este de las avenidas que van de norte a sur y del lado sur de las otras.
+  const bigCache = new Map();
+  function bigLot(x, y) {
+    const mx = mod(x, 26), my = mod(y, 22);
+    let ax, ay, alongX;
+    if (mx >= 3 && mx <= 5 && my >= 3 && my <= 18) { ax = x - mx + 3; ay = y - (my - 3) % 4; alongX = false; }
+    else if (my >= 3 && my <= 5 && mx >= 7 && mx <= 22) { ay = y - my + 3; ax = x - (mx - 7) % 4; alongX = true; }
+    else return null;
+    const key = ax + "," + ay;
+    if (bigCache.has(key)) return bigCache.get(key);
+    let lot = null;
+    if (hs(ax, ay, 400) < 0.09 && downtown(ax, ay) < 0.45) {
+      const w = alongX ? 4 : 3, h = alongX ? 3 : 4;
+      let ok = true;
+      for (let j = 0; j < h && ok; j++) for (let i = 0; i < w; i++) if (zoneAt(ax + i, ay + j) || inPlaza(ax + i, ay + j)) { ok = false; break; }
+      if (ok) lot = { kind: hs(ax, ay, 401) < 0.5 ? "ypf" : "vea", ax, ay, alongX };
+    }
+    if (bigCache.size > 4000) bigCache.clear();
+    bigCache.set(key, lot);
+    return lot;
+  }
   function computeCell(x, y) {
     const z = zoneAt(x, y);
     if (z) {
@@ -498,6 +525,7 @@
     }
     // Avenidas: tres cuadras de ancho, cada 26 de este a oeste y cada 22 de norte a sur.
     if (mod(x, 26) < 3 || mod(y, 22) < 3) return T.AVENUE;
+    if (bigLot(x, y)) return T.WALL;
     const ox = mod(x, 2) === 1, oy = mod(y, 2) === 1;
     if (ox && oy) return T.STREET;
     if (!ox && !oy) return hs(x, y, 4) < 0.07 ? T.IVY : T.WALL;
@@ -802,9 +830,9 @@
   // Qué hay en un lote del laberinto: casa, YPF, VEA o un edificio.
   function lotKind(x, y) {
     if (cellType(x, y) !== T.WALL) return "none";
+    if (bigLot(x, y)) return "big";
     const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
     const dn = downtown(x, y);
-    if (nearAvenue && dn < 0.45) { const r = hs(x, y, 310); if (r < 0.03) return "ypf"; if (r < 0.055) return "vea"; return "block"; }
     if (!nearAvenue && dn < 0.45 && hs(x, y, 301) > 0.1) return "house";
     return "block";
   }
@@ -822,22 +850,40 @@
     const r = i => hs(x, y, 320 + i);
     const wall = WALL_TINTS[Math.floor(r(0) * WALL_TINTS.length)];
     const chalet = r(1) < 0.5;
-    // Vereda de baldosas amarillas, cordón, murete con reja y el patio al frente.
-    lface(k.p, k.c, W, -4, 4, 0, 0, 0, 0xd6c68e);
-    kitQuad(k.p, k.c, W(-4, 0, 0.05), W(4, 0, 0.05), W(4, 1.3, 0.05), W(-4, 1.3, 0.05), r(2) < 0.7 ? 0xd2c48e : 0xb0a08a);
-    lbox(k.p, k.c, W, -4, 0, 0, 4, 0.16, 0.16, 0xa8a8a2);
-    lbox(k.p, k.c, W, -4, 1.3, 0, 4, 1.5, 0.55, r(3) < 0.5 ? 0xa0583a : wall);
-    const ra = W(-4, 1.4, 0.55), rb = W(4, 1.4, 0.55), rc = W(4, 1.4, 1.75), rd = W(-4, 1.4, 1.75);
-    k.rp.push(...ra, ...rb, ...rc, ...ra, ...rc, ...rd);
-    k.ru.push(0, 0, 8, 0, 8, 1, 0, 0, 8, 1, 0, 1);
-    kitQuad(k.p, k.c, W(-4, 1.5, 0.04), W(4, 1.5, 0.04), W(4, 3.3, 0.04), W(-4, 3.3, 0.04), r(4) < 0.5 ? 0x4e6a3a : 0x8a4a3a);
+    // Vereda elevada de baldosas (amarillas de vainillas o calcáreas), con el cordón gris adelante.
+    const patio = r(25) < 0.55, vf = patio ? 3.3 + r(26) * 0.9 : 1.6; // frente de la casa
+    const tiles = r(2) < 0.65 ? [0xd8c890, 0xc6b67e] : [0xb4aaa0, 0x9e948c];
+    lbox(k.p, k.c, W, -4, 0.12, 0, 4, 1.6, 0.14, tiles[1]);
+    for (let i = 0; i < 4; i++) {
+      const broken = hs(x * 4 + i, y, 330) < 0.12;
+      kitQuad(k.p, k.c, W(-4 + i * 2 + 0.05, 0.2, 0.15), W(-2 + i * 2 - 0.05, 0.2, 0.15), W(-2 + i * 2 - 0.05, 1.55, 0.15), W(-4 + i * 2 + 0.05, 1.55, 0.15), broken ? 0x7a7060 : tiles[i % 2]);
+    }
+    lbox(k.p, k.c, W, -4, 0, 0, 4, 0.14, 0.2, 0xb8b8b2);
+    if (patio) {
+      // Murete de ladrillo con reja negra de puntas, y el patio: pasto o baldosa roja.
+      lbox(k.p, k.c, W, -4, 1.6, 0, 4, 1.8, 0.6, r(3) < 0.5 ? 0xa0583a : wall);
+      const ra = W(-4, 1.7, 0.6), rb = W(4, 1.7, 0.6), rc = W(4, 1.7, 1.8), rd = W(-4, 1.7, 1.8);
+      k.rp.push(...ra, ...rb, ...rc, ...ra, ...rc, ...rd);
+      k.ru.push(0, 0, 8, 0, 8, 1, 0, 0, 8, 1, 0, 1);
+      kitQuad(k.p, k.c, W(-4, 1.8, 0.06), W(4, 1.8, 0.06), W(4, vf, 0.06), W(-4, vf, 0.06), r(4) < 0.55 ? 0x4e6a3a : 0x8a4a3a);
+      // A veces una ligustrina o un rosal contra la reja.
+      if (r(27) < 0.4) lbox(k.p, k.c, W, -3.6, 1.85, 0, r(28) < 0.5 ? -0.8 : 3.6, 2.4, 1.3, 0x2e4e26);
+    }
     // Medianeras altas a los costados, de revoque o ladrillo.
     const med = r(5) < 0.5 ? 0xb8b2a4 : 0x9a5a40;
-    lbox(k.p, k.c, W, -4, 1.5, 0, -3.85, 8, 2.4, med);
-    lbox(k.p, k.c, W, 3.85, 1.5, 0, 4, 8, 2.4, med);
-    const vf = 3.3; // frente de la casa
+    lbox(k.p, k.c, W, -4, patio ? 1.8 : vf, 0, -3.85, 8, 2.4, med);
+    lbox(k.p, k.c, W, 3.85, patio ? 1.8 : vf, 0, 4, 8, 2.4, med);
+    // Sin patio, la casa está sobre la línea de la vereda y las ventanas llevan reja.
+    const winReja = (u0, u1, h0, h1) => {
+      if (patio) return;
+      const a = W(u0 - 0.1, vf - 0.12, h0 - 0.1), b2 = W(u1 + 0.1, vf - 0.12, h0 - 0.1), c = W(u1 + 0.1, vf - 0.12, h1 + 0.1), e = W(u0 - 0.1, vf - 0.12, h1 + 0.1);
+      k.rp.push(...a, ...b2, ...c, ...a, ...c, ...e);
+      const n = (u1 - u0) + 0.2;
+      k.ru.push(0, 0, n, 0, n, 1, 0, 0, n, 1, 0, 1);
+    };
     const lit = i => r(40 + i) < 0.45;
     const win = (u0, u1, h0, h1, i) => {
+      winReja(u0, u1, h0, h1);
       if (lit(i)) {
         lface(k.gp, k.gc, W, u0, u1, h0, h1, vf - 0.03, r(50 + i) < 0.2 ? 0x9ab8ff : 0xffbf6a);
         if (r(60 + i) < 0.5) lface(k.p, k.c, W, u0, u1, h1 - (h1 - h0) * 0.45, h1, vf - 0.05, 0x5a3a24); // persiana a medio bajar
@@ -895,20 +941,21 @@
     if (r(17) < 0.2) { const a = W(3.9, 4.5, 2.4); kitBox(k.p, k.c, a[0] - 0.35, a[1], a[2] - 0.35, a[0] + 0.35, a[1] + 0.7, a[2] + 0.35, 0xc8c8cc); }
     // Árbol de vereda con la base pintada a la cal.
     if (r(18) < 0.4) {
-      const t0 = W(r(19) < 0.5 ? -2.4 : 2.4, 0.65, 0);
+      const t0 = W(r(19) < 0.5 ? -2.4 : 2.4, 0.7, 0);
       kitBox(k.p, k.c, t0[0] - 0.14, 0, t0[2] - 0.14, t0[0] + 0.14, 0.9, t0[2] + 0.14, 0xeae6da);
       kitBox(k.p, k.c, t0[0] - 0.12, 0.9, t0[2] - 0.12, t0[0] + 0.12, 3.2, t0[2] + 0.12, 0x5a4636);
       kitIco(k.p, k.c, t0[0], 4.2, t0[2], 1.9, 1.5, 1.9, r(20) < 0.5 ? 0x2e5a2a : 0x4a6a2a);
     }
     // Canasto de basura sobre un caño, a 1,20 m.
     if (r(21) < 0.35) {
-      const c0 = W(r(22) * 4 - 2, 1.0, 0);
+      const c0 = W(r(22) * 4 - 2, 1.2, 0);
       kitBox(k.p, k.c, c0[0] - 0.04, 0, c0[2] - 0.04, c0[0] + 0.04, 1.2, c0[2] + 0.04, 0x3a3a3e);
       kitBox(k.p, k.c, c0[0] - 0.3, 1.2, c0[2] - 0.2, c0[0] + 0.3, 1.55, c0[2] + 0.2, 0x5a3a28);
     }
     // Pilar de gas y luz con la puertita amarilla.
-    lbox(k.p, k.c, W, 2.6, 1.28, 0, 3.4, 1.52, 1.4, wall);
-    lface(k.p, k.c, W, 2.75, 3.25, 0.7, 1.2, 1.26, 0xd8b040);
+    const pv = patio ? 1.58 : vf - 0.24;
+    lbox(k.p, k.c, W, 2.6, pv, 0, 3.4, pv + 0.24, 1.4, wall);
+    lface(k.p, k.c, W, 2.75, 3.25, 0.7, 1.2, pv - 0.02, 0xd8b040);
     // Poste de cemento y los cables: hasta el lote de al lado y, a veces, cruzando la calle en diagonal.
     const pole = W(-3.9, 0.3, 0);
     kitBox(k.p, k.c, pole[0] - 0.13, 0, pole[2] - 0.13, pole[0] + 0.13, 7.4, pole[2] + 0.13, 0x8e8c86);
@@ -945,7 +992,21 @@
   const texMat = (key, tex, extra) => matCache[key] || (matCache[key] = new THREE.MeshBasicMaterial(Object.assign({ map: tex }, extra || {})));
   function roundRect(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
 
-  // YPF: la marquesina blanca con el borde azul que brilla, surtidores, tótem y el minimercado.
+  // Marco del terreno grande: u a lo largo de la avenida (±16 m), v hacia adentro (0 a 24 m).
+  function bigFrame(b) {
+    const w = b.alongX ? 32 : 24, h = b.alongX ? 24 : 32;
+    const cx = b.ax * CELL + w / 2, cz = b.ay * CELL + h / 2;
+    const d = b.alongX ? [0, -1] : [-1, 0], sx = -d[1], sz = d[0];
+    return { d, W: (u, v, hh) => [cx + d[0] * (12 - v) + sx * u, hh, cz + d[1] * (12 - v) + sz * u] };
+  }
+  function facePlane(g, mat, w, h, W, u, v, hh, d, turn) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat), p = W(u, v, hh);
+    m.position.set(p[0], hh, p[2]); m.rotation.y = Math.atan2(d[0], d[1]) + (turn || 0);
+    g.add(m); return m;
+  }
+
+  // YPF: marquesina grande con el borde azul que brilla, seis columnas, tres islas de surtidores,
+  // un tótem alto con precios y el minimercado atrás.
   function ypfTex() {
     return canvasTex("ypf", 256, 128, (x, w, h) => {
       x.fillStyle = "#1c4fe6"; x.fillRect(0, 0, w, h);
@@ -953,40 +1014,49 @@
       x.fillText("YPF", w / 2, h / 2 + 4);
     });
   }
-  function buildYPF(k, x, y, x0, z0, g, lamps) {
-    const d = frontOf(x, y) || [0, 1], W = lotFrame(x0, z0, d);
-    kitQuad(k.p, k.c, W(-4, 0, 0.04), W(4, 0, 0.04), W(4, 8, 0.04), W(-4, 8, 0.04), 0x8a8c90);
-    // Columnas.
-    [[-2.6, 2.2], [2.6, 2.2], [-2.6, 5.2], [2.6, 5.2]].forEach(([u, v]) => lbox(k.p, k.c, W, u - 0.2, v - 0.2, 0, u + 0.2, v + 0.2, 4.7, 0xd8dade));
-    // Marquesina: panza blanca con tiras de luz y el borde azul.
-    lbox(k.p, k.c, W, -4, 0.2, 4.7, 4, 7.4, 5.2, 0xe8eaee);
-    for (let i = 0; i < 4; i++) { const v = 1.2 + i * 1.6; kitQuad(k.gp, k.gc, W(-3, v, 4.68), W(3, v, 4.68), W(3, v + 0.22, 4.68), W(-3, v + 0.22, 4.68), 0xf2f6ff); }
-    const B = 0x2a62ff;
-    lbox(k.gp, k.gc, W, -4.05, 0.15, 4.95, 4.05, 0.25, 5.45, B);
-    lbox(k.gp, k.gc, W, -4.05, 7.35, 4.95, 4.05, 7.45, 5.45, B);
-    lbox(k.gp, k.gc, W, -4.05, 0.15, 4.95, -3.95, 7.45, 5.45, B);
-    lbox(k.gp, k.gc, W, 3.95, 0.15, 4.95, 4.05, 7.45, 5.45, B);
-    // Surtidores con pantalla azul.
-    [-1.2, 1.2].forEach(u => {
-      lbox(k.p, k.c, W, u - 0.35, 3.1, 0, u + 0.35, 4.3, 1.7, 0x6a6e76);
-      lface(k.gp, k.gc, W, u - 0.25, u + 0.25, 1.1, 1.55, 3.07, 0x3a8cff);
-      lbox(k.p, k.c, W, u - 0.6, 3.0, 0, u + 0.6, 4.4, 0.18, 0xb8b0a0);
-    });
-    // Minimercado atrás, con la vidriera iluminada.
-    lbox(k.p, k.c, W, -4, 6.2, 0, 4, 8, 3.1, 0x6a5040);
-    lface(k.gp, k.gc, W, -3.2, 2.2, 0.3, 2.3, 6.17, 0xffe0b0);
-    lface(k.gp, k.gc, W, -4, 4, 2.7, 2.85, 6.16, 0xf2f6ff);
-    // El logo en la marquesina y el tótem de precios en la esquina.
+  function buildYPF(k, b, g, lamps) {
+    const { d, W } = bigFrame(b), B = 0x2a62ff;
+    kitQuad(k.p, k.c, W(-16, 0, 0.05), W(16, 0, 0.05), W(16, 24, 0.05), W(-16, 24, 0.05), 0x8a8c90);
+    // Guías pintadas en el piso de la playa.
+    for (let i = -3; i <= 3; i++) kitQuad(k.p, k.c, W(i * 4 - 0.08, 3, 0.07), W(i * 4 + 0.08, 3, 0.07), W(i * 4 + 0.08, 18, 0.07), W(i * 4 - 0.08, 18, 0.07), 0xd8d4c8);
+    [-8, 0, 8].forEach(u => [7.5, 14.5].forEach(v => lbox(k.p, k.c, W, u - 0.3, v - 0.3, 0, u + 0.3, v + 0.3, 6.1, 0xdcdee2)));
+    // La marquesina: panza blanca con tiras de luz, y el borde azul alto.
+    lbox(k.p, k.c, W, -13, 3.5, 6.1, 13, 18.5, 6.9, 0xe8eaee);
+    for (let r = 0; r < 4; r++) for (let c = -2; c <= 2; c++) {
+      const v = 5.2 + r * 3.4, u = c * 5;
+      kitQuad(k.gp, k.gc, W(u - 1.8, v, 6.08), W(u + 1.8, v, 6.08), W(u + 1.8, v + 0.3, 6.08), W(u - 1.8, v + 0.3, 6.08), 0xf2f6ff);
+    }
+    lbox(k.gp, k.gc, W, -13.1, 3.35, 6.5, 13.1, 3.5, 7.9, B);
+    lbox(k.gp, k.gc, W, -13.1, 18.5, 6.5, 13.1, 18.65, 7.9, B);
+    lbox(k.gp, k.gc, W, -13.1, 3.35, 6.5, -12.95, 18.65, 7.9, B);
+    lbox(k.gp, k.gc, W, 12.95, 3.35, 6.5, 13.1, 18.65, 7.9, B);
     const m = texMat("ypf", ypfTex());
-    const logo = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.1), m);
-    const lp = W(0, 0.12, 5.2); logo.position.set(lp[0], 5.2, lp[2]); logo.rotation.y = Math.atan2(d[0], d[1]); g.add(logo);
-    lbox(k.gp, k.gc, W, 3.2, 0.3, 0, 3.9, 0.6, 4.2, 0x1c4fe6);
-    const tot = new THREE.Mesh(new THREE.PlaneGeometry(0.66, 0.33), m);
-    const tp = W(3.55, 0.27, 3.7); tot.position.set(tp[0], 3.7, tp[2]); tot.rotation.y = Math.atan2(d[0], d[1]); g.add(tot);
-    lamps.push(new THREE.Vector3(...W(0, 3.6, 4.4)));
+    facePlane(g, m, 4.4, 2.2, W, 0, 3.3, 7.2, d);
+    facePlane(g, m, 3.0, 1.5, W, -13.15, 11, 7.2, [-d[1], d[0]], Math.PI);
+    facePlane(g, m, 3.0, 1.5, W, 13.15, 11, 7.2, [-d[1], d[0]]);
+    // Islas de surtidores: dos surtidores cada una, con la pantalla azul.
+    [-8, 0, 8].forEach(u => {
+      lbox(k.p, k.c, W, u - 0.9, 8.6, 0, u + 0.9, 13.4, 0.22, 0xc8c0b0);
+      [9.8, 12.2].forEach(v => {
+        lbox(k.p, k.c, W, u - 0.45, v - 0.35, 0.22, u + 0.45, v + 0.35, 2.1, 0x5a5e66);
+        lface(k.gp, k.gc, W, u - 0.35, u + 0.35, 1.3, 1.85, v - 0.37, 0x3a8cff);
+        lbox(k.gp, k.gc, W, u - 0.46, v - 0.36, 2.0, u + 0.46, v + 0.36, 2.2, 0x2a62ff);
+      });
+    });
+    // Tótem de precios en la esquina, contra la avenida.
+    lbox(k.gp, k.gc, W, 13.6, 0.8, 0, 15.2, 1.4, 9.5, 0x1c4fe6);
+    for (let i = 0; i < 4; i++) lface(k.gp, k.gc, W, 13.8, 15.0, 2.2 + i * 1.3, 3.1 + i * 1.3, 0.77, i % 2 ? 0x9affc0 : 0xf2f6ff);
+    facePlane(g, m, 1.5, 0.75, W, 14.4, 0.75, 8.4, d);
+    // Minimercado con la vidriera prendida y su franja azul.
+    lbox(k.p, k.c, W, -15, 19.5, 0, 7, 24, 4.6, 0x5e4c3e);
+    lface(k.gp, k.gc, W, -13.5, 5.5, 0.3, 3.2, 19.47, 0xffe0b0);
+    lface(k.gp, k.gc, W, -15, 7, 3.7, 4.5, 19.46, B);
+    facePlane(g, m, 1.6, 0.8, W, -4, 19.44, 4.1, d);
+    lamps.push(new THREE.Vector3(...W(-6, 11, 5.8)), new THREE.Vector3(...W(6, 11, 5.8)));
   }
 
-  // Supermercado VEA: frente verde con nervaduras, el logo amarillo con letras rojas y reflectores.
+  // Supermercado VEA: un galpón grande con el frente verde de nervaduras, el logo redondo enorme,
+  // la entrada vidriada, la playa de estacionamiento adelante y un pilón con el logo en la entrada.
   function veaTex() {
     return canvasTex("vea", 256, 256, (x, w, h) => {
       x.clearRect(0, 0, w, h);
@@ -997,20 +1067,30 @@
       x.beginPath(); x.arc(206, 60, 12, 0, TAU); x.fill();
     });
   }
-  function buildVea(k, x, y, x0, z0, g, lamps) {
-    const d = frontOf(x, y) || [0, 1], W = lotFrame(x0, z0, d);
-    kitQuad(k.p, k.c, W(-4, 0, 0.04), W(4, 0, 0.04), W(4, 1.8, 0.04), W(-4, 1.8, 0.04), 0x7a7c80);
-    lbox(k.p, k.c, W, -4, 1.8, 0, 4, 8, 6.2, 0x5aa030);
-    // El frente iluminado por los reflectores: verde claro con nervaduras.
-    for (let i = 0; i < 9; i++) { const h0 = 2.6 + i * 0.4; lface(k.gp, k.gc, W, -4, 4, h0, h0 + 0.3, 1.77, i % 2 ? 0x4a9a2a : 0x62b83a); }
-    lbox(k.gp, k.gc, W, -4, 1.7, 0, -3.3, 1.8, 2.6, 0x62b83a); lbox(k.gp, k.gc, W, 3.3, 1.7, 0, 4, 1.8, 2.6, 0x62b83a);
-    lface(k.p, k.c, W, -3.2, -0.8, 0, 2.4, 1.76, 0x6a6c70);   // persianas
-    lface(k.p, k.c, W, 0.8, 3.2, 0, 2.4, 1.76, 0x6a6c70);
-    lface(k.gp, k.gc, W, -0.7, 0.7, 0, 2.3, 1.76, 0xdfe8e0);    // la entrada
-    const logo = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 2.3), texMat("vea", veaTex(), { transparent: true, alphaTest: 0.4 }));
-    const lp = W(0, 1.7, 4.0); logo.position.set(lp[0], 4.0, lp[2]); logo.rotation.y = Math.atan2(d[0], d[1]); g.add(logo);
-    [-2.5, 0, 2.5].forEach(u => { lbox(k.p, k.c, W, u - 0.05, 1.3, 6.2, u + 0.05, 1.8, 6.3, 0x3a3a3e); lbox(k.gp, k.gc, W, u - 0.2, 1.2, 6.25, u + 0.2, 1.4, 6.4, 0xfff4d8); });
-    lamps.push(new THREE.Vector3(...W(0, 0.5, 5)));
+  function buildVea(k, b, g, lamps) {
+    const { d, W } = bigFrame(b);
+    // Playa de estacionamiento con sus rayas.
+    kitQuad(k.p, k.c, W(-16, 0, 0.05), W(16, 0, 0.05), W(16, 9, 0.05), W(-16, 9, 0.05), 0x55575c);
+    for (let i = -6; i <= 6; i++) kitQuad(k.p, k.c, W(i * 2.4 - 0.06, 5.5, 0.07), W(i * 2.4 + 0.06, 5.5, 0.07), W(i * 2.4 + 0.06, 8.6, 0.07), W(i * 2.4 - 0.06, 8.6, 0.07), 0xdad8d0);
+    [-9, 9].forEach(u => { lbox(k.p, k.c, W, u - 0.14, 3.5, 0, u + 0.14, 3.8, 9, 0x8e9096); lbox(k.gp, k.gc, W, u - 0.6, 3.3, 8.9, u + 0.6, 4.0, 9.1, 0xfff4d8); });
+    // El galpón.
+    lbox(k.p, k.c, W, -15.5, 9, 0, 15.5, 24, 9.5, 0x4e9a2a);
+    for (let i = 0; i < 12; i++) { const h0 = 3.6 + i * 0.48; lface(k.gp, k.gc, W, -15.5, 15.5, h0, h0 + 0.36, 8.97, i % 2 ? 0x4a9a2a : 0x66bc3c); }
+    lface(k.gp, k.gc, W, -15.5, 15.5, 9.1, 9.5, 8.96, 0x7ad04a);
+    // Planta baja: persianas, vidrieras y la entrada con su marco verde claro.
+    lface(k.p, k.c, W, -14.5, -5, 0, 3.2, 8.96, 0x6a6c70);
+    lface(k.p, k.c, W, 5, 14.5, 0, 3.2, 8.96, 0x6a6c70);
+    lface(k.gp, k.gc, W, -4.2, 4.2, 0, 3.1, 8.95, 0xdfe8e0);
+    lbox(k.gp, k.gc, W, -5, 8.7, 0, -4.2, 9, 3.6, 0x62b83a); lbox(k.gp, k.gc, W, 4.2, 8.7, 0, 5, 9, 3.6, 0x62b83a);
+    lbox(k.gp, k.gc, W, -5, 8.7, 3.1, 5, 9, 3.6, 0x62b83a);
+    const lm = texMat("vea", veaTex(), { transparent: true, alphaTest: 0.4 });
+    facePlane(g, lm, 5.6, 5.6, W, 0, 8.9, 6.3, d);
+    // Reflectores arriba del frente.
+    [-12, -6, 0, 6, 12].forEach(u => { lbox(k.p, k.c, W, u - 0.06, 7.6, 9.5, u + 0.06, 9, 9.7, 0x3a3a3e); lbox(k.gp, k.gc, W, u - 0.3, 7.4, 9.55, u + 0.3, 7.8, 9.8, 0xfff4d8); });
+    // Pilón con el logo en la entrada de la playa.
+    lbox(k.p, k.c, W, 13.8, 0.6, 0, 14.4, 1.0, 5.2, 0x8e9096);
+    facePlane(g, lm, 2.6, 2.6, W, 14.1, 0.55, 6.3, d);
+    lamps.push(new THREE.Vector3(...W(-9, 3.6, 8.5)), new THREE.Vector3(...W(9, 3.6, 8.5)), new THREE.Vector3(...W(0, 7, 8)));
   }
 
   // Carteles de ruta: verdes con destinos y kilómetros, y cada tanto el azul de Malvinas.
@@ -1151,10 +1231,10 @@
         if (mod(y, 22) === 2 && mod(x, 4) === 3 && mod(x, 26) >= 3) poles.push([x0 + 4, z0 + 7.4, 0, -1]);
       } else if (t === T.WALL && lotKind(x, y) === "house") {
         buildHouse(kit, x, y, x0, z0);
-      } else if (t === T.WALL && lotKind(x, y) === "ypf") {
-        buildYPF(kit, x, y, x0, z0, g, lamps);
-      } else if (t === T.WALL && lotKind(x, y) === "vea") {
-        buildVea(kit, x, y, x0, z0, g, lamps);
+      } else if (t === T.WALL && lotKind(x, y) === "big") {
+        // El terreno entero lo arma su esquina; las otras cuadras no llevan nada.
+        const b = bigLot(x, y);
+        if (b.ax === x && b.ay === y) (b.kind === "ypf" ? buildYPF : buildVea)(kit, b, g, lamps);
       } else if (t === T.WALL) {
         const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
         const r = hs(x, y, 5);
@@ -2450,7 +2530,7 @@
   function newWorld(s, keepRun) {
     seed = s | 0;
     sx = (hash(seed, 1) - 0.5) * 4000; sy = (hash(seed, 2) - 0.5) * 4000;
-    cache.clear();
+    cache.clear(); bigCache.clear();
     chunks.forEach(c => disposeChunk(c));
     chunks.clear();
     dying.forEach(c => disposeChunk(c)); dying.length = 0;
