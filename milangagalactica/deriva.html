@@ -1911,7 +1911,7 @@
     }
   }
 
-  let chargeT = -9, chargeBuzz = 0;
+  let chargeT = -9, chargeBuzz = 0, chargePop = 0, chargeAcc = 0;
   function tickLight(dt) {
     if (state.map) return;
     // Manejar gasta luz; la nada la gasta más rápido. Bajo un farol se recarga despacio.
@@ -1939,9 +1939,19 @@
     if (charger && !abyss) {
       chargeT = clock;
       if (light < cap) {
+        const before = light;
         light = Math.min(cap, light + 0.7 * dt);
+        // La luz cargada también suma watts: 600 W por cada unidad de luz.
+        chargeAcc += (light - before) * 600;
         if (clock > chargeBuzz) { buzz(14); chargeBuzz = clock + 0.22; }
-        if (light >= cap) { buzz([30, 50, 60]); flash = 0.8; }
+        const full = light >= cap;
+        if ((clock > chargePop || full) && chargeAcc >= 10) {
+          const w = Math.round(chargeAcc / 10) * 10;
+          score += w; chargeAcc = Math.max(0, chargeAcc - w);
+          popups.push({ t0: clock, text: "+" + w + "W", mult: 1 });
+          chargePop = clock + 0.75;
+        }
+        if (full) { buzz([30, 50, 60]); flash = 0.8; chargeAcc = 0; }
       }
     }
     chunks.forEach(c => c.ideas.forEach(it => {
