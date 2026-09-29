@@ -704,8 +704,372 @@
   // El mundo se degenera a medida que se genera: cada pedazo nuevo sale un poco más roto.
   let generated = 0;
   const DEGEN_COLORS = [0xff2a3a, 0x2f6bff, 0xffc21a, 0x2fd85a, 0x7a2b3c];
+  // --- Barrio argentino: casas bajas, rejas, medianeras, tanques, cables y árboles de vereda ----
+  // Todo lo de un pedazo se junta en pocas mallas: una iluminada, una que brilla sola (ventanas,
+  // carteles de luz), una de rejas y una de cables. Así se dibuja en pocas llamadas.
+  const houseMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0, side: THREE.DoubleSide });
+  const glowMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  const cableMat = new THREE.LineBasicMaterial({ color: 0x55545e });
+  const rejaMat = (() => {
+    const c = document.createElement("canvas"); c.width = 64; c.height = 64;
+    const x = c.getContext("2d");
+    x.fillStyle = "#fff";
+    for (let i = 0; i < 8; i++) x.fillRect(i * 8 + 3, 6, 2, 58);   // barrotes
+    x.fillRect(0, 4, 64, 4); x.fillRect(0, 56, 64, 4);             // planchuelas
+    for (let i = 0; i < 8; i++) { x.beginPath(); x.moveTo(i * 8 + 1, 6); x.lineTo(i * 8 + 4, 0); x.lineTo(i * 8 + 7, 6); x.fill(); } // puntas
+    const tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping;
+    return new THREE.MeshStandardMaterial({ color: 0x3a3a42, map: tex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6 });
+  })();
+  const WALL_TINTS = [0xece2c6, 0xf2eee4, 0xd9b77a, 0xa9a69c, 0x9aa47a, 0xa8603e, 0xdca88a, 0xc8c0b0, 0xe0d0a8];
+  const TILES = [0xa8452c, 0x8e3a26, 0xb0502e, 0x4a3c3a];
+  const FLAT_ROOFS = [0xb4b6bc, 0x9a4a38, 0x8c8e94];
+  const ICO = new THREE.IcosahedronGeometry(1, 0).toNonIndexed().attributes.position.array;
+
+  function newKit() { return { p: [], c: [], gp: [], gc: [], rp: [], ru: [], lp: [] }; }
+  const _kc = new THREE.Color();
+  function kitTri(P, C, a, b, c, color, shade) {
+    P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+    _kc.set(color).multiplyScalar(shade || 1);
+    for (let k = 0; k < 3; k++) C.push(_kc.r, _kc.g, _kc.b);
+  }
+  function kitQuad(P, C, a, b, c, d, color, shade) { kitTri(P, C, a, b, c, color, shade); kitTri(P, C, a, c, d, color, shade); }
+  // Caja alineada a los ejes, de esquina a esquina (en el mundo).
+  function kitBox(P, C, x0, y0, z0, x1, y1, z1, color) {
+    const X0 = Math.min(x0, x1), X1 = Math.max(x0, x1), Z0 = Math.min(z0, z1), Z1 = Math.max(z0, z1), Y0 = Math.min(y0, y1), Y1 = Math.max(y0, y1);
+    kitQuad(P, C, [X0, Y1, Z0], [X0, Y1, Z1], [X1, Y1, Z1], [X1, Y1, Z0], color, 1);
+    kitQuad(P, C, [X0, Y0, Z1], [X1, Y0, Z1], [X1, Y1, Z1], [X0, Y1, Z1], color, 0.9);
+    kitQuad(P, C, [X1, Y0, Z0], [X0, Y0, Z0], [X0, Y1, Z0], [X1, Y1, Z0], color, 0.9);
+    kitQuad(P, C, [X1, Y0, Z1], [X1, Y0, Z0], [X1, Y1, Z0], [X1, Y1, Z1], color, 0.8);
+    kitQuad(P, C, [X0, Y0, Z0], [X0, Y0, Z1], [X0, Y1, Z1], [X0, Y1, Z0], color, 0.8);
+  }
+  // Cilindro de pocas caras (tanques de agua).
+  function kitCyl(P, C, x, y0, z, r, h, color) {
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const a0 = i / n * TAU, a1 = (i + 1) / n * TAU;
+      const p0 = [x + Math.cos(a0) * r, y0, z + Math.sin(a0) * r], p1 = [x + Math.cos(a1) * r, y0, z + Math.sin(a1) * r];
+      const q0 = [p0[0], y0 + h, p0[2]], q1 = [p1[0], y0 + h, p1[2]];
+      kitQuad(P, C, p0, p1, q1, q0, color, 0.85);
+      kitTri(P, C, [x, y0 + h, z], q1, q0, color, 1);
+    }
+  }
+  function kitIco(P, C, x, y, z, sx, sy, sz, color) {
+    for (let i = 0; i < ICO.length; i += 9) kitTri(P, C,
+      [x + ICO[i] * sx, y + ICO[i + 1] * sy, z + ICO[i + 2] * sz],
+      [x + ICO[i + 3] * sx, y + ICO[i + 4] * sy, z + ICO[i + 5] * sz],
+      [x + ICO[i + 6] * sx, y + ICO[i + 7] * sy, z + ICO[i + 8] * sz], color, 0.8 + 0.2 * ((i / 9) % 3) / 2);
+  }
+  function kitCable(L, a, b, sag) {
+    const n = 6;
+    for (let i = 0; i < n; i++) {
+      const t0 = i / n, t1 = (i + 1) / n;
+      const f = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - sag * 4 * t * (1 - t), a[2] + (b[2] - a[2]) * t];
+      L.push(...f(t0), ...f(t1));
+    }
+  }
+  function kitMeshes(k, g) {
+    const mk = (P, C, material) => {
+      if (!P.length) return;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+      if (material === houseMat) geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, material); m.userData.own = true; g.add(m);
+    };
+    mk(k.p, k.c, houseMat);
+    mk(k.gp, k.gc, glowMat);
+    if (k.rp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(k.rp, 3));
+      geo.setAttribute("uv", new THREE.Float32BufferAttribute(k.ru, 2));
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, rejaMat); m.userData.own = true; g.add(m);
+    }
+    if (k.lp.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(k.lp, 3));
+      const m = new THREE.LineSegments(geo, cableMat); m.userData.own = true; g.add(m);
+    }
+  }
+
+  // El lote: mira hacia la calle que tiene al lado. u va a lo largo de la vereda, v hacia adentro.
+  const PASSABLE_FRONT = t => t === T.STREET || t === T.AVENUE || t === T.PLAZA;
+  function frontOf(x, y) {
+    const order = [[0, 1], [1, 0], [0, -1], [-1, 0]], o = Math.floor(hs(x, y, 305) * 4);
+    for (let k = 0; k < 4; k++) { const [a, b] = order[(k + o) % 4]; if (PASSABLE_FRONT(cellType(x + a, y + b))) return [a, b]; }
+    return null;
+  }
+  // Qué hay en un lote del laberinto: casa, YPF, VEA o un edificio.
+  function lotKind(x, y) {
+    if (cellType(x, y) !== T.WALL) return "none";
+    const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
+    const dn = downtown(x, y);
+    if (nearAvenue && dn < 0.45) { const r = hs(x, y, 310); if (r < 0.03) return "ypf"; if (r < 0.055) return "vea"; return "block"; }
+    if (!nearAvenue && dn < 0.45 && hs(x, y, 301) > 0.1) return "house";
+    return "block";
+  }
+  function lotFrame(x0, z0, d) {
+    const cx = x0 + 4, cz = z0 + 4, dx = d[0], dz = d[1], sx = -dz, sz = dx;
+    return (u, v, h) => [cx + dx * (4 - v) + sx * u, h, cz + dz * (4 - v) + sz * u];
+  }
+  // Caja en coordenadas del lote.
+  const lbox = (P, C, W, u0, v0, h0, u1, v1, h1, color) => { const a = W(u0, v0, h0), b = W(u1, v1, h1); kitBox(P, C, a[0], a[1], a[2], b[0], b[1], b[2], color); };
+  // Cara vertical mirando a la calle (ventanas, puertas, carteles).
+  const lface = (P, C, W, u0, u1, h0, h1, v, color) => kitQuad(P, C, W(u0, v, h0), W(u1, v, h0), W(u1, v, h1), W(u0, v, h1), color);
+
+  function buildHouse(k, x, y, x0, z0) {
+    const d = frontOf(x, y) || [0, 1], W = lotFrame(x0, z0, d);
+    const r = i => hs(x, y, 320 + i);
+    const wall = WALL_TINTS[Math.floor(r(0) * WALL_TINTS.length)];
+    const chalet = r(1) < 0.5;
+    // Vereda de baldosas amarillas, cordón, murete con reja y el patio al frente.
+    lface(k.p, k.c, W, -4, 4, 0, 0, 0, 0xd6c68e);
+    kitQuad(k.p, k.c, W(-4, 0, 0.05), W(4, 0, 0.05), W(4, 1.3, 0.05), W(-4, 1.3, 0.05), r(2) < 0.7 ? 0xd2c48e : 0xb0a08a);
+    lbox(k.p, k.c, W, -4, 0, 0, 4, 0.16, 0.16, 0xa8a8a2);
+    lbox(k.p, k.c, W, -4, 1.3, 0, 4, 1.5, 0.55, r(3) < 0.5 ? 0xa0583a : wall);
+    const ra = W(-4, 1.4, 0.55), rb = W(4, 1.4, 0.55), rc = W(4, 1.4, 1.75), rd = W(-4, 1.4, 1.75);
+    k.rp.push(...ra, ...rb, ...rc, ...ra, ...rc, ...rd);
+    k.ru.push(0, 0, 8, 0, 8, 1, 0, 0, 8, 1, 0, 1);
+    kitQuad(k.p, k.c, W(-4, 1.5, 0.04), W(4, 1.5, 0.04), W(4, 3.3, 0.04), W(-4, 3.3, 0.04), r(4) < 0.5 ? 0x4e6a3a : 0x8a4a3a);
+    // Medianeras altas a los costados, de revoque o ladrillo.
+    const med = r(5) < 0.5 ? 0xb8b2a4 : 0x9a5a40;
+    lbox(k.p, k.c, W, -4, 1.5, 0, -3.85, 8, 2.4, med);
+    lbox(k.p, k.c, W, 3.85, 1.5, 0, 4, 8, 2.4, med);
+    const vf = 3.3; // frente de la casa
+    const lit = i => r(40 + i) < 0.45;
+    const win = (u0, u1, h0, h1, i) => {
+      if (lit(i)) {
+        lface(k.gp, k.gc, W, u0, u1, h0, h1, vf - 0.03, r(50 + i) < 0.2 ? 0x9ab8ff : 0xffbf6a);
+        if (r(60 + i) < 0.5) lface(k.p, k.c, W, u0, u1, h1 - (h1 - h0) * 0.45, h1, vf - 0.05, 0x5a3a24); // persiana a medio bajar
+      } else lface(k.p, k.c, W, u0, u1, h0, h1, vf - 0.03, 0x2a2622);
+    };
+    let top;
+    if (chalet) {
+      const garage = r(6) < 0.55, bu1 = garage ? 1.6 : 3.6;
+      lbox(k.p, k.c, W, -3.6, vf, 0, bu1, 7.6, 2.8, wall);
+      // Zócalo de piedra Mar del Plata.
+      lbox(k.p, k.c, W, -3.65, vf - 0.06, 0, bu1 + 0.05, vf + 0.3, r(7) < 0.6 ? 0.9 : 2.8, 0xd4c8aa);
+      // Techo a dos o cuatro aguas, de tejas.
+      const tile = TILES[Math.floor(r(8) * TILES.length)], hip = r(9) < 0.4 ? 1.2 : 0;
+      const u0 = -3.9, u1 = bu1 + 0.3, v0 = vf - 0.4, v1 = 7.9, h = 2.8, vm = (v0 + v1) / 2, top0 = h + 1.7;
+      const A = W(u0, v0, h), B = W(u1, v0, h), Cc = W(u1, v1, h), D = W(u0, v1, h), R0 = W(u0 + hip, vm, top0), R1 = W(u1 - hip, vm, top0);
+      kitQuad(k.p, k.c, A, B, R1, R0, tile, 1); kitQuad(k.p, k.c, R0, R1, Cc, D, tile, 0.75);
+      kitTri(k.p, k.c, A, R0, D, hip ? tile : wall, 0.85); kitTri(k.p, k.c, B, Cc, R1, hip ? tile : wall, 0.85);
+      win(-3.1, -1.9, 1.0, 2.1, 0); win(0.1, 1.2, 1.0, 2.1, 1);
+      lface(k.p, k.c, W, -1.4, -0.5, 0, 2.1, vf - 0.03, 0x4a2e1c);
+      lface(k.gp, k.gc, W, -1.1, -0.8, 2.25, 2.45, vf - 0.05, 0xffd890);
+      if (garage) { lbox(k.p, k.c, W, bu1, vf + 0.4, 0, 3.8, 7.6, 2.4, wall); lface(k.p, k.c, W, bu1 + 0.2, 3.6, 0, 2.1, vf + 0.37, r(10) < 0.5 ? 0x6a4428 : 0x3a3a3e); }
+      if (r(11) < 0.35) lbox(k.p, k.c, W, 1.2, 6.2, 3.3, 1.8, 6.8, 5.2, 0x9a5a40); // chimenea de la parrilla
+      top = top0;
+    } else {
+      // Casa de losa: volumen simple, alero en la entrada, terraza con baranda y a veces un piso más.
+      const bu0 = -3.7, bu1 = 3.7, h = 2.9;
+      lbox(k.p, k.c, W, bu0, vf, 0, bu1, 7.7, h, wall);
+      lbox(k.p, k.c, W, bu0, vf, h - 0.02, bu1, 7.7, h + 0.12, FLAT_ROOFS[Math.floor(r(12) * FLAT_ROOFS.length)]);
+      lbox(k.p, k.c, W, -1.8, vf - 1.0, 2.3, 0.4, vf, 2.45, 0xb0aca4); // alero de hormigón
+      win(-3.2, -2.0, 1.0, 2.1, 0); win(1.0, 3.0, 1.0, 2.1, 1);
+      lface(k.p, k.c, W, -1.3, -0.4, 0, 2.1, vf - 0.03, r(13) < 0.5 ? 0x4a2e1c : 0x6a6a70);
+      lface(k.gp, k.gc, W, -1.0, -0.7, 2.15, 2.28, vf - 0.05, 0xffd890);
+      let hh = h + 0.12;
+      if (r(14) < 0.4) {
+        lbox(k.p, k.c, W, -2.6, vf + 1.2, hh, 2.6, 7.4, hh + 2.7, wall);
+        lbox(k.p, k.c, W, -2.6, vf + 1.2, hh + 2.7, 2.6, 7.4, hh + 2.82, FLAT_ROOFS[0]);
+        const vf2 = vf + 1.2;
+        if (lit(3)) lface(k.gp, k.gc, W, -1.4, 0.8, hh + 0.2, hh + 2.1, vf2 - 0.03, 0xffbf6a); else lface(k.p, k.c, W, -1.4, 0.8, hh + 0.2, hh + 2.1, vf2 - 0.03, 0x2a2622);
+        // Balcón con baranda de caño.
+        lbox(k.p, k.c, W, -2.6, vf, hh + 0.95, 2.6, vf + 0.06, hh + 1.02, 0x3a3a40);
+        hh += 2.82;
+      } else {
+        lbox(k.p, k.c, W, bu0, vf, hh + 0.9, bu1, vf + 0.06, hh + 0.97, 0x3a3a40);
+      }
+      top = hh;
+    }
+    // Tanque de agua negro sobre una torrecita, atrás en lo más alto.
+    if (r(15) < 0.55) {
+      const tp = W(chalet ? -2.6 : 2.2, 6.6, 0);
+      const base = chalet ? 2.8 : top;
+      kitBox(k.p, k.c, tp[0] - 0.5, base, tp[2] - 0.5, tp[0] + 0.5, base + 0.9 + (chalet ? 1.6 : 0), tp[2] + 0.5, 0x8a8a86);
+      kitCyl(k.p, k.c, tp[0], base + 0.9 + (chalet ? 1.6 : 0), tp[2], 0.6, 1.1, r(16) < 0.7 ? 0x26262a : 0x9a9a98);
+    }
+    // Antena satelital atornillada a la medianera.
+    if (r(17) < 0.2) { const a = W(3.9, 4.5, 2.4); kitBox(k.p, k.c, a[0] - 0.35, a[1], a[2] - 0.35, a[0] + 0.35, a[1] + 0.7, a[2] + 0.35, 0xc8c8cc); }
+    // Árbol de vereda con la base pintada a la cal.
+    if (r(18) < 0.4) {
+      const t0 = W(r(19) < 0.5 ? -2.4 : 2.4, 0.65, 0);
+      kitBox(k.p, k.c, t0[0] - 0.14, 0, t0[2] - 0.14, t0[0] + 0.14, 0.9, t0[2] + 0.14, 0xeae6da);
+      kitBox(k.p, k.c, t0[0] - 0.12, 0.9, t0[2] - 0.12, t0[0] + 0.12, 3.2, t0[2] + 0.12, 0x5a4636);
+      kitIco(k.p, k.c, t0[0], 4.2, t0[2], 1.9, 1.5, 1.9, r(20) < 0.5 ? 0x2e5a2a : 0x4a6a2a);
+    }
+    // Canasto de basura sobre un caño, a 1,20 m.
+    if (r(21) < 0.35) {
+      const c0 = W(r(22) * 4 - 2, 1.0, 0);
+      kitBox(k.p, k.c, c0[0] - 0.04, 0, c0[2] - 0.04, c0[0] + 0.04, 1.2, c0[2] + 0.04, 0x3a3a3e);
+      kitBox(k.p, k.c, c0[0] - 0.3, 1.2, c0[2] - 0.2, c0[0] + 0.3, 1.55, c0[2] + 0.2, 0x5a3a28);
+    }
+    // Pilar de gas y luz con la puertita amarilla.
+    lbox(k.p, k.c, W, 2.6, 1.28, 0, 3.4, 1.52, 1.4, wall);
+    lface(k.p, k.c, W, 2.75, 3.25, 0.7, 1.2, 1.26, 0xd8b040);
+    // Poste de cemento y los cables: hasta el lote de al lado y, a veces, cruzando la calle en diagonal.
+    const pole = W(-3.9, 0.3, 0);
+    kitBox(k.p, k.c, pole[0] - 0.13, 0, pole[2] - 0.13, pole[0] + 0.13, 7.4, pole[2] + 0.13, 0x8e8c86);
+    const s = [-d[1], d[0]];
+    const nx = x + s[0], ny = y + s[1];
+    if (lotKind(nx, ny) === "house") {
+      const fd = frontOf(nx, ny);
+      if (fd && fd[0] === d[0] && fd[1] === d[1]) {
+        const Wn = lotFrame(nx * CELL, ny * CELL, d), q = Wn(-3.9, 0.3, 0);
+        [7.2, 6.8, 6.4].forEach((hc, i) => kitCable(k.lp, [pole[0], hc, pole[2]], [q[0], hc - i * 0.1, q[2]], 0.5 + i * 0.15));
+      }
+    }
+    const ax = x + d[0] * 2, ay = y + d[1] * 2;
+    if (r(23) < 0.45 && lotKind(ax, ay) === "house") {
+      const fd = frontOf(ax, ay);
+      if (fd && fd[0] === -d[0] && fd[1] === -d[1]) {
+        const Wa = lotFrame(ax * CELL, ay * CELL, fd), q = Wa(-3.9, 0.3, 0);
+        kitCable(k.lp, [pole[0], 7.0, pole[2]], [q[0], 6.9, q[2]], 1.1);
+        if (r(24) < 0.5) kitCable(k.lp, [pole[0], 6.6, pole[2]], [q[0], 6.5, q[2]], 1.4);
+      }
+    }
+  }
+
+  // Carteles con letras: se dibujan una vez en un canvas y se comparten.
+  const texCache = {};
+  function canvasTex(key, w, h, draw) {
+    if (texCache[key]) return texCache[key];
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    draw(c.getContext("2d"), w, h);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 2;
+    return (texCache[key] = t);
+  }
+  const matCache = {};
+  const texMat = (key, tex, extra) => matCache[key] || (matCache[key] = new THREE.MeshBasicMaterial(Object.assign({ map: tex }, extra || {})));
+  function roundRect(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+
+  // YPF: la marquesina blanca con el borde azul que brilla, surtidores, tótem y el minimercado.
+  function ypfTex() {
+    return canvasTex("ypf", 256, 128, (x, w, h) => {
+      x.fillStyle = "#1c4fe6"; x.fillRect(0, 0, w, h);
+      x.fillStyle = "#fff"; x.font = "bold 86px Arial, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillText("YPF", w / 2, h / 2 + 4);
+    });
+  }
+  function buildYPF(k, x, y, x0, z0, g, lamps) {
+    const d = frontOf(x, y) || [0, 1], W = lotFrame(x0, z0, d);
+    kitQuad(k.p, k.c, W(-4, 0, 0.04), W(4, 0, 0.04), W(4, 8, 0.04), W(-4, 8, 0.04), 0x8a8c90);
+    // Columnas.
+    [[-2.6, 2.2], [2.6, 2.2], [-2.6, 5.2], [2.6, 5.2]].forEach(([u, v]) => lbox(k.p, k.c, W, u - 0.2, v - 0.2, 0, u + 0.2, v + 0.2, 4.7, 0xd8dade));
+    // Marquesina: panza blanca con tiras de luz y el borde azul.
+    lbox(k.p, k.c, W, -4, 0.2, 4.7, 4, 7.4, 5.2, 0xe8eaee);
+    for (let i = 0; i < 4; i++) { const v = 1.2 + i * 1.6; kitQuad(k.gp, k.gc, W(-3, v, 4.68), W(3, v, 4.68), W(3, v + 0.22, 4.68), W(-3, v + 0.22, 4.68), 0xf2f6ff); }
+    const B = 0x2a62ff;
+    lbox(k.gp, k.gc, W, -4.05, 0.15, 4.95, 4.05, 0.25, 5.45, B);
+    lbox(k.gp, k.gc, W, -4.05, 7.35, 4.95, 4.05, 7.45, 5.45, B);
+    lbox(k.gp, k.gc, W, -4.05, 0.15, 4.95, -3.95, 7.45, 5.45, B);
+    lbox(k.gp, k.gc, W, 3.95, 0.15, 4.95, 4.05, 7.45, 5.45, B);
+    // Surtidores con pantalla azul.
+    [-1.2, 1.2].forEach(u => {
+      lbox(k.p, k.c, W, u - 0.35, 3.1, 0, u + 0.35, 4.3, 1.7, 0x6a6e76);
+      lface(k.gp, k.gc, W, u - 0.25, u + 0.25, 1.1, 1.55, 3.07, 0x3a8cff);
+      lbox(k.p, k.c, W, u - 0.6, 3.0, 0, u + 0.6, 4.4, 0.18, 0xb8b0a0);
+    });
+    // Minimercado atrás, con la vidriera iluminada.
+    lbox(k.p, k.c, W, -4, 6.2, 0, 4, 8, 3.1, 0x6a5040);
+    lface(k.gp, k.gc, W, -3.2, 2.2, 0.3, 2.3, 6.17, 0xffe0b0);
+    lface(k.gp, k.gc, W, -4, 4, 2.7, 2.85, 6.16, 0xf2f6ff);
+    // El logo en la marquesina y el tótem de precios en la esquina.
+    const m = texMat("ypf", ypfTex());
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.1), m);
+    const lp = W(0, 0.12, 5.2); logo.position.set(lp[0], 5.2, lp[2]); logo.rotation.y = Math.atan2(d[0], d[1]); g.add(logo);
+    lbox(k.gp, k.gc, W, 3.2, 0.3, 0, 3.9, 0.6, 4.2, 0x1c4fe6);
+    const tot = new THREE.Mesh(new THREE.PlaneGeometry(0.66, 0.33), m);
+    const tp = W(3.55, 0.27, 3.7); tot.position.set(tp[0], 3.7, tp[2]); tot.rotation.y = Math.atan2(d[0], d[1]); g.add(tot);
+    lamps.push(new THREE.Vector3(...W(0, 3.6, 4.4)));
+  }
+
+  // Supermercado VEA: frente verde con nervaduras, el logo amarillo con letras rojas y reflectores.
+  function veaTex() {
+    return canvasTex("vea", 256, 256, (x, w, h) => {
+      x.clearRect(0, 0, w, h);
+      x.fillStyle = "#fff"; x.beginPath(); x.arc(128, 128, 124, 0, TAU); x.fill();
+      x.fillStyle = "#f7c21b"; x.beginPath(); x.arc(128, 128, 112, 0, TAU); x.fill();
+      x.fillStyle = "#d8262a"; x.font = "bold italic 96px Arial, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillText("Vea", 124, 118);
+      x.beginPath(); x.arc(206, 60, 12, 0, TAU); x.fill();
+    });
+  }
+  function buildVea(k, x, y, x0, z0, g, lamps) {
+    const d = frontOf(x, y) || [0, 1], W = lotFrame(x0, z0, d);
+    kitQuad(k.p, k.c, W(-4, 0, 0.04), W(4, 0, 0.04), W(4, 1.8, 0.04), W(-4, 1.8, 0.04), 0x7a7c80);
+    lbox(k.p, k.c, W, -4, 1.8, 0, 4, 8, 6.2, 0x5aa030);
+    // El frente iluminado por los reflectores: verde claro con nervaduras.
+    for (let i = 0; i < 9; i++) { const h0 = 2.6 + i * 0.4; lface(k.gp, k.gc, W, -4, 4, h0, h0 + 0.3, 1.77, i % 2 ? 0x4a9a2a : 0x62b83a); }
+    lbox(k.gp, k.gc, W, -4, 1.7, 0, -3.3, 1.8, 2.6, 0x62b83a); lbox(k.gp, k.gc, W, 3.3, 1.7, 0, 4, 1.8, 2.6, 0x62b83a);
+    lface(k.p, k.c, W, -3.2, -0.8, 0, 2.4, 1.76, 0x6a6c70);   // persianas
+    lface(k.p, k.c, W, 0.8, 3.2, 0, 2.4, 1.76, 0x6a6c70);
+    lface(k.gp, k.gc, W, -0.7, 0.7, 0, 2.3, 1.76, 0xdfe8e0);    // la entrada
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 2.3), texMat("vea", veaTex(), { transparent: true, alphaTest: 0.4 }));
+    const lp = W(0, 1.7, 4.0); logo.position.set(lp[0], 4.0, lp[2]); logo.rotation.y = Math.atan2(d[0], d[1]); g.add(logo);
+    [-2.5, 0, 2.5].forEach(u => { lbox(k.p, k.c, W, u - 0.05, 1.3, 6.2, u + 0.05, 1.8, 6.3, 0x3a3a3e); lbox(k.gp, k.gc, W, u - 0.2, 1.2, 6.25, u + 0.2, 1.4, 6.4, 0xfff4d8); });
+    lamps.push(new THREE.Vector3(...W(0, 0.5, 5)));
+  }
+
+  // Carteles de ruta: verdes con destinos y kilómetros, y cada tanto el azul de Malvinas.
+  const PUEBLOS = ["ALBERDI", "G. ALVEAR", "OBERA", "TRES ARROYOS", "BAHIA BLANCA", "CORDOBA", "CARLOS PAZ", "CAPILLA DEL MONTE",
+    "CNEL. SUAREZ", "TANDIL", "MAR DEL PLATA", "PEHUAJO", "RIO CUARTO", "AZUL", "CHASCOMUS", "SAN LUIS", "MINA CLAVERO", "LA FALDA",
+    "CURA BROCHERO", "PUNTA ALTA", "ALTA GRACIA", "COSQUIN"];
+  function arrow(x, cx, cy, s, dir) {
+    x.beginPath();
+    x.moveTo(cx + dir * s, cy); x.lineTo(cx, cy - s * 0.8); x.lineTo(cx, cy - s * 0.3); x.lineTo(cx - dir * s, cy - s * 0.3);
+    x.lineTo(cx - dir * s, cy + s * 0.3); x.lineTo(cx, cy + s * 0.3); x.lineTo(cx, cy + s * 0.8); x.closePath(); x.fill();
+  }
+  function greenSignTex(v) {
+    return canvasTex("verde" + v, 512, 256, (x, w, h) => {
+      x.fillStyle = "#1d6b40"; roundRect(x, 0, 0, w, h, 18); x.fill();
+      x.strokeStyle = "#f4f4ee"; x.lineWidth = 8; roundRect(x, 10, 10, w - 20, h - 20, 12); x.stroke();
+      x.fillStyle = "#f4f4ee"; x.font = "bold 50px 'Arial Narrow', Arial, sans-serif"; x.textBaseline = "middle";
+      for (let i = 0; i < 3; i++) {
+        const name = PUEBLOS[Math.floor(hash(v * 7 + i, 91) * PUEBLOS.length)], km = 1 + Math.floor(hash(v * 13 + i, 92) * (i ? 240 : 30)) + i * 10;
+        const cy = 58 + i * 70, dir = i === 0 ? 1 : -1;
+        x.textAlign = "left"; x.fillText(name.length > 13 ? name.slice(0, 13) : name, 88, cy);
+        x.textAlign = "right"; x.fillText(String(km), w - 80, cy);
+        arrow(x, dir > 0 ? w - 42 : 48, cy, 24, dir);
+      }
+    });
+  }
+  function malvinasTex(v) {
+    return canvasTex("malvinas" + v, 400, 300, (x, w, h) => {
+      x.fillStyle = "#1f50b0"; roundRect(x, 0, 0, w, h, 18); x.fill();
+      x.strokeStyle = "#f4f4ee"; x.lineWidth = 7; roundRect(x, 9, 9, w - 18, h - 18, 12); x.stroke();
+      x.fillStyle = "#f4f4ee"; x.font = "bold 36px Arial, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillText("ISLAS MALVINAS", w / 2 - 24, 52);
+      x.fillStyle = "#74acdf"; x.fillRect(w - 78, 36, 48, 30); x.fillStyle = "#fff"; x.fillRect(w - 78, 46, 48, 10);
+      // Las dos islas.
+      x.fillStyle = "#f4f4ee";
+      const blob = (cx, cy, rx, ry, seed) => { x.beginPath(); for (let i = 0; i <= 18; i++) { const a = i / 18 * TAU, rr = 1 + (hash(i + seed, 7) - 0.5) * 0.7; x.lineTo(cx + Math.cos(a) * rx * rr, cy + Math.sin(a) * ry * rr); } x.fill(); };
+      blob(140, 150, 62, 34, 3); blob(262, 142, 66, 38, 11); blob(96, 178, 14, 9, 21);
+      x.font = "bold 40px Arial, sans-serif"; x.fillText((1300 + Math.floor(hash(v, 93) * 1500)).toLocaleString("es-AR").replace(".", "") + " Km", w / 2, 250);
+    });
+  }
+  const signBack = new THREE.MeshBasicMaterial({ color: 0x5a5e62 });
+  function buildSign(k, g, px, py, pz, alongX, facing, malvinas, v) {
+    const w = malvinas ? 2.8 : 3.4, h = malvinas ? 2.1 : 1.7, y0 = py + 1.8;
+    const m = malvinas ? texMat("malvinas" + v, malvinasTex(v)) : texMat("verde" + v, greenSignTex(v));
+    const front = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m), back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), signBack);
+    // El cartel mira hacia los autos que vienen.
+    const ry = alongX ? (facing > 0 ? -Math.PI / 2 : Math.PI / 2) : (facing > 0 ? Math.PI : 0);
+    front.position.set(px, y0 + h / 2, pz); front.rotation.y = ry;
+    back.position.copy(front.position); back.rotation.y = ry + Math.PI;
+    const off = 0.03, nx = Math.sin(ry) * off, nz = Math.cos(ry) * off;
+    front.position.x += nx; front.position.z += nz; back.position.x -= nx; back.position.z -= nz;
+    g.add(front, back);
+    // Dos parantes galvanizados.
+    const sx = alongX ? 0 : 1, sz = alongX ? 1 : 0;
+    [-w * 0.32, w * 0.32].forEach(o => kitBox(k.p, k.c, px + sx * o - 0.07, py, pz + sz * o - 0.07, px + sx * o + 0.07, y0 + h * 0.8, pz + sz * o + 0.07, 0x9a9ea2));
+  }
+
   function buildChunk(cx, cy) {
     const g = new THREE.Group();
+    const kit = newKit();
     const degen = clamp((generated++ - 9) / 110, 0, 1);
     const lamps = [];
     const fp = [], fc = [];
@@ -758,11 +1122,18 @@
         if (mod(x, 26) === 2 && mod(y, 4) === 2) poles.push([x0 + 7.4, z0 + 4, -1]);
         if (mod(y, 22) === 0 && mod(x, 4) === 1 && mod(x, 26) >= 3) poles.push([x0 + 4, z0 + 0.6, 0, 1]);
         if (mod(y, 22) === 2 && mod(x, 4) === 3 && mod(x, 26) >= 3) poles.push([x0 + 4, z0 + 7.4, 0, -1]);
+      } else if (t === T.WALL && lotKind(x, y) === "house") {
+        buildHouse(kit, x, y, x0, z0);
+      } else if (t === T.WALL && lotKind(x, y) === "ypf") {
+        buildYPF(kit, x, y, x0, z0, g, lamps);
+      } else if (t === T.WALL && lotKind(x, y) === "vea") {
+        buildVea(kit, x, y, x0, z0, g, lamps);
       } else if (t === T.WALL) {
         const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
         const r = hs(x, y, 5);
         const dn = downtown(x, y);
-        const floors = dn > 0.45 ? 7 + Math.floor(r * 15 * Math.min(1, dn)) : nearAvenue ? 4 + Math.floor(r * 5) : 1 + Math.floor(Math.pow(r, 1.6) * 5);
+        // Entre las casas del barrio asoma cada tanto un edificio de cuatro a nueve pisos.
+        const floors = dn > 0.45 ? 7 + Math.floor(r * 15 * Math.min(1, dn)) : nearAvenue ? 4 + Math.floor(r * 5) : 4 + Math.floor(r * 6);
         (byFloors[floors] = byFloors[floors] || []).push([x0, z0, PALETTE[Math.floor(hs(x, y, 6) * PALETTE.length)]]);
         // Las torres llevan luz roja de balizamiento arriba.
         if (floors >= 9) {
@@ -799,6 +1170,12 @@
         [2, 6].forEach(a => midStuds.push(vert ? at(x0 + 4, z0 + a) : at(x0 + a, z0 + 4)));
         // Alumbrado público: una columna por cuadra, alternando de lado.
         const along = vert ? y : x, side = mod(along, 2) ? 1 : -1;
+        // Carteles verdes de destinos y, cada tanto, el azul de Malvinas, del lado de enfrente al farol.
+        if (hs(x, y, 210) < 0.07 && hs(x, y, 131) > degen * 0.4) {
+          const px = vert ? x0 + 4 - side * 5.3 : x0 + 4, pz = vert ? z0 + 4 : z0 + 4 - side * 5.3;
+          const mal = hs(x, y, 211) < 0.22;
+          buildSign(kit, g, px, groundAt(px, pz) - 0.1, pz, !vert, hs(x, y, 212) < 0.5 ? 1 : -1, mal, Math.floor(hs(x, y, 213) * (mal ? 3 : 8)));
+        }
         if (hs(x, y, 130) > degen * 0.4) {
           const px = vert ? x0 + 4 + side * 4.6 : x0 + 4, pz = vert ? z0 + 4 : z0 + 4 + side * 4.6;
           poles.push([px, pz, vert ? -side : 0, vert ? 0 : -side, groundAt(px, pz) - 0.2]);
@@ -957,6 +1334,7 @@
       geo.setAttribute("color", new THREE.Float32BufferAttribute(cl, 3));
       const pts = new THREE.Points(geo, bulbPointsMat); pts.userData.own = true; g.add(pts);
     }
+    kitMeshes(kit, g);
     // Nace desde el piso.
     g.scale.y = 0.001;
     scene.add(g);
