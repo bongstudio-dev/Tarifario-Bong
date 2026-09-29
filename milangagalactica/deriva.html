@@ -336,7 +336,7 @@
 
   // --- Estado ------------------------------------------------------------------
   const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-  const state = { dist: "Media", assist: true, auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
+  const state = { vibe: true, dist: "Media", assist: true, auto: true, density: "Intermedia", mode: "Color", view: "Atrás", map: false };
   const keys = { up: false, down: false, left: false, right: false, hand: false };
 
   // --- WebGL -------------------------------------------------------------------
@@ -1042,6 +1042,9 @@
     const k = Math.exp(-grip * dt);
     const turn = player.steer * clamp(along / 6, -1, 1) * (1.9 - 0.9 * Math.min(1, Math.abs(along) / MAX_FWD));
     player.heading += turn * dt * (keys.hand ? 1.35 : offroad ? 1.15 : 1) * (player.air ? 0.2 : 1);
+    // Derrape: el auto no se desliza de costado, así que se mide cuánto te tira la curva
+    // (más rápido y más cerrado, más fuerte; en la tierra y con freno de mano, más todavía).
+    if (!player.air) player.slip += Math.abs(turn * along) / (keys.hand ? 5 : offroad ? 6 : 9);
 
     const nfx = Math.cos(player.heading), nfz = -Math.sin(player.heading);
     player.vx = nfx * along + latx * k;
@@ -1348,6 +1351,7 @@
       it.taken = true;
       it.mesh.visible = false;
       collected.add(it.key);
+      gathered(); // la barrita de abajo y el golpe seco en la mano
       // Cada orbe te llena un poco y te deja cargar un poco más de luz para siempre.
       cap = Math.min(4, cap + 0.125);
       light = Math.min(cap, light + 0.3);
@@ -1383,6 +1387,7 @@
   function tickHorizon() {
     const pcx = Math.floor(toCell(player.x) / CHUNK), pcy = Math.floor(toCell(player.z) / CHUNK);
     const want = new Set();
+    if (portalAt) want.add(portalAt[0] + "," + portalAt[1]);
     for (let b = -3; b <= 3; b++) for (let a = -3; a <= 3; a++) singularities(pcx + a, pcy + b).forEach(([x, z]) => want.add(x + "," + z));
     beacons.forEach((g, k) => { if (!want.has(k)) { scene.remove(g); beacons.delete(k); } });
     want.forEach(k => {
@@ -1401,6 +1406,99 @@
     near = nearest ? 1 - clamp(best / 70, 0, 1) : 0;
     beacons.forEach(g => { const s = 1 + Math.sin(clock * 2.2) * 0.08; g.children[1].scale.setScalar(s); });
     if (nearest && best < 4 && !ending && !sinking) startEnding();
+  }
+
+  // --- Vibración: un temblor mientras derrapás, un golpe seco al juntar luz -------------------
+  // Solo en los celus que la tienen (en iPhone el navegador no deja).
+  let buzzQuiet = 0, driftBuzz = 0;
+  function buzz(p) { if (!state.vibe || !navigator.vibrate) return; try { navigator.vibrate(p); } catch (e) { /* sin vibración */ } }
+  function tickBuzz(dt) {
+    driftBuzz -= dt;
+    if (clock < buzzQuiet || title || ending || sinking || player.air || menu.open || state.map) return;
+    const s = player.slip;
+    // Pulsos cortos y seguidos: más derrape, pulsos más largos.
+    if (s > 2.4 && player.speed > 4 && driftBuzz <= 0) { buzz(Math.round(clamp(8 + (s - 2.4) * 5, 8, 26))); driftBuzz = 0.09; }
+  }
+
+  // --- La barrita de luz: diez luces y la nada te abre un túnel hasta el portal ----------------
+  const RUN_GOAL = 10;
+  let runLight = 0, runFlash = -9, tunnelIn = -1, portalAt = null, tunnel = null;
+  function gathered() {
+    if (runLight >= RUN_GOAL) { buzz(40); buzzQuiet = clock + 0.15; return; }
+    runLight++; runFlash = clock;
+    if (runLight < RUN_GOAL) { buzz(40); buzzQuiet = clock + 0.15; return; }
+    // La última: tres golpes y, un instante después, el túnel.
+    buzz([40, 70, 40, 70, 140]); buzzQuiet = clock + 0.5;
+    tunnelIn = clock + 0.9;
+  }
+  const tunnelMat = new THREE.MeshBasicMaterial({ color: 0xfff1d0, fog: false });
+  const tunnelDim = new THREE.MeshBasicMaterial({ color: 0xffb070, fog: false });
+  const ARCH = new THREE.TorusGeometry(5.2, 0.14, 6, 40, Math.PI);
+  const TACHA = new THREE.BoxGeometry(0.25, 0.08, 0.6);
+  const RING = new THREE.TorusGeometry(3.6, 0.22, 8, 48);
+  function clearTunnel() { if (tunnel) scene.remove(tunnel); tunnel = null; portalAt = null; }
+  // Busca en la nada una recta despejada de 9 cuadras: al fondo va el portal.
+  function tunnelSpot() {
+    const x0 = toCell(player.x), y0 = toCell(player.z), L = 9;
+    const clear = (x, y, dx, dy) => {
+      for (let k = -1; k <= L + 1; k++) for (let w = -1; w <= 1; w++) if (cellType(x + dx * k + dy * w, y + dy * k + dx * w) !== T.VOID) return false;
+      return true;
+    };
+    for (let r = 1; r < 260; r++) for (let d = -r; d <= r; d++) for (const [x, y] of [[x0 + d, y0 - r], [x0 + d, y0 + r], [x0 - r, y0 + d], [x0 + r, y0 + d]]) {
+      if (cellType(x, y) !== T.VOID) continue;
+      for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) if (clear(x, y, dx, dy)) return { x, y, dx, dy, L };
+    }
+    return null;
+  }
+  function enterTunnel() {
+    tunnelIn = -1;
+    const t = tunnelSpot();
+    if (!t) return;
+    clearTunnel();
+    const ax = toWorld(t.x), az = toWorld(t.y), bx = toWorld(t.x + t.dx * t.L), bz = toWorld(t.y + t.dy * t.L);
+    portalAt = [bx, bz];
+    // Arcos de luz cada seis metros y una línea de tachas en el medio, del auto al portal.
+    tunnel = new THREE.Group();
+    const len = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / len, uz = (bz - az) / len, ry = Math.atan2(ux, uz);
+    for (let d = 6; d < len - 8; d += 6) {
+      const a = new THREE.Mesh(ARCH, d % 12 ? tunnelDim : tunnelMat);
+      a.position.set(ax + ux * d, 0, az + uz * d); a.rotation.y = ry;
+      tunnel.add(a);
+    }
+    for (let d = 3; d < len - 6; d += 3) {
+      const m = new THREE.Mesh(TACHA, tunnelMat);
+      m.position.set(ax + ux * d, 0.05, az + uz * d); m.rotation.y = ry;
+      tunnel.add(m);
+    }
+    // El portal: un aro entero parado alrededor del punto de luz, de frente al auto.
+    const ring = new THREE.Mesh(RING, tunnelMat);
+    ring.position.set(bx, 3, bz); ring.rotation.y = ry;
+    tunnel.add(ring);
+    tunnel.userData.ring = ring;
+    scene.add(tunnel);
+    player.x = ax; player.z = az;
+    player.heading = Math.atan2(-uz, ux);
+    player.vx = player.vz = 0; player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0; player.steer = 0;
+    currentZone = T.VOID;
+    voidK = 1;
+    camSnap = true;
+    light = Math.max(light, cap * 0.6);
+    updateChunks(true);
+  }
+  function tickTunnel() {
+    if (tunnelIn > 0 && clock >= tunnelIn && !ending && !sinking) enterTunnel();
+    if (tunnel) tunnel.userData.ring.scale.setScalar(1 + Math.sin(clock * 2.2) * 0.06);
+  }
+  function lightBar() {
+    if (state.map || menu.open) return;
+    // Abajo, sin texto: diez tramos que se llenan. En el celu deja lugar al freno.
+    const seg = cols >= 60 ? 3 : 2, w = RUN_GOAL * seg, right = touchDevice ? cols - 16 : cols;
+    const r = rows - 2, c0 = Math.max(1, Math.floor((right - w) / 2));
+    const full = runLight >= RUN_GOAL, pulse = full && Math.sin(clock * 8) > 0;
+    for (let k = 0; k < RUN_GOAL; k++) for (let j = 0; j < seg; j++) {
+      const on = k < runLight, fresh = k === runLight - 1 && clock - runFlash < 0.5;
+      put(r, c0 + k * seg + j, j === seg - 1 && seg > 2 ? null : on ? "█" : "░", fresh || pulse ? "#ffffff" : on ? "#fff1c4" : DIM);
+    }
   }
 
   // --- El final: todo se vuelve luz, después negro, y queda el Arlequín girando solo -----------
@@ -1441,6 +1539,7 @@
     frameEndCam(0);
     if (ending.t > 14) {
       ending = null;
+      clearTunnel();
       newWorld((Math.random() * 1e9) | 0);
     }
   }
@@ -1580,6 +1679,7 @@
     watchers.length = 0;
     if (giant) { scene.remove(giant.g); giant = null; }
     voidTime = 0;
+    clearTunnel(); runLight = 0; tunnelIn = -1;
     // Arranca en una esquina del laberinto, mirando hacia una calle abierta.
     let start = null;
     for (let r = 0; r < 60 && !start; r++) for (let dy = -r; dy <= r && !start; dy++) for (let dx = -r; dx <= r; dx++) {
@@ -1803,6 +1903,7 @@
     if (title) { titleScreen(); return; }
     if (ending) return;
     hudBase();
+    lightBar();
     overlay();
   }
   function hudBase() {
@@ -1916,6 +2017,7 @@
       { label: "DENSIDAD", value: state.density.toUpperCase(), act: () => setOpt("density", cyc(Object.keys(DENSITY), state.density)) },
       { label: "DISTANCIA", value: state.dist.toUpperCase(), act: () => { state.dist = cyc(Object.keys(DIST), state.dist); } },
       { label: "MODO", value: state.mode.toUpperCase(), act: () => setOpt("mode", cyc(Object.keys(MODES), state.mode)) },
+      { label: "VIBRACIÓN", value: state.vibe ? "SÍ" : "NO", act: () => { state.vibe = !state.vibe; } },
       { label: "GIROSCOPIO", value: gyro.on ? "SÍ" : gyroBtn.dataset.failed ? "NO HAY" : "NO", act: () => gyroBtn.click() },
       { label: "MAPA", value: state.map ? "SÍ" : "NO", act: () => setOpt("map", !state.map) },
       { label: "PANTALLA", value: document.fullscreenElement ? "COMPLETA" : "NORMAL", act: () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (err) { /* sin pantalla completa */ } } },
@@ -2207,6 +2309,8 @@
     if (title) { endTurn.rotation.y = clock * 0.35; frameEndCam(ratio > 1 ? 0.9 : 0.25); }
     if (!title && !state.map && !menu.open) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
     tickHorizon();
+    tickTunnel();
+    tickBuzz(dt);
     tickEnding(dt);
     tickLight(dt);
     markSeen();
