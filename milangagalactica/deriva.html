@@ -1459,7 +1459,7 @@
     if (runLight < RUN_GOAL) { buzz(40); buzzQuiet = clock + 0.15; return; }
     // La última: tres golpes y, un instante después, el túnel.
     buzz([40, 70, 40, 70, 140]); buzzQuiet = clock + 0.5;
-    tunnelIn = clock + 0.9;
+    tunnelIn = clock; // en cuanto se pueda, se oscurece todo y aparecés en la pasarela
   }
   const tunnelMat = new THREE.MeshBasicMaterial({ color: 0xfff1d0, fog: false });
   const tunnelDim = new THREE.MeshBasicMaterial({ color: 0xffb070, fog: false });
@@ -1482,6 +1482,7 @@
   }
   function enterTunnel() {
     tunnelIn = -1;
+    const v = Math.max(9, Math.min(MAX_FWD, player.speed));
     const t = tunnelSpot();
     if (!t) return;
     clearTunnel();
@@ -1508,9 +1509,9 @@
     scene.add(tunnel);
     player.x = ax; player.z = az;
     player.heading = Math.atan2(-uz, ux);
-    player.vx = player.vz = 0; player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0; player.steer = 0;
+    player.vx = ux * v; player.vz = uz * v; player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0; player.steer = 0;
     currentZone = T.VOID;
-    voidK = 1;
+    voidK = 0;
     camSnap = true;
     light = Math.max(light, cap * 0.6);
     updateChunks(true);
@@ -1580,7 +1581,7 @@
   function goToMap(name) {
     const spot = findSpot(name);
     if (!spot) return false;
-    const v = Math.max(9, Math.min(CRUISE, player.speed));
+    const v = Math.max(9, Math.min(MAX_FWD, player.speed));
     player.x = toWorld(spot.x); player.z = toWorld(spot.y); player.heading = spot.h;
     player.vx = Math.cos(spot.h) * v; player.vz = -Math.sin(spot.h) * v;
     player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0; player.steer = 0;
@@ -1607,18 +1608,30 @@
       if (goToMap(order[mapI])) return;
     }
   }
-  function startAbyss() {
-    if (abyss || ending || title || tunnel || tunnelIn > 0) return;
-    abyss = { t: 0, moved: false };
-    buzz([20, 60, 20]);
+  // Tiempos del abismo: se oscurece de a poco, un instante negro (ahí cambia el mundo) y vuelve la luz.
+  const FADE_OUT = 2.6, HOLD = 0.8, FADE_IN = 1.8;
+  function abyssDark() {
+    if (!abyss) return 0;
+    const t = abyss.t;
+    return t < FADE_OUT ? sstep(0, FADE_OUT, t) : t < FADE_OUT + HOLD ? 1 : 1 - sstep(0, FADE_IN, t - FADE_OUT - HOLD);
+  }
+  // kind: "map" pasa al mundo siguiente; "tunnel" lleva a la pasarela del portal.
+  function startAbyss(kind) {
+    kind = kind || "map";
+    if (abyss || ending || title) return;
+    if (kind === "map" && (tunnel || tunnelIn > 0)) return;
+    abyss = { t: 0, moved: false, kind };
   }
   function tickMaps(dt) {
     if (title || menu.open || state.map || ending) return;
     runT += dt;
     if (abyss) {
       abyss.t += dt;
-      if (!abyss.moved && abyss.t > 1.1) { abyss.moved = true; nextMap(); lastGet = clock; }
-      if (abyss.t > 2.8) { abyss = null; mapTime = 0; }
+      if (!abyss.moved && abyss.t > FADE_OUT + HOLD * 0.5) {
+        abyss.moved = true;
+        if (abyss.kind === "tunnel") enterTunnel(); else { nextMap(); lastGet = clock; }
+      }
+      if (abyss.t > FADE_OUT + HOLD + FADE_IN) { abyss = null; mapTime = 0; }
       return;
     }
     if (tunnel || tunnelIn > 0 || sinking || !started) return;
@@ -1628,8 +1641,9 @@
   // El abismo: la grilla se apaga y queda solo algo que cae.
   function abyssOverlay() {
     if (!abyss) return;
-    const t = abyss.t, d = t < 0.8 ? t / 0.8 : t < 2 ? 1 : 1 - (t - 2) / 0.8, n = cols * rows;
-    for (let i = 0; i < n; i++) if (hash(i, 7) < d * 1.05) CH[i] = null;
+    const d = abyssDark(), n = cols * rows;
+    // Las letras se van apagando de a una, además de bajar la luz.
+    for (let i = 0; i < n; i++) if (hash(i, 7) < d * d * 1.05) CH[i] = null;
     if (d < 0.6) return;
     for (let c = 0; c < cols; c += 3) {
       if (hash(c, 31) > 0.35) continue;
@@ -1638,7 +1652,7 @@
     }
   }
   function tickTunnel() {
-    if (tunnelIn > 0 && clock >= tunnelIn && !ending && !sinking) enterTunnel();
+    if (tunnelIn > 0 && !abyss && !ending && !sinking) startAbyss("tunnel");
     if (tunnel) tunnel.userData.ring.scale.setScalar(1 + Math.sin(clock * 2.2) * 0.06);
   }
   const _pp = new THREE.Vector3();
@@ -1717,6 +1731,7 @@
     endCam.updateProjectionMatrix();
   }
   function startEnding() {
+    abyss = null;
     ending = { t: 0, score, time: runT, lights: runLight, record: score > best };
     if (score > best) { best = score; try { localStorage.setItem("deriva-record", String(best)); } catch (e) { /* sin almacenamiento */ } }
     keys.up = keys.down = keys.left = keys.right = keys.hand = false;
@@ -1726,7 +1741,7 @@
     ending.t += dt;
     player.vx *= Math.exp(-3 * dt); player.vz *= Math.exp(-3 * dt);
     endTurn.rotation.y = ending.t * 0.35;
-    frameEndCam(0);
+    frameEndCam(ratio > 1 ? 0.35 : 0.2);
     if (ending.t > 14) {
       ending = null;
       clearTunnel();
@@ -1744,17 +1759,30 @@
       const p = 1 - clamp((t - 3.2) / 1.6, 0, 1);
       for (let i = 0; i < n; i++) if (hash(i, 7) < p) { CH[i] = RAMP[RAMP.length - 1 - Math.floor(hash(i, 9) * 4)]; COL[i] = "#fff6e0"; } else CH[i] = null;
     }
-    // El puntaje: los watts que juntaste, contando hacia arriba.
+    // El tablero: el nombre arriba, el Golf girando en el medio y los watts grandes abajo.
     if (t > 5.4) {
       const e = ending, shown = Math.round(e.score * clamp((t - 5.4) / 1.6, 0, 1));
-      const W = shown.toLocaleString("es-AR") + " W";
+      const W = shown.toLocaleString("es-AR") + "W";
       const mm = Math.floor(e.time / 60), ss = String(Math.floor(e.time % 60)).padStart(2, "0");
       // Cada línea limpia su fila para leerse sobre lo que cae.
       const center = (r, str, color) => { const c = Math.floor((cols - str.length) / 2); for (let k = -2; k < str.length + 2; k++) put(r, c + k, null, color); text(r, c, str, color); };
-      const r0 = Math.round(rows * 0.76);
-      center(r0, W, "#fff1c4");
-      center(r0 + 2, e.lights + " luces · " + mm + ":" + ss, "#8d8ca6");
-      if (t > 7.2) center(r0 + 4, e.record ? "récord" : "récord " + best.toLocaleString("es-AR") + " W", e.record ? (Math.sin(clock * 6) > 0 ? "#ffc21a" : "#fff1c4") : "#6e6a80");
+      const clearRows = (a, b) => { for (let r = a; r <= b; r++) for (let c = 0; c < cols; c++) put(r, c, null, "#000"); };
+      const nsc = (cols >= 72 && rows >= 60) || cols >= 110 ? 2 : 1;
+      const ntop = Math.max(2, Math.round(rows * 0.06));
+      const nameEnd = ntop + (bigWidth("A LA DERIVA", nsc) <= cols - 4 ? 5 : 11) * nsc;
+      clearRows(ntop - 1, nameEnd);
+      bigName(ntop, nsc);
+      // Los watts, lo más grandes que entren.
+      // Los watts, lo más grandes que entren (con las cifras juntas, para que entren más grandes).
+      const full = Math.round(e.score).toLocaleString("es-AR") + "W";
+      let wsc = 4;
+      while (wsc > 1 && (bigWidth(full, wsc, 1) > cols - 4 || wsc * 5 > rows * 0.23)) wsc--;
+      const wtop = Math.min(Math.round(rows * 0.66), rows - 5 * wsc - 6);
+      clearRows(wtop - 1, wtop + 5 * wsc);
+      bigText(W, wtop, wsc, 1);
+      const r1 = wtop + 5 * wsc + 2;
+      center(r1, e.lights + " luces · " + mm + ":" + ss, "#8d8ca6");
+      if (t > 7.2) center(r1 + 2, e.record ? "récord" : "récord " + best.toLocaleString("es-AR") + " W", e.record ? (Math.sin(clock * 6) > 0 ? "#ffc21a" : "#fff1c4") : "#6e6a80");
     }
   }
 
@@ -1989,7 +2017,7 @@
   };
   let exposureNow = ADJ.exposure;
   function shade() {
-    exposureNow = title || (ending && ending.t > 5) ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1);
+    exposureNow = title || (ending && ending.t > 5) ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1) * (1 - 0.92 * abyssDark());
     const W = cols * SS, H = rows * SS;
     cullChunks();
     renderer.setRenderTarget(rt);
@@ -2297,8 +2325,46 @@
     I: ["█████", "  █  ", "  █  ", "  █  ", "█████"],
     V: ["█   █", "█   █", "█   █", " █ █ ", "  █  "],
     A: [" ███ ", "█   █", "█████", "█   █", "█   █"],
-    L: ["█    ", "█    ", "█    ", "█    ", "█████"]
+    L: ["█    ", "█    ", "█    ", "█    ", "█████"],
+    W: ["█   █", "█   █", "█ █ █", "██ ██", "█   █"],
+    "0": [" ███ ", "█   █", "█   █", "█   █", " ███ "],
+    "1": ["  █  ", " ██  ", "  █  ", "  █  ", " ███ "],
+    "2": ["████ ", "    █", " ███ ", "█    ", "█████"],
+    "3": ["████ ", "    █", " ███ ", "    █", "████ "],
+    "4": ["█   █", "█   █", "█████", "    █", "    █"],
+    "5": ["█████", "█    ", "████ ", "    █", "████ "],
+    "6": [" ███ ", "█    ", "████ ", "█   █", " ███ "],
+    "7": ["█████", "    █", "   █ ", "  █  ", "  █  "],
+    "8": [" ███ ", "█   █", " ███ ", "█   █", " ███ "],
+    "9": [" ███ ", "█   █", " ████", "    █", " ███ "],
+    ".": ["  ", "  ", "  ", "  ", "█ "]
   };
+  // Texto en letras grandes, centrado: cada bloque es un carácter denso con un brillo que baja.
+  // gap: el espacio entre letras (por defecto, un bloque).
+  const bigWidth = (str, sc, gap) => { gap = gap || sc; return [...str].reduce((a, ch) => a + (ch === " " ? 3 * sc : BIG[ch][0].length * sc + gap), 0) - gap; };
+  function bigText(str, top, sc, gap) {
+    gap = gap || sc;
+    let cx = Math.floor((cols - bigWidth(str, sc, gap)) / 2);
+    for (const ch of str) {
+      if (ch === " ") { cx += 3 * sc; continue; }
+      const g = BIG[ch];
+      g.forEach((line, y) => {
+        for (let yy = 0; yy < sc; yy++) for (let x = 0; x < line.length; x++) for (let xx = 0; xx < sc; xx++) {
+          if (line[x] === " ") continue;
+          const r = top + y * sc + yy, c = cx + x * sc + xx;
+          const glow = 0.5 + 0.5 * Math.sin(clock * 1.6 - r * 0.45 - c * 0.06);
+          put(r, c, glow > 0.66 ? "$" : glow > 0.33 ? "@" : "B", glow > 0.8 ? "#fff6e0" : glow > 0.45 ? "#e9e5f0" : "#b8b4c8");
+        }
+      });
+      cx += g[0].length * sc + gap;
+    }
+  }
+  // El nombre: en una línea si entra; si no, "A LA" arriba y "DERIVA" abajo. Devuelve dónde termina.
+  function bigName(top, sc) {
+    const lines = bigWidth("A LA DERIVA", sc) <= cols - 4 ? ["A LA DERIVA"] : ["A LA", "DERIVA"];
+    lines.forEach((w, i) => bigText(w, top + i * 6 * sc, sc));
+    return top + lines.length * 6 * sc - sc;
+  }
   const CAR_COLORS = ["#ff2a3a", "#3c6bff", "#ffc21a", "#2fe0d0"];
   const PLAY_BOX = () => { const w = 15; return { top: Math.min(rows - 4, Math.round(rows * 0.85)), left: Math.floor((cols - w) / 2), h: 3, w }; };
   function titleScreen() {
@@ -2307,28 +2373,8 @@
     center(Math.round(rows * 0.1), "la luz da vida a todo", "#c9b98e");
     // A LA DERIVA en letras grandes: cada bloque es un carácter denso, con un brillo que baja.
     // Si entra, en una línea; si no (en vertical), "A LA" arriba y "DERIVA" abajo.
-    const sc = (cols >= 72 && rows >= 60) || cols >= 110 ? 2 : 1, lw = 6 * sc, top = Math.max(Math.round(rows * 0.1) + 3, Math.round(rows * (sc === 2 ? 0.14 : 0.15)));
-    const width = w => [...w].reduce((a, ch) => a + (ch === " " ? 3 * sc : lw), 0) - sc;
-    const lines = width("A LA DERIVA") <= cols - 4 ? ["A LA DERIVA"] : ["A LA", "DERIVA"];
-    lines.forEach((word, li) => {
-      let cx = Math.floor((cols - width(word)) / 2);
-      for (const ch of word) {
-        if (ch === " ") { cx += 3 * sc; continue; }
-        bigLetter(ch, top + li * 6 * sc, cx);
-        cx += lw;
-      }
-    });
-    function bigLetter(ch, top, left) {
-      BIG[ch].forEach((line, y) => {
-      for (let yy = 0; yy < sc; yy++) for (let x = 0; x < line.length; x++) for (let xx = 0; xx < sc; xx++) {
-        if (line[x] === " ") continue;
-        const r = top + y * sc + yy, c = left + x * sc + xx;
-        // Todos caracteres densos; el brillo baja como una luz que recorre las letras.
-        const glow = 0.5 + 0.5 * Math.sin(clock * 1.6 - r * 0.45 - c * 0.06);
-        put(r, c, glow > 0.66 ? "$" : glow > 0.33 ? "@" : "B", glow > 0.8 ? "#fff6e0" : glow > 0.45 ? "#e9e5f0" : "#b8b4c8");
-      }
-      });
-    }
+    const sc = (cols >= 72 && rows >= 60) || cols >= 110 ? 2 : 1, top = Math.max(Math.round(rows * 0.1) + 3, Math.round(rows * (sc === 2 ? 0.14 : 0.15)));
+    bigName(top, sc);
     // milangagalactica con los colores del auto, con una ola de brillo que la recorre.
     const name = "milangagalactica", nr = Math.round(rows * (rows >= 60 ? 0.74 : 0.8)), nc = Math.floor((cols - name.length) / 2);
     for (let k = 0; k < name.length; k++) put(nr, nc + k, name[k], Math.sin(clock * 2.2 - k * 0.45) > 0.85 ? "#fff6e0" : CAR_COLORS[k % 4]);
@@ -2525,7 +2571,7 @@
     clock += dt;
     water.uniforms.uTime.value = clock;
     if (title) { endTurn.rotation.y = clock * 0.35; frameEndCam(ratio > 1 ? 0.9 : 0.25); }
-    if (!title && !state.map && !menu.open && !abyss) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
+    if (!title && !state.map && !menu.open) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
     tickHorizon();
     tickTunnel();
     tickMaps(dt);
