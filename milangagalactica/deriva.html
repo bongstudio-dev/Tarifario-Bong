@@ -430,8 +430,8 @@
   // --- El mundo: infinito, por zonas -------------------------------------------------
   // Cada celda es una cuadra de 8 m. La base es un laberinto; cada tanto lo cruzan
   // avenidas, se abre una plaza, llega la playa o se termina todo en la nada.
-  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, ROAD: 7, BRIDGE: 8, PARK: 9, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14, FERRIS: 15 };
-  const SOLID = t => t >= 10 && t !== T.SEA && t !== T.MOUNTAIN;
+  const T = { STREET: 1, AVENUE: 2, PLAZA: 3, SAND: 4, VOID: 5, FOREST: 6, ROAD: 7, BRIDGE: 8, PARK: 9, WALL: 10, IVY: 11, SEA: 12, MONUMENT: 13, MOUNTAIN: 14, FERRIS: 15, STATION: 16 };
+  const SOLID = t => t >= 10 && t !== T.SEA && t !== T.MOUNTAIN && t !== T.STATION;
   const mod = (a, n) => ((a % n) + n) % n;
   let seed = 700, sx = 0, sy = 0;
   const hs = (x, y, k) => hash(x + Math.imul(k + 1, 9973) + seed, y + Math.imul(k + 1, 7919) - seed);
@@ -528,7 +528,11 @@
     }
     // Avenidas: tres cuadras de ancho, cada 26 de este a oeste y cada 22 de norte a sur.
     if (mod(x, 26) < 3 || mod(y, 22) < 3) return T.AVENUE;
-    if (bigLot(x, y)) return T.WALL;
+    const big = bigLot(x, y);
+    if (big) {
+      const depth = big.alongX ? y - big.ay : x - big.ax;
+      return big.kind === "ypf" && depth <= 1 ? T.STATION : T.WALL;
+    }
     const ox = mod(x, 2) === 1, oy = mod(y, 2) === 1;
     if (ox && oy) return T.STREET;
     if (!ox && !oy) return hs(x, y, 4) < 0.07 ? T.IVY : T.WALL;
@@ -664,7 +668,7 @@
   const CHUNK = 16;
   const chunks = new Map();
   const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), col = new THREE.Color();
-  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x2e5028, 7: 0x3c3c4c, 8: 0x4a4452, 9: 0x3a2a4c, 14: 0x2e5028, 15: 0x3a2a4c, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
+  const FLOOR_COLORS = { 1: 0x3e3c46, 2: 0x44445a, 3: 0x2f5030, 4: 0x7a705a, 6: 0x2e5028, 7: 0x3c3c4c, 8: 0x4a4452, 9: 0x3a2a4c, 14: 0x2e5028, 15: 0x3a2a4c, 16: 0x5a5c62, 10: 0x3e3c46, 11: 0x3e3c46, 13: 0x2f5030 };
 
   function instanced(geo, material, list, build) {
     if (!list.length) return null;
@@ -1021,7 +1025,7 @@
     color: 0x3a6cff, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     map: canvasTex("halo", 8, 64, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(0.5, "rgba(255,255,255,1)"); gr.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = gr; x.fillRect(0, 0, w, h); })
   });
-  function buildYPF(k, b, g, lamps) {
+  function buildYPF(k, b, g, lamps, chargers) {
     const { d, W } = bigFrame(b), B = 0x3f78ff;
     kitQuad(k.p, k.c, W(-16, 0, 0.05), W(16, 0, 0.05), W(16, 24, 0.05), W(-16, 24, 0.05), 0x8a8c90);
     // Guías pintadas en el piso de la playa.
@@ -1053,7 +1057,16 @@
     facePlane(g, m, 3.0, 1.5, W, -13.15, 11, 7.2, [-d[1], d[0]], Math.PI);
     facePlane(g, m, 3.0, 1.5, W, 13.15, 11, 7.2, [-d[1], d[0]]);
     // Islas de surtidores: dos surtidores cada una, con la pantalla azul.
-    [-8, 0, 8].forEach(u => {
+    // La isla del medio es el cargador de luz: una columna que brilla, un anillo y una esfera arriba.
+    lbox(k.p, k.c, W, -1.3, 8.6, 0, 1.3, 13.4, 0.22, 0xc8c0b0);
+    lbox(k.gp, k.gc, W, -0.45, 10.55, 0.22, 0.45, 11.45, 3.6, 0xfff1c4);
+    lbox(k.gp, k.gc, W, -0.9, 10.1, 0.22, 0.9, 11.9, 0.5, 0xffd890);
+    lbox(k.gp, k.gc, W, -0.75, 10.25, 2.2, 0.75, 11.75, 2.35, 0xffd890);
+    const cc = W(0, 11, 0);
+    kitIco(k.gp, k.gc, cc[0], 4.3, cc[2], 0.75, 0.75, 0.75, 0xffffff);
+    const ch = new THREE.Vector3(cc[0], 2.5, cc[2]); ch.tint = 0xffe0a0; ch.power = 3.2; lamps.push(ch);
+    chargers.push(new THREE.Vector3(cc[0], 0, cc[2]));
+    [-8, 8].forEach(u => {
       lbox(k.p, k.c, W, u - 0.9, 8.6, 0, u + 0.9, 13.4, 0.22, 0xc8c0b0);
       [9.8, 12.2].forEach(v => {
         lbox(k.p, k.c, W, u - 0.45, v - 0.35, 0.22, u + 0.45, v + 0.35, 2.1, 0x5a5e66);
@@ -1203,7 +1216,7 @@
   }
   function* buildChunkGen(cx, cy) {
     const g = new THREE.Group();
-    const kit = newKit();
+    const kit = newKit(), chargers = [];
     const degen = clamp((generated++ - 9) / 110, 0, 1);
     const lamps = [];
     const fp = [], fc = [];
@@ -1223,6 +1236,10 @@
       const key = x + "," + y;
       if (ideaChance && hs(x, y, 20) < ideaChance && !collected.has(key)) ideas.push([key, x0 + 2 + hs(x, y, 21) * 4, z0 + 2 + hs(x, y, 22) * 4, hs(x, y, 23)]);
       if (t === T.VOID) continue;
+      if (t === T.WALL || t === T.STATION) {
+        const bl = bigLot(x, y);
+        if (bl && bl.ax === x && bl.ay === y) (bl.kind === "ypf" ? buildYPF : buildVea)(kit, bl, g, lamps, chargers);
+      }
       if (t === T.SEA) {
         const S = 4, d = CELL / S;
         for (let b = 0; b < S; b++) for (let a = 0; a < S; a++) {
@@ -1259,9 +1276,7 @@
       } else if (t === T.WALL && lotKind(x, y) === "house") {
         buildHouse(kit, x, y, x0, z0);
       } else if (t === T.WALL && lotKind(x, y) === "big") {
-        // El terreno entero lo arma su esquina; las otras cuadras no llevan nada.
-        const b = bigLot(x, y);
-        if (b.ax === x && b.ay === y) (b.kind === "ypf" ? buildYPF : buildVea)(kit, b, g, lamps);
+        // El terreno entero lo arma su esquina (arriba); las otras cuadras no llevan nada.
       } else if (t === T.WALL) {
         const nearAvenue = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cellType(x + a, y + b) === T.AVENUE);
         const r = hs(x, y, 5);
@@ -1475,7 +1490,7 @@
     // Nace desde el piso.
     g.scale.y = 0.001;
     scene.add(g);
-    return { group: g, lamps, ideas: ideaList, born: clock, anim };
+    return { group: g, lamps, ideas: ideaList, born: clock, anim, chargers };
   }
 
   function disposeChunk(c) {
@@ -1801,7 +1816,7 @@
   function message(text, secs) { msg = text; msgUntil = clock + secs; }
   function trackZone() {
     const t = cellType(toCell(player.x), toCell(player.z));
-    const zone = t === T.SEA || t === T.BRIDGE ? T.SAND : t === T.MONUMENT || t === T.PARK || t === T.FERRIS ? T.PLAZA : t === T.MOUNTAIN || t === T.ROAD ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t;
+    const zone = t === T.SEA || t === T.BRIDGE ? T.SAND : t === T.MONUMENT || t === T.PARK || t === T.FERRIS ? T.PLAZA : t === T.MOUNTAIN || t === T.ROAD ? T.FOREST : (t === T.WALL || t === T.IVY) ? T.STREET : t === T.STATION ? T.AVENUE : t;
     if (zone === currentZone) return;
     currentZone = zone;
   }
@@ -1896,6 +1911,7 @@
     }
   }
 
+  let chargeT = -9, chargeBuzz = 0;
   function tickLight(dt) {
     if (state.map) return;
     // Manejar gasta luz; la nada la gasta más rápido. Bajo un farol se recarga despacio.
@@ -1908,6 +1924,26 @@
     if (light < 0.01 && currentZone !== T.VOID && !sinking && !ending && !abyss) { darkT += dt; if (darkT > 3.5) { darkT = 0; fallIntoVoid(); } }
     else darkT = 0;
     flash = Math.max(0, flash - dt * 2.5);
+    // El cargador de luz de la YPF: parado al lado, la luz sube rápido hasta tu capacidad.
+    let charger = false;
+    chunks.forEach(c => (c.chargers || []).forEach(q => {
+      const dx = player.x - q.x, dz = player.z - q.z, d = Math.hypot(dx, dz);
+      if (d < 5.5) charger = true;
+      // La columna es sólida: el auto se frena al lado, no la atraviesa.
+      if (d < 2.2 && d > 0.001) {
+        const nx = dx / d, nz = dz / d, inward = player.vx * nx + player.vz * nz;
+        player.x = q.x + nx * 2.2; player.z = q.z + nz * 2.2;
+        if (inward < 0) { player.vx -= inward * nx * 1.3; player.vz -= inward * nz * 1.3; }
+      }
+    }));
+    if (charger && !abyss) {
+      chargeT = clock;
+      if (light < cap) {
+        light = Math.min(cap, light + 0.7 * dt);
+        if (clock > chargeBuzz) { buzz(14); chargeBuzz = clock + 0.22; }
+        if (light >= cap) { buzz([30, 50, 60]); flash = 0.8; }
+      }
+    }
     chunks.forEach(c => c.ideas.forEach(it => {
       if (it.taken) return;
       it.mesh.position.y = (it.base || 1.5) + Math.sin(clock * 1.6 + it.phase) * 0.3;
@@ -2330,6 +2366,19 @@
     });
   }
   // El cartel de los watts: en letras grandes, sube desde el auto y se desarma al final.
+  function drawCharge() {
+    if (clock - chargeT > 0.25) return;
+    _pp.set(player.x, player.y + 1.2, player.z).project(camera);
+    if (_pp.z > 1) return;
+    const cr = (1 - _pp.y) / 2 * rows, cc = (_pp.x + 1) / 2 * cols, full = light >= cap - 0.001;
+    const spread = Math.max(6, cols * 0.12);
+    for (let k = 0; k < 40; k++) {
+      const h = hash(k, 77), sp = 0.6 + hash(k, 78) * 1.2, life = (clock * sp + h) % 1;
+      const c = Math.round(cc + (hash(k, 79) - 0.5) * spread * (1 + life * 0.6)), r = Math.round(cr + 2 - life * rows * 0.28);
+      const ch = life < 0.3 ? "*" : life < 0.6 ? "+" : life < 0.85 ? "'" : ".";
+      put(r, c, ch, full ? "#ffffff" : life < 0.4 ? "#fff1c4" : "#ffc070");
+    }
+  }
   function drawPopups() {
     // Lo más grande que entre: hasta un cuarto de la altura y casi todo el ancho.
     let sc = 4;
@@ -2674,43 +2723,52 @@
   // Solo se copia un búfer cuando la placa avisa que lo terminó; si ninguno está listo, se sigue
   // con la imagen anterior. Así el procesador nunca se queda parado esperando a la placa.
   const gl = renderer.getContext(), GL2 = renderer.capabilities.isWebGL2;
-  const PBO_RING = 3, pbo = [];
-  let pboI = 0;
+  // Cuatro búferes: uno se llena, los otros esperan el aviso. Nunca se pisa uno que la placa no
+  // terminó; si están todos ocupados, ese cuadro no pide imagen nueva y se sigue con la anterior.
+  const PBO_RING = 4, pbo = [];
+  let pboFrame = 0, pboHave = false, pboStarve = 0, pboSync = true;
   function readPixelsAsync(W, H) {
     if (!GL2) { renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf); return; }
     const size = W * H * 4;
-    let cur = pbo[pboI];
-    if (!cur || cur.size !== size) {
-      if (cur) { gl.deleteBuffer(cur.b); if (cur.sync) gl.deleteSync(cur.sync); }
-      const b = gl.createBuffer();
-      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, b);
-      gl.bufferData(gl.PIXEL_PACK_BUFFER, size, gl.STREAM_READ);
-      cur = pbo[pboI] = { b, size, sync: null, t: 0 };
+    // Si el navegador nunca avisa, se vuelve a la lectura de siempre (espera un poco, pero anda).
+    if (!pboSync) { renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf); return; }
+    for (let i = 0; i < PBO_RING; i++) {
+      const q = pbo[i];
+      if (q && q.size !== size) { gl.deleteBuffer(q.b); if (q.sync) gl.deleteSync(q.sync); pbo[i] = null; }
     }
-    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, cur.b);
-    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, 0);
-    if (cur.sync) gl.deleteSync(cur.sync);
-    cur.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0); cur.t = ++pboFrame;
-    gl.flush();
-    // El más nuevo que ya esté terminado.
+    // 1. Los que ya avisaron quedan listos; se lee el más nuevo y los más viejos se liberan.
     let best = null;
     for (const q of pbo) {
-      if (!q || !q.sync || q.size !== size) continue;
-      if (gl.clientWaitSync(q.sync, 0, 0) === gl.TIMEOUT_EXPIRED) continue;
-      if (!best || q.t > best.t) best = q;
+      if (!q || !q.sync) continue;
+      if (gl.getSyncParameter(q.sync, gl.SYNC_STATUS) === gl.SIGNALED) { gl.deleteSync(q.sync); q.sync = null; q.ready = true; }
     }
-    // Al arrancar (o al cambiar la grilla) no hay nada listo: esa única vez se espera.
-    if (!best && !pboHave) best = cur;
+    for (const q of pbo) if (q && q.ready && (!best || q.t > best.t)) best = q;
     if (best) {
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, best.b);
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buf);
-      gl.deleteSync(best.sync); best.sync = null;
-      pboHave = true;
+      for (const q of pbo) if (q && q.ready && q.t <= best.t) q.ready = false;
+      pboHave = true; pboStarve = 0;
+    } else if (pboHave && ++pboStarve > 45) { pboSync = false; }
+    // 2. Se pide la imagen de este cuadro a un búfer libre, con su marca.
+    let slot = -1;
+    for (let i = 0; i < PBO_RING; i++) { const q = pbo[i]; if (!q || (!q.sync && !q.ready)) { slot = i; break; } }
+    if (slot >= 0) {
+      let q = pbo[slot];
+      if (!q) {
+        const b = gl.createBuffer();
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, b);
+        gl.bufferData(gl.PIXEL_PACK_BUFFER, size, gl.STREAM_READ);
+        q = pbo[slot] = { b, size, sync: null, ready: false, t: 0 };
+      }
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, q.b);
+      gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+      q.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0); q.t = ++pboFrame;
+      gl.flush();
     }
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-    pboI = (pboI + 1) % PBO_RING;
+    // Al arrancar o al cambiar la grilla todavía no hay nada: esa vez se lee directo.
+    if (!pboHave) { renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf); pboHave = true; pboStarve = 0; }
   }
-  let pboFrame = 0, pboHave = false;
   const RGB_CACHE = new Array(32 * 32 * 32);
   // 32 niveles por canal: a la vista es igual y permite juntar letras del mismo color.
   const rgbStr = (r, g, b) => {
@@ -2798,7 +2856,7 @@
   // El mapa de lo recorrido, como el automapa de Doom: paredes rojas, calles vistas.
   const MAP_STYLE = {
     [T.WALL]: ["##", "#e0463c"], [T.IVY]: ["&&", "#8fd26a"], [T.SEA]: ["~~", "#4a86e8"], [T.MONUMENT]: ["!!", "#e8e4f0"],
-    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"], [T.ROAD]: ["= ", "#b08a5a"], [T.BRIDGE]: ["==", "#ffe2a8"], [T.PARK]: ["* ", "#ff4ab0"], [T.FERRIS]: ["@@", "#40e0ff"]
+    [T.STREET]: ["· ", "#4a4f78"], [T.AVENUE]: ["= ", "#6d73a8"], [T.PLAZA]: [", ", "#5f8a4f"], [T.SAND]: [". ", "#d9c8a0"], [T.FOREST]: ['" ', "#9ad0a0"], [T.MOUNTAIN]: ["^^", "#8a9a7a"], [T.ROAD]: ["= ", "#b08a5a"], [T.BRIDGE]: ["==", "#ffe2a8"], [T.PARK]: ["* ", "#ff4ab0"], [T.FERRIS]: ["@@", "#40e0ff"], [T.STATION]: ["::", "#3f78ff"]
   };
   function automap() {
     CH.fill(null);
@@ -2863,7 +2921,7 @@
     if (title) { titleScreen(); return; }
     if (ending) return;
     hudBase();
-    if (!abyss) { drawWaves(); drawPopups(); }
+    if (!abyss) { drawWaves(); drawCharge(); drawPopups(); }
     lightBar();
     overlay();
   }
