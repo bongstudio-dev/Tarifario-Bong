@@ -372,6 +372,7 @@
   // El auto, con los faros como linterna.
   const car = buildGolf();
   scene.add(car);
+  car.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.fog = false; m.needsUpdate = true; }); });
   const { tailMat, wheels } = car.userData;
   car.userData.headMat.emissiveIntensity = 1.3;
   tailMat.emissiveIntensity = 1.0;
@@ -1107,7 +1108,8 @@
   }
 
   // --- Cámara ------------------------------------------------------------------------
-  let shake = 0, camSnap = true;
+  let shake = 0, camSnap = true, fogFar = 58;
+  const fogColor = new THREE.Color(0x000000);
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   const blocksCam = (x, y) => { const t = cellType(x, y); return t === T.WALL || t === T.IVY || t === T.MONUMENT; };
   function placeCamera(dt) {
@@ -1220,9 +1222,13 @@
     const z = ZONE_LIGHT[currentZone] || ZONE_LIGHT[1], k = 1 - Math.exp(-dt * 1.5);
     hemi.intensity += (z[0] - hemi.intensity) * k;
     moonLight.intensity += (z[1] - moonLight.intensity) * k;
-    hemi.color.lerp(_c1.set(z[3]), k); hemi.groundColor.lerp(_c2.set(z[4]), k); fog.color.lerp(_c3.set(z[5]), k);
-    fog.far += ((state.view === "Arriba" ? 120 : z[2] * DIST[state.dist]) - fog.far) * k;
-    fog.near = fog.far * 0.3;
+    hemi.color.lerp(_c1.set(z[3]), k); hemi.groundColor.lerp(_c2.set(z[4]), k); fogColor.lerp(_c3.set(z[5]), k);
+    fogFar += ((state.view === "Arriba" ? 120 : z[2] * DIST[state.dist]) - fogFar) * k;
+    // En la transición la niebla se cierra negra hasta pegarse al auto: el mundo se va, el auto queda.
+    const shut = abyssDark();
+    fog.far = fogFar + (2.5 - fogFar) * shut;
+    fog.near = fog.far * 0.3 * (1 - shut);
+    fog.color.copy(fogColor).multiplyScalar(1 - shut);
     // Los faroles más cercanos se quedan con las luces.
     const near = [];
     chunks.forEach(c => c.lamps.forEach(p => near.push(p)));
@@ -1260,11 +1266,12 @@
   // Alrededor del auto orbita tu luz: los puntos encendidos son la que tenés,
   // los apagados, lo que te falta para llenar tu capacidad.
   const ORBIT_MAX = 12;
-  const emptyMat = new THREE.MeshBasicMaterial({ color: 0x4a4658 });
+  const emptyMat = new THREE.MeshBasicMaterial({ color: 0x4a4658, fog: false });
+  const orbitMat = new THREE.MeshBasicMaterial({ color: 0xfff1c4, fog: false });
   const orbit = new THREE.Group();
   scene.add(orbit);
   for (let i = 0; i < ORBIT_MAX; i++) {
-    const m = new THREE.Mesh(ORB_GEO, orbMat);
+    const m = new THREE.Mesh(ORB_GEO, orbitMat);
     m.scale.setScalar(0.22);
     m.userData = { i };
     orbit.add(m);
@@ -1276,7 +1283,7 @@
     orbit.children.forEach((m, i) => {
       const a = clock * 0.7 + (i / slots) * TAU;
       m.visible = i < slots;
-      m.material = i < lit || (i === lit && light > 0.01 && Math.sin(clock * 9) > 0) ? orbMat : emptyMat;
+      m.material = i < lit || (i === lit && light > 0.01 && Math.sin(clock * 9) > 0) ? orbitMat : emptyMat;
       m.position.set(Math.cos(a) * 2.9, 1.9 + Math.sin(clock * 1.3 + i) * 0.12, Math.sin(a) * 2.9);
     });
   }
@@ -1335,7 +1342,7 @@
   function tickLight(dt) {
     if (state.map) return;
     // Manejar gasta luz; la nada la gasta más rápido. Bajo un farol se recarga despacio.
-    let drain = player.speed > 1 ? 0.011 : 0.004;
+    let drain = abyss ? 0 : player.speed > 1 ? 0.011 : 0.004;
     if (currentZone === T.VOID) drain *= 3;
     let lamp = false;
     chunks.forEach(c => c.lamps.forEach(p => { if (!lamp && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 7.5 * 7.5) lamp = true; }));
@@ -1581,14 +1588,7 @@
   function goToMap(name) {
     const spot = findSpot(name);
     if (!spot) return false;
-    const v = Math.max(9, Math.min(MAX_FWD, player.speed));
-    player.x = toWorld(spot.x); player.z = toWorld(spot.y); player.heading = spot.h;
-    player.vx = Math.cos(spot.h) * v; player.vz = -Math.sin(spot.h) * v;
-    player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0; player.steer = 0;
-    sinking = null; lastSafe = null; voidK = 0; darkT = 0;
-    camSnap = true;
-    updateChunks(true);
-    trackZone();
+    moveTo(spot);
     return true;
   }
   function nextMap() {
@@ -1608,50 +1608,86 @@
       if (goToMap(order[mapI])) return;
     }
   }
-  // Tiempos del abismo: se oscurece de a poco, un instante negro (ahí cambia el mundo) y vuelve la luz.
-  const FADE_OUT = 2.6, HOLD = 0.8, FADE_IN = 1.8;
+  // Tiempos del abismo: el mundo se cierra alrededor del auto, se abre la nada con sus ojos,
+  // un rato manejando ahí, se vuelve a cerrar y se abre el mundo siguiente. El auto nunca se va.
+  const CLOSE = 2.4, OPEN = 1.8, VOID_STAY = 8;
+  // Etapas: 0 se cierra el mundo · 1 se abre la nada · 2 en la nada · 3 se cierra la nada · 4 se abre el mundo nuevo.
   function abyssDark() {
     if (!abyss) return 0;
     const t = abyss.t;
-    return t < FADE_OUT ? sstep(0, FADE_OUT, t) : t < FADE_OUT + HOLD ? 1 : 1 - sstep(0, FADE_IN, t - FADE_OUT - HOLD);
+    return abyss.stage === 0 || abyss.stage === 3 ? sstep(0, CLOSE, t) : abyss.stage === 2 ? 0 : 1 - sstep(0, OPEN, t);
   }
-  // kind: "map" pasa al mundo siguiente; "tunnel" lleva a la pasarela del portal.
+  // kind: "map" pasa al mundo siguiente por la nada; "tunnel" lleva a la pasarela del portal.
   function startAbyss(kind) {
     kind = kind || "map";
     if (abyss || ending || title) return;
     if (kind === "map" && (tunnel || tunnelIn > 0)) return;
-    abyss = { t: 0, moved: false, kind };
+    abyss = { t: 0, stage: 0, kind };
+  }
+  // Un lugar hondo de la nada, lejos del horizonte, con una recta libre para seguir andando.
+  // Lejos del haz del horizonte, para que el tránsito no termine el juego sin querer.
+  function nearHorizon(x, y) {
+    const cx = Math.floor(x / CHUNK), cy = Math.floor(y / CHUNK), wx = toWorld(x), wz = toWorld(y);
+    for (let b = -2; b <= 2; b++) for (let a = -2; a <= 2; a++)
+      if (singularities(cx + a, cy + b).some(([sx0, sz0]) => Math.hypot(sx0 - wx, sz0 - wz) < 110)) return true;
+    return false;
+  }
+  // Primero busca una recta larga (para los segundos que pasás ahí); si no hay, una más corta.
+  function voidSpot() {
+    const x0 = toCell(player.x), y0 = toCell(player.z), isV = t => t === T.VOID;
+    for (const L of [20, 12]) for (let r = 1; r < 300; r++) for (let d = -r; d <= r; d += 2) for (const [x, y] of [[x0 + d, y0 - r], [x0 + d, y0 + r], [x0 - r, y0 + d], [x0 + r, y0 + d]]) {
+      if (cellType(x, y) !== T.VOID || monteNoise(x, y) > 0.712 || nearHorizon(x, y)) continue;
+      const dir = DIRS.find(([a, b]) => runOf(x, y, a, b, L, isV) && runOf(x + b, y + a, a, b, L, isV) && runOf(x - b, y - a, a, b, L, isV));
+      if (dir) return { x, y, h: heading(dir[0], dir[1]) };
+    }
+    return null;
+  }
+  // Pasar a otro lugar sin frenar: misma velocidad, el auto sigue donde estaba en la pantalla.
+  function moveTo(spot) {
+    const v = Math.max(9, Math.min(MAX_FWD, player.speed));
+    player.x = toWorld(spot.x); player.z = toWorld(spot.y); player.heading = spot.h;
+    player.vx = Math.cos(spot.h) * v; player.vz = -Math.sin(spot.h) * v;
+    player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0;
+    sinking = null; lastSafe = null; darkT = 0;
+    camSnap = true;
+    updateChunks(true);
+    trackZone();
+  }
+  function intoVoid() {
+    const spot = voidSpot();
+    if (!spot) return false;
+    moveTo(spot);
+    currentZone = T.VOID;
+    // Los ojos ya te estaban esperando: aparecen enseguida y se van abriendo.
+    voidTime = 13;
+    return true;
   }
   function tickMaps(dt) {
     if (title || menu.open || state.map || ending) return;
     runT += dt;
     if (abyss) {
-      abyss.t += dt;
-      if (!abyss.moved && abyss.t > FADE_OUT + HOLD * 0.5) {
-        abyss.moved = true;
-        if (abyss.kind === "tunnel") enterTunnel(); else { nextMap(); lastGet = clock; }
-      }
-      if (abyss.t > FADE_OUT + HOLD + FADE_IN) { abyss = null; mapTime = 0; }
+      const a = abyss, next = st => { a.stage = st; a.t = 0; };
+      a.t += dt;
+      // Cerrado del todo: cambia lo que hay alrededor.
+      const closed = a.t > CLOSE + 0.15;
+      if (a.stage === 0 && closed) {
+        if (a.kind === "tunnel") { enterTunnel(); next(4); }
+        else if (intoVoid()) next(1);
+        else { nextMap(); lastGet = clock; next(4); }
+      } else if (a.stage === 1 && a.t > OPEN) next(2);
+      else if (a.stage === 2 && (a.t > VOID_STAY || currentZone !== T.VOID)) next(3);
+      else if (a.stage === 3 && closed) {
+        if (a.kind === "tunnel") enterTunnel(); else { nextMap(); lastGet = clock; }
+        next(4);
+      } else if (a.stage === 4 && a.t > OPEN) { abyss = null; mapTime = 0; }
       return;
     }
     if (tunnel || tunnelIn > 0 || sinking || !started) return;
     mapTime += dt;
     if (mapTime > MAP_SECS) startAbyss();
   }
-  // El abismo: la grilla se apaga y queda solo algo que cae.
-  function abyssOverlay() {
-    if (!abyss) return;
-    const d = abyssDark(), n = cols * rows;
-    // Las letras se van apagando de a una, además de bajar la luz.
-    for (let i = 0; i < n; i++) if (hash(i, 7) < d * d * 1.05) CH[i] = null;
-    if (d < 0.6) return;
-    for (let c = 0; c < cols; c += 3) {
-      if (hash(c, 31) > 0.35) continue;
-      const r = Math.floor(mod(hash(c, 32) * rows - clock * (6 + hash(c, 33) * 14), rows));
-      put(r, c, hash(c, 34) < 0.5 ? "." : ":", "#3c3852");
-    }
-  }
   function tickTunnel() {
+    if (tunnelIn > 0 && abyss && abyss.kind === "map" && abyss.stage === 2) { abyss.kind = "tunnel"; abyss.stage = 3; abyss.t = 0; }
     if (tunnelIn > 0 && !abyss && !ending && !sinking) startAbyss("tunnel");
     if (tunnel) tunnel.userData.ring.scale.setScalar(1 + Math.sin(clock * 2.2) * 0.06);
   }
@@ -1852,7 +1888,8 @@
 
   function tickVoid(dt) {
     // Cerca del horizonte la luz calma todo: los ojos se cierran y la grilla se ordena.
-    const inVoid = (currentZone === T.VOID || light < 0.03 || !!sinking) && !state.map && near < 0.45 && !ending;
+    const transit = !!abyss && abyss.stage >= 1 && abyss.stage <= 3;
+    const inVoid = (transit || (currentZone === T.VOID || light < 0.03 || !!sinking) && near < 0.45) && !state.map && !ending;
     voidK += ((inVoid ? 1 : 0) - voidK) * Math.min(1, dt * 0.8);
     voidTime = inVoid ? voidTime + dt : Math.max(0, voidTime - dt * 3);
     starAmount = 1 - 0.96 * voidK;
@@ -2045,7 +2082,7 @@
   };
   let exposureNow = ADJ.exposure;
   function shade() {
-    exposureNow = title || (ending && ending.t > 5) ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1) * (1 - 0.92 * abyssDark());
+    exposureNow = title || (ending && ending.t > 5) ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1)
     const W = cols * SS, H = rows * SS;
     cullChunks();
     renderer.setRenderTarget(rt);
@@ -2621,7 +2658,7 @@
     placeOrbit();
     tickVoid(pdt);
     placeCamera(pdt);
-    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); abyssOverlay(); }
+    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); }
     hud();
     paint();
   }
