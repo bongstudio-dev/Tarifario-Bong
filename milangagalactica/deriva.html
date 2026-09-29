@@ -16,7 +16,8 @@
     position: fixed; inset: 0; background: var(--bg);
     padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   }
-  canvas#game { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+  canvas#game { position: relative; display: block; width: 100%; height: 100%; touch-action: none; outline: none; background: transparent; }
+  canvas#glyphs { position: absolute; display: block; pointer-events: none; }
   .nogl { padding: 24px 16px; color: var(--muted); font-size: 14px; max-width: 60ch; }
   .legacy { display: none; }
 </style>
@@ -349,6 +350,8 @@
     renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
     renderer.setPixelRatio(1);
     renderer.setSize(1, 1, false);
+    renderer.domElement.id = "glyphs";
+    canvas.parentElement.insertBefore(renderer.domElement, canvas);
     renderer.setClearColor(0x000000, 0);
   } catch (e) { renderer = null; }
   if (!renderer) {
@@ -1189,7 +1192,16 @@
     [-w * 0.32, w * 0.32].forEach(o => kitBox(k.p, k.c, px + sx * o - 0.07, py, pz + sz * o - 0.07, px + sx * o + 0.07, y0 + h * 0.8, pz + sz * o + 0.07, 0x9a9ea2));
   }
 
-  function buildChunk(cx, cy) {
+  // Armar un pedazo de mundo es un trabajo que se puede cortar: cede el paso cada cuatro filas
+  // de cuadras y antes de las partes pesadas, para repartirlo entre varios cuadros.
+  function buildChunk(cx, cy) { const it = buildChunkGen(cx, cy); let r; while (!(r = it.next()).done); return r.value; }
+  // Avanza un armado hasta agotar el tiempo del cuadro; devuelve el pedazo cuando termina.
+  function stepBuild(job, ms) {
+    const t0 = performance.now();
+    while (performance.now() - t0 < ms) { const r = job.it.next(); if (r.done) { r.value.key = [job.a, job.b]; return r.value; } }
+    return null;
+  }
+  function* buildChunkGen(cx, cy) {
     const g = new THREE.Group();
     const kit = newKit();
     const degen = clamp((generated++ - 9) / 110, 0, 1);
@@ -1204,7 +1216,7 @@
     const byFloors = {}, ivies = [], trees = [], poles = [], monuments = [];
     const ideas = [], beams = [], motes = [], studs = [], midStuds = [], grass = [], pines = [];
     const roofLights = [], tlights = [], tlPoles = [], towers = [], beams2 = [], cableBulbs = [], parkBulbs = [], anim = [];
-    for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
+    for (let j = 0; j < CHUNK; j++) { if (j % 4 === 3) yield; for (let i = 0; i < CHUNK; i++) {
       const x = cx * CHUNK + i, y = cy * CHUNK + j, t = cellType(x, y);
       const x0 = x * CELL, z0 = y * CELL;
       const ideaChance = { 1: 0.03, 2: 0.02, 3: 0.1, 4: 0.04, 5: 0.045, 6: 0.07, 7: 0.04, 8: 0.08, 9: 0.12, 14: 0.06 }[t] || 0;
@@ -1345,7 +1357,8 @@
       if (t === T.STREET && mod(x, 2) === 1 && mod(y, 2) === 1 && hs(x, y, 13) < 0.3) {
         poles.push([x0 + 4 + (hs(x, y, 14) < 0.5 ? -3.2 : 3.2), z0 + 4 + (hs(x, y, 15) < 0.5 ? -3.2 : 3.2), 0]);
       }
-    }
+    }}
+    yield;
 
     if (fp.length) {
       const geo = new THREE.BufferGeometry();
@@ -1389,6 +1402,7 @@
     if (grassMesh) { grass.forEach(([, , r], i) => grassMesh.setColorAt(i, col.set(GRASS_COLORS[Math.floor(r * 53) % GRASS_COLORS.length]))); g.add(grassMesh); }
     const pineMesh = instanced(PINE, pineMat, pines, ([x, y, z, r], m) => m.makeScale(0.8 + r * 0.6, 0.8 + r * 0.9, 0.8 + r * 0.6).setPosition(x, y, z));
     if (pineMesh) g.add(pineMesh);
+    yield;
     // Laderas: una malla de alturas cada 2 m, solo donde el monte se levanta.
     const hp = [], hc = [], STEP = 2, N = CHUNK * CELL / STEP;
     const H = [];
@@ -1456,6 +1470,7 @@
       geo.setAttribute("color", new THREE.Float32BufferAttribute(cl, 3));
       const pts = new THREE.Points(geo, bulbPointsMat); pts.userData.own = true; g.add(pts);
     }
+    yield;
     kitMeshes(kit, g);
     // Nace desde el piso.
     g.scale.y = 0.001;
@@ -1502,13 +1517,29 @@
     for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) want.add((pcx + a) + "," + (pcy + b));
     // Lo que queda atrás no se borra de golpe: se hunde y desaparece.
     chunks.forEach((c, k) => { if (!want.has(k)) { c.dying = clock; dying.push(c); chunks.delete(k); } });
-    for (const k of want) {
+    if (all) {
+      pendingBuild = null;
+      for (const k of want) {
+        if (chunks.has(k)) continue;
+        const [a, b] = k.split(",").map(Number);
+        const nc = buildChunk(a, b); nc.key = [a, b]; chunks.set(k, nc);
+      }
+      return;
+    }
+    // De a poco: un pedazo por vez y unos pocos milisegundos por cuadro, así nunca se traba.
+    if (pendingBuild && !want.has(pendingBuild.k)) pendingBuild = null;
+    if (!pendingBuild) for (const k of want) {
       if (chunks.has(k)) continue;
       const [a, b] = k.split(",").map(Number);
-      const nc = buildChunk(a, b); nc.key = [a, b]; chunks.set(k, nc);
-      if (!all) break; // uno por cuadro, para que no se trabe
+      pendingBuild = { k, a, b, it: buildChunkGen(a, b) };
+      break;
+    }
+    if (pendingBuild) {
+      const nc = stepBuild(pendingBuild, 4);
+      if (nc) { chunks.set(pendingBuild.k, nc); pendingBuild = null; }
     }
   }
+  let pendingBuild = null;
 
   // --- El auto ---------------------------------------------------------------------
   const player = { x: 0, z: 0, y: 0, vy: 0, air: false, pitch: 0, roll: 0, heading: 0, vx: 0, vz: 0, steer: 0, speed: 0, dist: 0, slip: 0, assist: false };
@@ -2051,9 +2082,9 @@
     adoptPrepared();
     updateChunks(true);
   }
-  // Cada mundo dura 30 segundos. Después, un rato en el abismo (todo negro) y el siguiente.
+  // Cada mundo dura un minuto. Después, un rato en el abismo (todo negro) y el siguiente.
   // La primera vuelta es fija; cuando recorriste todos, vuelve a empezar en otra ciudad y en otro orden.
-  const MAP_SECS = 30;
+  const MAP_SECS = 60;
   const FIRST_ORDER = ["laberinto", "puente", "avenida", "parque", "playa", "monte"];
   let order = FIRST_ORDER.slice(), mapI = 0, mapTime = 0, abyss = null;
   const heading = (dx, dy) => Math.atan2(-dy, dx);
@@ -2211,11 +2242,15 @@
   // Un pedazo por cuadro, para que no se trabe. Quedan lejos y en la niebla: no se ven.
   function prepareStep() {
     if (!dest) return;
+    if (dest.job) {
+      const nc = stepBuild(dest.job, 4);
+      if (nc) { dest.built.set(dest.job.k, nc); dest.job = null; }
+      return;
+    }
     for (const [a, b] of dest.keys) {
       const k = a + "," + b;
       if (chunks.has(k) || dest.built.has(k)) continue;
-      const nc = buildChunk(a, b); nc.key = [a, b];
-      dest.built.set(k, nc);
+      dest.job = { k, a, b, it: buildChunkGen(a, b) };
       return;
     }
   }
@@ -2605,6 +2640,7 @@
     if (rt) rt.dispose();
     rt = new THREE.WebGLRenderTarget(W, H);
     buf = new Uint8Array(W * H * 4);
+    pboHave = false;
     const N = cols * rows;
     L = new Float32Array(N); RGB = new Float32Array(N * 3); A = new Uint8Array(N); Q = new Int16Array(N);
     CH = new Array(N); COL = new Array(N);
@@ -2619,6 +2655,12 @@
     canvas.width = Math.round(bw * dpr);
     canvas.height = Math.round(bh * dpr);
     fontFor = { w: 0, px: 0 };
+    // El lienzo de la placa, del mismo tamaño y en el mismo lugar; las letras, del tamaño de la celda.
+    const el = renderer.domElement, host = canvas.parentElement.getBoundingClientRect();
+    renderer.setSize(canvas.width, canvas.height, false);
+    Object.assign(el.style, { left: (box.left - host.left) + "px", top: (box.top - host.top) + "px", width: bw + "px", height: bh + "px" });
+    buildGlyphs(canvas.width / cols, canvas.height / rows);
+    if (glyph.ok) ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   function star(ci, ri, t) {
@@ -2628,34 +2670,47 @@
     return 0.3 + 0.55 * hash(ci + 3, ri + 99) * (0.55 + 0.45 * tw);
   }
 
-  // Lectura asíncrona: se pide la imagen de este cuadro y se usa la del cuadro anterior,
-  // así el procesador no se queda esperando a la placa de video.
+  // Lectura sin esperar: cada cuadro se pide la imagen a un búfer de la placa y se deja una marca.
+  // Solo se copia un búfer cuando la placa avisa que lo terminó; si ninguno está listo, se sigue
+  // con la imagen anterior. Así el procesador nunca se queda parado esperando a la placa.
   const gl = renderer.getContext(), GL2 = renderer.capabilities.isWebGL2;
-  const pbo = [null, null];
+  const PBO_RING = 3, pbo = [];
   let pboI = 0;
   function readPixelsAsync(W, H) {
     if (!GL2) { renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf); return; }
     const size = W * H * 4;
     let cur = pbo[pboI];
     if (!cur || cur.size !== size) {
-      if (cur) gl.deleteBuffer(cur.b);
+      if (cur) { gl.deleteBuffer(cur.b); if (cur.sync) gl.deleteSync(cur.sync); }
       const b = gl.createBuffer();
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, b);
       gl.bufferData(gl.PIXEL_PACK_BUFFER, size, gl.STREAM_READ);
-      cur = pbo[pboI] = { b, size, ready: false };
+      cur = pbo[pboI] = { b, size, sync: null, t: 0 };
     }
-    // Se pide este cuadro al buffer actual...
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, cur.b);
     gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, 0);
-    cur.ready = true;
-    // ...y se usa el del cuadro anterior, que la placa ya terminó. El primer cuadro lee el actual.
-    const prev = pbo[1 - pboI];
-    const src = prev && prev.ready && prev.size === size ? prev : cur;
-    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, src.b);
-    gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buf);
+    if (cur.sync) gl.deleteSync(cur.sync);
+    cur.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0); cur.t = ++pboFrame;
+    gl.flush();
+    // El más nuevo que ya esté terminado.
+    let best = null;
+    for (const q of pbo) {
+      if (!q || !q.sync || q.size !== size) continue;
+      if (gl.clientWaitSync(q.sync, 0, 0) === gl.TIMEOUT_EXPIRED) continue;
+      if (!best || q.t > best.t) best = q;
+    }
+    // Al arrancar (o al cambiar la grilla) no hay nada listo: esa única vez se espera.
+    if (!best && !pboHave) best = cur;
+    if (best) {
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, best.b);
+      gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buf);
+      gl.deleteSync(best.sync); best.sync = null;
+      pboHave = true;
+    }
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-    pboI = 1 - pboI;
+    pboI = (pboI + 1) % PBO_RING;
   }
+  let pboFrame = 0, pboHave = false;
   const RGB_CACHE = new Array(32 * 32 * 32);
   // 32 niveles por canal: a la vista es igual y permite juntar letras del mismo color.
   const rgbStr = (r, g, b) => {
@@ -2663,6 +2718,30 @@
     return RGB_CACHE[k] || (RGB_CACHE[k] = "rgb(" + ((r >> 3) << 3 | 4) + "," + ((g >> 3) << 3 | 4) + "," + ((b >> 3) << 3 | 4) + ")");
   };
   let exposureNow = ADJ.exposure;
+  const shadeLutBuf = new Float32Array(256 * 4 + 1);
+  let shadeLutKey = -1;
+  function shadeLut(exp) {
+    const key = Math.round(exp * 1e4);
+    if (key === shadeLutKey) return shadeLutBuf;
+    shadeLutKey = key;
+    const n = SS * SS;
+    for (let s = 0; s < shadeLutBuf.length; s++) {
+      const raw = s / n / 255;
+      let l = clamp((raw * exp - 0.5) * ADJ.contrast + 0.5, 0, 1);
+      l = Math.pow(l, ADJ.gamma);
+      shadeLutBuf[s] = raw < 0.004 || l < ADJ.threshold ? -1 : l;
+    }
+    return shadeLutBuf;
+  }
+  let ditherBuf = null, ditherKey = "";
+  function ditherFor() {
+    const key = cols + "x" + rows;
+    if (key === ditherKey) return ditherBuf;
+    ditherKey = key; ditherBuf = new Float32Array(cols * rows);
+    const steps = RAMP.length - 1;
+    for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++) ditherBuf[ri * cols + ci] = (hash(ci * 3 + 11, ri * 5 + 7) - 0.5) * ADJ.amount / steps;
+    return ditherBuf;
+  }
   function shade() {
     exposureNow = title || (ending && ending.t > 5) ? ADJ.exposure : ADJ.exposure * (0.72 + 0.28 * Math.min(1, light)) * (1 + flash * 0.7 + near * 0.9 + (ending ? ending.t * 1.5 : 0)) * (sinking ? Math.max(0.05, 1 - sinking.t / 2.4) : 1)
     const W = cols * SS, H = rows * SS;
@@ -2673,24 +2752,26 @@
     if (title || (ending && ending.t > 5)) renderer.render(endScene, endCam); else renderer.render(scene, camera);
     readPixelsAsync(W, H);
     renderer.setRenderTarget(null);
-    const steps = RAMP.length - 1, ink = MODES[state.mode];
+    const steps = RAMP.length - 1, ink = MODES[state.mode], n = SS * SS;
+    // La luz de cada celda sale de una tabla que se arma una vez por cuadro (exposición, contraste,
+    // gamma y umbral ya aplicados), y el tramado de una tabla que se arma al cambiar la grilla.
+    const LUT = shadeLut(exposureNow), DT = ditherFor();
     for (let ri = 0; ri < rows; ri++) {
       const y0 = (rows - 1 - ri) * SS;
       for (let ci = 0; ci < cols; ci++) {
         let r = 0, g = 0, b = 0, a = 0;
-        for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
-          const k = ((y0 + sy) * W + ci * SS + sx) * 4;
-          r += buf[k]; g += buf[k + 1]; b += buf[k + 2]; a += buf[k + 3];
+        for (let sy = 0; sy < SS; sy++) {
+          let k = ((y0 + sy) * W + ci * SS) * 4;
+          for (let sx = 0; sx < SS; sx++, k += 4) { r += buf[k]; g += buf[k + 1]; b += buf[k + 2]; a += buf[k + 3]; }
         }
-        const n = SS * SS, i = ri * cols + ci;
+        const i = ri * cols + ci;
+        A[i] = a > 8 * n ? 1 : 0;
+        const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+        const l = LUT[mx];
+        if (l < 0) { CH[i] = null; continue; }
         r /= n; g /= n; b /= n;
-        A[i] = a / n > 8 ? 1 : 0;
-        const raw = Math.max(r, g, b) / 255;
-        let l = clamp((raw * exposureNow - 0.5) * ADJ.contrast + 0.5, 0, 1);
-        l = Math.pow(l, ADJ.gamma);
-        if (raw < 0.004 || l < ADJ.threshold) { CH[i] = null; continue; }
-        const off = hash(ci * 3 + 11, ri * 5 + 7) - 0.5;
-        const q = clamp(Math.round((l + (off * ADJ.amount) / steps) * steps), 0, steps);
+        let q = Math.round((l + DT[i]) * steps);
+        q = q < 0 ? 0 : q > steps ? steps : q;
         CH[i] = RAMP[q];
         if (ink) { COL[i] = ink; continue; }
         const m = Math.max(r, g, b) || 1, kk = (150 + 105 * (q / steps)) / m;
@@ -2822,7 +2903,107 @@
   // color se dibuja de una sola vez y queda alineado a la grilla.
   const FONT = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
   let fontFor = { w: 0, px: 0 };
+  // Las letras se dibujan una vez en una hoja (una casilla por carácter, del tamaño de la celda)
+  // y en cada cuadro la placa pinta cada celda con su letra y su color, de una sola pasada.
+  const glyph = { ok: false, index: new Map(), chars: [], canvas: null, tex: null, cells: null, data: null, tw: 0, th: 0, px: 0 };
+  const COLOR_CACHE = new Map();
+  const parseColor = str => {
+    let v = COLOR_CACHE.get(str);
+    if (v !== undefined) return v;
+    v = 0xffffff;
+    if (str[0] === "#") {
+      const h = str.length === 4 ? str[1] + str[1] + str[2] + str[2] + str[3] + str[3] : str.slice(1, 7);
+      v = parseInt(h, 16);
+    } else if (str.startsWith("rgb")) {
+      const m = str.match(/\d+/g); if (m) v = (+m[0] << 16) | (+m[1] << 8) | +m[2];
+    }
+    COLOR_CACHE.set(str, v);
+    return v;
+  };
+  const glyphScene = new THREE.Scene(), glyphCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const glyphMat = new THREE.ShaderMaterial({
+    uniforms: { uCells: { value: null }, uAtlas: { value: null }, uGrid: { value: new THREE.Vector2(1, 1) }, uRes: { value: new THREE.Vector2(1, 1) } },
+    vertexShader: "void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }",
+    fragmentShader: `
+      uniform sampler2D uCells; uniform sampler2D uAtlas; uniform vec2 uGrid; uniform vec2 uRes;
+      void main() {
+        vec2 cf = vec2(gl_FragCoord.x / uRes.x * uGrid.x, (uRes.y - gl_FragCoord.y) / uRes.y * uGrid.y);
+        vec2 cell = floor(cf), f = fract(cf);
+        vec4 d = texture2D(uCells, (cell + 0.5) / uGrid);
+        float idx = floor(d.r * 255.0 + 0.5);
+        if (idx < 0.5) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+        vec2 t = vec2(mod(idx, 16.0), floor(idx / 16.0));
+        float a = texture2D(uAtlas, vec2((t.x + f.x) / 16.0, 1.0 - (t.y + f.y) / 16.0)).r;
+        gl_FragColor = vec4(d.gba * a, 1.0);
+      }`,
+    depthTest: false, depthWrite: false
+  });
+  glyphScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), glyphMat));
+  glyphScene.children[0].frustumCulled = false;
+  function drawGlyph(i) {
+    const x = glyph.canvas.getContext("2d"), tx = (i % 16) * glyph.tw, ty = Math.floor(i / 16) * glyph.th;
+    x.save(); x.beginPath(); x.rect(tx, ty, glyph.tw, glyph.th); x.clip();
+    x.fillStyle = "#000"; x.fillRect(tx, ty, glyph.tw, glyph.th);
+    x.fillStyle = "#fff"; x.font = glyph.px.toFixed(2) + "px " + FONT; x.textAlign = "left"; x.textBaseline = "middle";
+    x.fillText(glyph.chars[i], tx, ty + glyph.th / 2);
+    x.restore();
+  }
+  function glyphIndex(ch) {
+    let i = glyph.index.get(ch);
+    if (i !== undefined) return i;
+    if (glyph.chars.length >= 256) return glyph.index.get("?") || 1;
+    i = glyph.chars.length; glyph.chars.push(ch); glyph.index.set(ch, i);
+    drawGlyph(i); glyph.tex.needsUpdate = true;
+    return i;
+  }
+  // La hoja se rearma cuando cambia el tamaño de las celdas.
+  function buildGlyphs(cwPx, chPx) {
+    try {
+      glyph.tw = Math.max(4, Math.round(cwPx)); glyph.th = Math.max(6, Math.round(chPx));
+      const probe = document.createElement("canvas").getContext("2d");
+      probe.font = "100px " + FONT;
+      const adv = probe.measureText("MMMMMMMMMM").width / 1000;
+      glyph.px = Math.min(glyph.th * 1.05, glyph.tw / adv);
+      glyph.canvas = document.createElement("canvas");
+      glyph.canvas.width = glyph.tw * 16; glyph.canvas.height = glyph.th * 16;
+      if (!glyph.tex) {
+        glyph.chars = [""]; glyph.index = new Map([["", 0]]);
+        (RAMP + STAR_CHARS + "?").split("").forEach(ch => { if (!glyph.index.has(ch)) { glyph.index.set(ch, glyph.chars.length); glyph.chars.push(ch); } });
+      }
+      if (glyph.tex) glyph.tex.dispose();
+      glyph.tex = new THREE.CanvasTexture(glyph.canvas);
+      glyph.tex.minFilter = THREE.LinearFilter; glyph.tex.magFilter = THREE.LinearFilter; glyph.tex.generateMipmaps = false;
+      for (let i = 1; i < glyph.chars.length; i++) drawGlyph(i);
+      glyphMat.uniforms.uAtlas.value = glyph.tex;
+      glyph.ok = true;
+    } catch (e) { glyph.ok = false; }
+  }
+  function paintGL() {
+    const n = cols * rows;
+    if (!glyph.data || glyph.data.length !== n * 4) {
+      glyph.data = new Uint8Array(n * 4);
+      if (glyph.cells) glyph.cells.dispose();
+      glyph.cells = new THREE.DataTexture(glyph.data, cols, rows, THREE.RGBAFormat);
+      glyph.cells.minFilter = glyph.cells.magFilter = THREE.NearestFilter;
+      glyphMat.uniforms.uCells.value = glyph.cells;
+      glyphMat.uniforms.uGrid.value.set(cols, rows);
+    }
+    const d = glyph.data;
+    for (let i = 0, o = 0; i < n; i++, o += 4) {
+      const ch = CH[i];
+      if (!ch) { d[o] = 0; continue; }
+      const c = parseColor(COL[i]);
+      d[o] = glyphIndex(ch); d[o + 1] = c >> 16; d[o + 2] = (c >> 8) & 255; d[o + 3] = c & 255;
+    }
+    glyph.cells.needsUpdate = true;
+    const el = renderer.domElement;
+    glyphMat.uniforms.uRes.value.set(el.width, el.height);
+    renderer.setRenderTarget(null);
+    renderer.setViewport(0, 0, el.width, el.height);
+    renderer.render(glyphScene, glyphCam);
+  }
   function paint() {
+    if (glyph.ok) { paintGL(); return; }
     const cw = canvas.width / cols, chh = canvas.height / rows;
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
