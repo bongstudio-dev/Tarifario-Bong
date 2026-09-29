@@ -1149,8 +1149,10 @@
     } else {
       camera.up.set(0, 1, 0);
       // La cámara va atrás del auto, pero nunca adentro de una manzana.
-      let back = camBack;
-      for (let s = 0.5; s <= camBack; s += 0.5) {
+      // En la transición la cámara se aleja y el auto queda chiquito en el medio de la oscuridad.
+      const shut = abyssDark(), far = camBack * (1 + 1.1 * shut);
+      let back = far;
+      if (shut < 0.4) for (let s = 0.5; s <= far; s += 0.5) {
         if (blocksCam(toCell(player.x - fx * s), toCell(player.z - fz * s))) { back = Math.max(1.5, s - 1); break; }
       }
       const wx = player.x - fx * back, wz = player.z - fz * back;
@@ -1691,6 +1693,7 @@
       a.t += dt;
       // Cerrado del todo: cambia lo que hay alrededor.
       const closed = a.t > CLOSE + 0.15;
+      if ((a.stage === 0 || a.stage === 3) && closed) startWipe();
       if (a.stage === 0 && closed) {
         if (a.kind === "tunnel") { enterTunnel(); next(4); }
         else if (intoVoid()) next(1);
@@ -1706,6 +1709,30 @@
     if (tunnel || tunnelIn > 0 || sinking || !started) return;
     mapTime += dt;
     if (mapTime > MAP_SECS) startAbyss();
+  }
+  let wipe = null;
+  function startWipe() {
+    wipe = { t0: clock, cols, rows, ch: CH.slice(), col: COL.slice() };
+  }
+  function wipeOverlay() {
+    if (!wipe) return;
+    if (wipe.cols !== cols || wipe.rows !== rows) { wipe = null; return; }
+    const k = (clock - wipe.t0) / 0.55;
+    if (k >= 1) { wipe = null; return; }
+    // La franja avanza de izquierda a derecha, un poco inclinada; lo que queda atrás ya es el lugar nuevo.
+    const e = k * k * (3 - 2 * k), x = -8 + e * (cols + 16);
+    for (let r = 0; r < rows; r++) {
+      const xr = x - (r / rows) * 6;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, d = c - xr;
+        if (d > 2) { CH[i] = wipe.ch[i]; COL[i] = wipe.col[i]; }
+        else if (d > -2) {
+          const h = hash(i, Math.floor(clock * 30));
+          CH[i] = d > 0.5 ? (h < 0.5 ? "$" : "@") : h < 0.5 ? ":" : ".";
+          COL[i] = d > 0.5 ? "#fff1c4" : "#c98a4a";
+        }
+      }
+    }
   }
   function tickTunnel() {
     if (tunnelIn > 0 && abyss && abyss.kind === "map" && abyss.stage === 2) { abyss.kind = "tunnel"; abyss.stage = 3; abyss.t = 0; }
@@ -2681,7 +2708,7 @@
     placeOrbit();
     tickVoid(pdt);
     placeCamera(pdt);
-    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); }
+    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); wipeOverlay(); }
     hud();
     paint();
   }
