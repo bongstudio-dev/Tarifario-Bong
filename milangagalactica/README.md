@@ -11,7 +11,7 @@ abre la búsqueda de conceptos. La técnica no se toca; lo que sigue son ideas.
 | `ascii-3d.html` | La técnica final: escenas 3D en WebGL dibujadas con caracteres, con panel de ajustes y linterna | https://claude.ai/artifact/2ReTYHQQrGyt5vmZDB32LW |
 | `ascii-2d.html` | La serie 2D anterior. La escena "Órbita" fue la que abrió el camino | https://claude.ai/artifact/DJid3R1uLU7DGS2QBuvzNc |
 | `arlequin-ascii.html` | Primera prueba del Arlequín con la misma técnica: cuatro escenas, arranca en modo Color | https://claude.ai/artifact/T2r7fWLWxU8UJ5FGRZRRTU |
-| `deriva.html` | Deriva: el juego a pantalla llena, con menú hecho de caracteres. Se adapta solo: en el celu aparecen los botones táctiles, en la compu se maneja con el teclado | https://claude.ai/artifact/JKjksFR9wwbNTdnKw2mtud |
+| `deriva.html` | A la deriva: el juego a pantalla llena, con menú hecho de caracteres. Se adapta solo: en el celu aparecen los botones táctiles, en la compu se maneja con el teclado | https://claude.ai/artifact/JKjksFR9wwbNTdnKw2mtud |
 
 Pendiente: migrar `deriva.html` a una página https propia (fuera de claude.ai)
 para que ande el giroscopio del celu. Se probó un rato en el sitio del

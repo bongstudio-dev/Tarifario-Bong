@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Deriva</title>
+<title>A la deriva</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
 </style>
 
 <div id="screen" class="stage">
-  <canvas id="game" tabindex="0" role="img" aria-label="Deriva: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
+  <canvas id="game" tabindex="0" role="img" aria-label="A la deriva: el Arlequín maneja de noche por una ciudad que no se termina"></canvas>
 </div>
 <!-- Controles del juego base que acá se manejan desde el menú ASCII. -->
 <div class="legacy" aria-hidden="true">
@@ -1341,7 +1341,7 @@
     chunks.forEach(c => c.lamps.forEach(p => { if (!lamp && (p.x - player.x) ** 2 + (p.z - player.z) ** 2 < 7.5 * 7.5) lamp = true; }));
     light = clamp(light - (started ? drain * dt : 0) + (lamp ? 0.06 * dt : 0) + near * 0.35 * dt, 0, cap);
     // Sin luz, la nada te alcanza: unos segundos de limbo y caés adentro.
-    if (light < 0.01 && currentZone !== T.VOID && !sinking && !ending) { darkT += dt; if (darkT > 3.5) { darkT = 0; fallIntoVoid(); } }
+    if (light < 0.01 && currentZone !== T.VOID && !sinking && !ending && !abyss) { darkT += dt; if (darkT > 3.5) { darkT = 0; fallIntoVoid(); } }
     else darkT = 0;
     flash = Math.max(0, flash - dt * 2.5);
     chunks.forEach(c => c.ideas.forEach(it => {
@@ -1425,7 +1425,35 @@
   // --- La barrita de luz: diez luces y la nada te abre un túnel hasta el portal ----------------
   const RUN_GOAL = 10;
   let runLight = 0, runFlash = -9, tunnelIn = -1, portalAt = null, tunnel = null;
+  // Cada luz vale 200 W. Si la juntás rápido después de la anterior, vale más.
+  const WATTS = 200;
+  let score = 0, lastGet = 0, runT = 0;
+  const popups = [];
+  let best = 0;
+  try { best = parseInt(localStorage.getItem("deriva-record"), 10) || 0; } catch (e) { /* sin almacenamiento */ }
+  const multFor = gap => gap < 4 ? 4 : gap < 8 ? 3 : gap < 15 ? 2 : 1;
+  // Onda expansiva: dos aros de luz que salen del auto por el piso.
+  const WAVE = new THREE.RingGeometry(0.9, 1, 72); WAVE.rotateX(-Math.PI / 2);
+  const waves = [0, 1].map(() => {
+    const m = new THREE.Mesh(WAVE, new THREE.MeshBasicMaterial({ color: 0xfff1c4, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide }));
+    m.visible = false; m.userData.t0 = -9; scene.add(m); return m;
+  });
+  function tickWaves() {
+    waves.forEach(m => {
+      const t = clock - m.userData.t0;
+      m.visible = t >= 0 && t < 0.9;
+      if (!m.visible) return;
+      const k = t / 0.9, r = 1.5 + 30 * (1 - Math.pow(1 - k, 2.2));
+      m.position.set(m.userData.x, m.userData.y, m.userData.z);
+      m.scale.set(r, 1, r);
+      m.material.opacity = Math.pow(1 - k, 1.4) * 1.6;
+    });
+  }
   function gathered() {
+    const mult = multFor(clock - lastGet);
+    score += WATTS * mult; lastGet = clock;
+    popups.push({ t0: clock, text: "+" + WATTS + "W", mult });
+    waves.forEach((m, i) => { m.userData.t0 = clock + i * 0.13; m.userData.x = player.x; m.userData.y = player.y + 0.25; m.userData.z = player.z; });
     if (runLight >= RUN_GOAL) { buzz(40); buzzQuiet = clock + 0.15; return; }
     runLight++; runFlash = clock;
     if (runLight < RUN_GOAL) { buzz(40); buzzQuiet = clock + 0.15; return; }
@@ -1487,9 +1515,168 @@
     light = Math.max(light, cap * 0.6);
     updateChunks(true);
   }
+  // Cada mundo dura 30 segundos. Después, un rato en el abismo (todo negro) y el siguiente.
+  // La primera vuelta es fija; cuando recorriste todos, vuelve a empezar en otra ciudad y en otro orden.
+  const MAP_SECS = 30;
+  const FIRST_ORDER = ["laberinto", "puente", "avenida", "parque", "playa", "monte"];
+  let order = FIRST_ORDER.slice(), mapI = 0, mapTime = 0, abyss = null;
+  const heading = (dx, dy) => Math.atan2(-dy, dx);
+  const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+  const runOf = (x, y, dx, dy, n, ok) => { for (let k = 0; k <= n; k++) if (!ok(cellType(x + dx * k, y + dy * k))) return false; return true; };
+  // Cada mundo sabe dónde se arranca: un lugar al azar cada vez más lejos, alineado a sus calles.
+  const MAPS = {
+    laberinto: (x, y) => {
+      x |= 1; y |= 1;
+      if (cellType(x, y) !== T.STREET || zoneAt(x, y) || mod(x, 26) < 3 || mod(y, 22) < 3) return null;
+      const d = DIRS.find(([a, b]) => cellType(x + a, y + b) === T.STREET);
+      return d && { x, y, h: heading(d[0], d[1]) };
+    },
+    puente: (x, y) => {
+      const alongY = Math.random() < 0.5;
+      if (alongY) x = 26 * Math.round(x / 26) + 1; else y = 22 * Math.round(y / 22) + 1;
+      if (cellType(x, y) !== T.BRIDGE) return null;
+      const [a, b] = alongY ? [0, 1] : [1, 0], sg = runOf(x, y, a, b, 4, t => t === T.BRIDGE) ? 1 : runOf(x, y, -a, -b, 4, t => t === T.BRIDGE) ? -1 : 0;
+      return sg ? { x, y, h: heading(a * sg, b * sg) } : null;
+    },
+    avenida: (x, y) => {
+      const alongY = Math.random() < 0.5;
+      if (alongY) x = 26 * Math.round(x / 26) + 1; else y = 22 * Math.round(y / 22) + 1;
+      const [a, b] = alongY ? [0, 1] : [1, 0];
+      if (downtown(x, y) < 0.5 || !runOf(x, y, a, b, 6, t => t === T.AVENUE)) return null;
+      return { x, y, h: heading(a, b) };
+    },
+    parque: (x, y) => {
+      const fx = Math.round((x - 10) / 20) * 20 + 10, fy = Math.round((y - 10) / 20) * 20 + 10;
+      if (cellType(fx, fy) !== T.FERRIS) return null;
+      for (const [a, b] of DIRS) for (let d = 9; d >= 7; d--) {
+        const sx0 = fx + a * d, sy0 = fy + b * d;
+        if (runOf(sx0, sy0, -a, -b, d - 4, t => !SOLID(t) && t !== T.SEA)) return { x: sx0, y: sy0, h: heading(-a, -b) };
+      }
+      return null;
+    },
+    playa: (x, y) => {
+      if (cellType(x, y) !== T.SAND) return null;
+      const d = DIRS.find(([a, b]) => runOf(x, y, a, b, 5, t => t === T.SAND));
+      return d && { x, y, h: heading(d[0], d[1]) };
+    },
+    monte: (x, y) => {
+      const alongY = Math.random() < 0.5;
+      if (alongY) x = 26 * Math.round(x / 26) + 1; else y = 22 * Math.round(y / 22) + 1;
+      const [a, b] = alongY ? [0, 1] : [1, 0];
+      if (!runOf(x, y, a, b, 5, t => t === T.ROAD)) return null;
+      return { x, y, h: heading(a, b) };
+    }
+  };
+  function findSpot(name) {
+    const x0 = toCell(player.x), y0 = toCell(player.z), f = MAPS[name];
+    for (let k = 0; k < 9000; k++) {
+      const r = 12 + k * 0.05, a = Math.random() * TAU;
+      const hit = f(Math.round(x0 + Math.cos(a) * r), Math.round(y0 + Math.sin(a) * r));
+      if (hit) return hit;
+    }
+    return null;
+  }
+  // Aparecer en un mundo: andando, a la misma velocidad con la que caíste.
+  function goToMap(name) {
+    const spot = findSpot(name);
+    if (!spot) return false;
+    const v = Math.max(9, Math.min(CRUISE, player.speed));
+    player.x = toWorld(spot.x); player.z = toWorld(spot.y); player.heading = spot.h;
+    player.vx = Math.cos(spot.h) * v; player.vz = -Math.sin(spot.h) * v;
+    player.y = 0; player.vy = 0; player.air = false; player.pitch = player.roll = 0; player.steer = 0;
+    sinking = null; lastSafe = null; voidK = 0; darkT = 0;
+    camSnap = true;
+    updateChunks(true);
+    trackZone();
+    return true;
+  }
+  function nextMap() {
+    for (let tries = 0; tries < order.length; tries++) {
+      mapI++;
+      if (mapI >= order.length) {
+        // Recorriste todos: otra ciudad, otro orden.
+        const keep = { score, lastGet, runT, runLight }, last = order[order.length - 1];
+        newWorld((Math.random() * 1e9) | 0, true);
+        ({ score, lastGet, runT, runLight } = keep);
+        // Mezcla de verdad, sin repetir el mundo del que venís.
+        order = FIRST_ORDER.slice();
+        for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+        if (order[0] === last) order.push(order.shift());
+        mapI = 0;
+      }
+      if (goToMap(order[mapI])) return;
+    }
+  }
+  function startAbyss() {
+    if (abyss || ending || title || tunnel || tunnelIn > 0) return;
+    abyss = { t: 0, moved: false };
+    buzz([20, 60, 20]);
+  }
+  function tickMaps(dt) {
+    if (title || menu.open || state.map || ending) return;
+    runT += dt;
+    if (abyss) {
+      abyss.t += dt;
+      if (!abyss.moved && abyss.t > 1.1) { abyss.moved = true; nextMap(); lastGet = clock; }
+      if (abyss.t > 2.8) { abyss = null; mapTime = 0; }
+      return;
+    }
+    if (tunnel || tunnelIn > 0 || sinking || !started) return;
+    mapTime += dt;
+    if (mapTime > MAP_SECS) startAbyss();
+  }
+  // El abismo: la grilla se apaga y queda solo algo que cae.
+  function abyssOverlay() {
+    if (!abyss) return;
+    const t = abyss.t, d = t < 0.8 ? t / 0.8 : t < 2 ? 1 : 1 - (t - 2) / 0.8, n = cols * rows;
+    for (let i = 0; i < n; i++) if (hash(i, 7) < d * 1.05) CH[i] = null;
+    if (d < 0.6) return;
+    for (let c = 0; c < cols; c += 3) {
+      if (hash(c, 31) > 0.35) continue;
+      const r = Math.floor(mod(hash(c, 32) * rows - clock * (6 + hash(c, 33) * 14), rows));
+      put(r, c, hash(c, 34) < 0.5 ? "." : ":", "#3c3852");
+    }
+  }
   function tickTunnel() {
     if (tunnelIn > 0 && clock >= tunnelIn && !ending && !sinking) enterTunnel();
     if (tunnel) tunnel.userData.ring.scale.setScalar(1 + Math.sin(clock * 2.2) * 0.06);
+  }
+  const _pp = new THREE.Vector3();
+  // La onda también sobre la grilla: dos elipses de letras que se abren desde el auto.
+  function drawWaves() {
+    const t0 = waves[0].userData.t0;
+    _pp.set(waves[0].userData.x, waves[0].userData.y, waves[0].userData.z).project(camera);
+    if (clock - t0 > 1.1 || _pp.z > 1) return;
+    const cr = (1 - _pp.y) / 2 * rows, cc = (_pp.x + 1) / 2 * cols;
+    [0, 0.16].forEach((delay, j) => {
+      const t = clock - t0 - delay;
+      if (t < 0 || t > 0.85) return;
+      const k = t / 0.85, rx = 2 + cols * 0.85 * (1 - Math.pow(1 - k, 2)), ry = rx * 0.6 * 0.42, th = 2.4 / rx + 0.06;
+      const col = k < 0.3 ? "#ffffff" : k < 0.65 ? "#fff1c4" : j ? "#8a4a20" : "#c98a4a";
+      const chs = j ? ".:" : k < 0.5 ? "@O" : "o*";
+      for (let r = Math.max(0, Math.floor(cr - ry - 1)); r <= Math.min(rows - 1, Math.ceil(cr + ry + 1)); r++) {
+        const dy = (r + 0.5 - cr) / ry;
+        for (let c = Math.max(0, Math.floor(cc - rx - 1)); c <= Math.min(cols - 1, Math.ceil(cc + rx + 1)); c++) {
+          const dx = (c + 0.5 - cc) / rx, d = Math.sqrt(dx * dx + dy * dy);
+          if (d > 1 || d < 1 - th * (1 - k * 0.5)) continue;
+          put(r, c, chs[(r + c) & 1], col);
+        }
+      }
+    });
+  }
+  function drawPopups() {
+    for (let i = popups.length - 1; i >= 0; i--) {
+      const p = popups[i], t = clock - p.t0;
+      if (t > 1.4) { popups.splice(i, 1); continue; }
+      _pp.set(player.x, player.y + 2.6, player.z).project(camera);
+      if (_pp.z > 1) continue;
+      const r = Math.round((1 - _pp.y) / 2 * rows - 2 - t * 5), c = Math.round((_pp.x + 1) / 2 * cols);
+      const col = t < 0.25 ? "#ffffff" : t < 0.9 ? "#fff1c4" : "#c98a4a";
+      const extra = p.mult > 1 ? " ×" + p.mult : "", c0 = c - Math.floor((p.text.length + extra.length) / 2);
+      for (let k = -1; k <= p.text.length + extra.length; k++) put(r, c0 + k, null, col);
+      text(r, c0, p.text, col);
+      if (extra) text(r, c0 + p.text.length, extra, t < 0.9 ? AMBER : "#8a4a20");
+    }
   }
   function lightBar() {
     if (state.map || menu.open) return;
@@ -1530,7 +1717,8 @@
     endCam.updateProjectionMatrix();
   }
   function startEnding() {
-    ending = { t: 0 };
+    ending = { t: 0, score, time: runT, lights: runLight, record: score > best };
+    if (score > best) { best = score; try { localStorage.setItem("deriva-record", String(best)); } catch (e) { /* sin almacenamiento */ } }
     keys.up = keys.down = keys.left = keys.right = keys.hand = false;
   }
   function tickEnding(dt) {
@@ -1555,6 +1743,18 @@
     } else if (t < 5) {
       const p = 1 - clamp((t - 3.2) / 1.6, 0, 1);
       for (let i = 0; i < n; i++) if (hash(i, 7) < p) { CH[i] = RAMP[RAMP.length - 1 - Math.floor(hash(i, 9) * 4)]; COL[i] = "#fff6e0"; } else CH[i] = null;
+    }
+    // El puntaje: los watts que juntaste, contando hacia arriba.
+    if (t > 5.4) {
+      const e = ending, shown = Math.round(e.score * clamp((t - 5.4) / 1.6, 0, 1));
+      const W = shown.toLocaleString("es-AR") + " W";
+      const mm = Math.floor(e.time / 60), ss = String(Math.floor(e.time % 60)).padStart(2, "0");
+      // Cada línea limpia su fila para leerse sobre lo que cae.
+      const center = (r, str, color) => { const c = Math.floor((cols - str.length) / 2); for (let k = -2; k < str.length + 2; k++) put(r, c + k, null, color); text(r, c, str, color); };
+      const r0 = Math.round(rows * 0.76);
+      center(r0, W, "#fff1c4");
+      center(r0 + 2, e.lights + " luces · " + mm + ":" + ss, "#8d8ca6");
+      if (t > 7.2) center(r0 + 4, e.record ? "récord" : "récord " + best.toLocaleString("es-AR") + " W", e.record ? (Math.sin(clock * 6) > 0 ? "#ffc21a" : "#fff1c4") : "#6e6a80");
     }
   }
 
@@ -1667,7 +1867,7 @@
     }
   }
 
-  function newWorld(s) {
+  function newWorld(s, keepRun) {
     seed = s | 0;
     sx = (hash(seed, 1) - 0.5) * 4000; sy = (hash(seed, 2) - 0.5) * 4000;
     cache.clear();
@@ -1682,6 +1882,8 @@
     if (giant) { scene.remove(giant.g); giant = null; }
     voidTime = 0;
     clearTunnel(); runLight = 0; tunnelIn = -1;
+    if (!keepRun) { score = 0; runT = 0; lastGet = clock; order = FIRST_ORDER.slice(); mapI = 0; abyss = null; }
+    mapTime = 0; popups.length = 0;
     // Arranca en una esquina del laberinto, mirando hacia una calle abierta.
     let start = null;
     for (let r = 0; r < 60 && !start; r++) for (let dy = -r; dy <= r && !start; dy++) for (let dx = -r; dx <= r; dx++) {
@@ -1905,6 +2107,7 @@
     if (title) { titleScreen(); return; }
     if (ending) return;
     hudBase();
+    if (!abyss) { drawWaves(); drawPopups(); }
     lightBar();
     overlay();
   }
@@ -1997,7 +2200,7 @@
   // Otro mundo, al lado del menú: siempre a mano para cambiar de ciudad de un toque.
   const WORLD_BOX = () => ({ top: 1, left: cols - 17, h: 3, w: 7 });
   const world = { tapBtn: false, flash: -9 };
-  const otherWorld = () => { newWorld((Math.random() * 1e9) | 0); world.flash = clock; };
+  const otherWorld = () => { startAbyss(); world.flash = clock; };
   const BRAKE_BOX = () => ({ top: rows - 8, left: cols - 14, h: 6, w: 12 });
   // Sin autoavance aparece el acelerador, arriba del freno.
   const GAS_BOX = () => ({ top: rows - 15, left: cols - 14, h: 6, w: 12 });
@@ -2023,7 +2226,7 @@
       { label: "GIROSCOPIO", value: gyro.on ? "SÍ" : gyroBtn.dataset.failed ? "NO HAY" : "NO", act: () => gyroBtn.click() },
       { label: "MAPA", value: state.map ? "SÍ" : "NO", act: () => setOpt("map", !state.map) },
       { label: "PANTALLA", value: document.fullscreenElement ? "COMPLETA" : "NORMAL", act: () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (err) { /* sin pantalla completa */ } } },
-      { label: "OTRA CIUDAD", value: "", act: () => { otherWorld(); menu.open = false; } },
+      { label: "OTRA CIUDAD", value: "", act: () => { newWorld((Math.random() * 1e9) | 0); menu.open = false; } },
       { label: "SEGUIR", value: "", act: () => { menu.open = false; } }
     ];
   }
@@ -2074,7 +2277,7 @@
     put(top, left, "┌", DIM); put(top, left + inner + 1, "┐", DIM); put(top + h - 1, left, "└", DIM); put(top + h - 1, left + inner + 1, "┘", DIM);
     for (let c = left + 1; c <= left + inner; c++) { put(top, c, "─", DIM); put(top + h - 1, c, "─", DIM); }
     for (let r = top + 1; r < top + h - 1; r++) { put(r, left, "│", DIM); put(r, left + inner + 1, "│", DIM); }
-    text(top, left + 2, " DERIVA ", AMBER);
+    text(top, left + 2, " A LA DERIVA ", AMBER);
     menu.rows = [];
     items.forEach((it, k) => {
       const r = top + 2 + k;
@@ -2093,7 +2296,8 @@
     R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
     I: ["█████", "  █  ", "  █  ", "  █  ", "█████"],
     V: ["█   █", "█   █", "█   █", " █ █ ", "  █  "],
-    A: [" ███ ", "█   █", "█████", "█   █", "█   █"]
+    A: [" ███ ", "█   █", "█████", "█   █", "█   █"],
+    L: ["█    ", "█    ", "█    ", "█    ", "█████"]
   };
   const CAR_COLORS = ["#ff2a3a", "#3c6bff", "#ffc21a", "#2fe0d0"];
   const PLAY_BOX = () => { const w = 15; return { top: Math.min(rows - 4, Math.round(rows * 0.85)), left: Math.floor((cols - w) / 2), h: 3, w }; };
@@ -2101,18 +2305,30 @@
     const center = (r, str, color) => text(r, Math.floor((cols - str.length) / 2), str, color);
     // Leyenda arriba.
     center(Math.round(rows * 0.1), "la luz da vida a todo", "#c9b98e");
-    // DERIVA en letras grandes: cada bloque es un carácter denso, con un brillo que baja.
-    const sc = (cols >= 72 && rows >= 60) || cols >= 110 ? 2 : 1, word = "DERIVA", lw = 6 * sc, top = Math.round(rows * (sc === 2 ? 0.15 : 0.16));
-    const left = Math.floor((cols - word.length * lw + sc) / 2);
-    for (let k = 0; k < word.length; k++) BIG[word[k]].forEach((line, y) => {
+    // A LA DERIVA en letras grandes: cada bloque es un carácter denso, con un brillo que baja.
+    // Si entra, en una línea; si no (en vertical), "A LA" arriba y "DERIVA" abajo.
+    const sc = (cols >= 72 && rows >= 60) || cols >= 110 ? 2 : 1, lw = 6 * sc, top = Math.max(Math.round(rows * 0.1) + 3, Math.round(rows * (sc === 2 ? 0.14 : 0.15)));
+    const width = w => [...w].reduce((a, ch) => a + (ch === " " ? 3 * sc : lw), 0) - sc;
+    const lines = width("A LA DERIVA") <= cols - 4 ? ["A LA DERIVA"] : ["A LA", "DERIVA"];
+    lines.forEach((word, li) => {
+      let cx = Math.floor((cols - width(word)) / 2);
+      for (const ch of word) {
+        if (ch === " ") { cx += 3 * sc; continue; }
+        bigLetter(ch, top + li * 6 * sc, cx);
+        cx += lw;
+      }
+    });
+    function bigLetter(ch, top, left) {
+      BIG[ch].forEach((line, y) => {
       for (let yy = 0; yy < sc; yy++) for (let x = 0; x < line.length; x++) for (let xx = 0; xx < sc; xx++) {
         if (line[x] === " ") continue;
-        const r = top + y * sc + yy, c = left + k * lw + x * sc + xx;
+        const r = top + y * sc + yy, c = left + x * sc + xx;
         // Todos caracteres densos; el brillo baja como una luz que recorre las letras.
         const glow = 0.5 + 0.5 * Math.sin(clock * 1.6 - r * 0.45 - c * 0.06);
         put(r, c, glow > 0.66 ? "$" : glow > 0.33 ? "@" : "B", glow > 0.8 ? "#fff6e0" : glow > 0.45 ? "#e9e5f0" : "#b8b4c8");
       }
-    });
+      });
+    }
     // milangagalactica con los colores del auto, con una ola de brillo que la recorre.
     const name = "milangagalactica", nr = Math.round(rows * (rows >= 60 ? 0.74 : 0.8)), nc = Math.floor((cols - name.length) / 2);
     for (let k = 0; k < name.length; k++) put(nr, nc + k, name[k], Math.sin(clock * 2.2 - k * 0.45) > 0.85 ? "#fff6e0" : CAR_COLORS[k % 4]);
@@ -2121,7 +2337,7 @@
     drawBox(b, on ? AMBER : DIM);
     text(b.top + 1, b.left + 4, "▶ JUGAR", on ? "#fff1c4" : AMBER);
   }
-  function startGame() { title = false; camSnap = true; }
+  function startGame() { title = false; camSnap = true; lastGet = clock; }
 
   canvas.addEventListener("pointerdown", e => {
     engaged = true;
@@ -2309,9 +2525,11 @@
     clock += dt;
     water.uniforms.uTime.value = clock;
     if (title) { endTurn.rotation.y = clock * 0.35; frameEndCam(ratio > 1 ? 0.9 : 0.25); }
-    if (!title && !state.map && !menu.open) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
+    if (!title && !state.map && !menu.open && !abyss) { if (sinking || ending) { player.x += player.vx * dt; player.z += player.vz * dt; } else physics(dt); tickWater(dt); }
     tickHorizon();
     tickTunnel();
+    tickMaps(dt);
+    tickWaves();
     tickBuzz(dt);
     tickEnding(dt);
     tickLight(dt);
@@ -2327,7 +2545,7 @@
     placeOrbit();
     tickVoid(pdt);
     placeCamera(pdt);
-    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); }
+    if (state.map) automap(); else { shade(); if (voidK > 0.02) glitch(); endingOverlay(); abyssOverlay(); }
     hud();
     paint();
   }
