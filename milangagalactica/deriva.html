@@ -1678,18 +1678,46 @@
       }
     });
   }
+  // El cartel de los watts: en letras grandes, sube desde el auto y se desarma al final.
   function drawPopups() {
+    // Lo más grande que entre: hasta un cuarto de la altura y casi todo el ancho.
+    let sc = 4;
+    while (sc > 1 && (bigWidth("+200W", sc, sc) > cols - 6 || 5 * sc > rows * 0.25)) sc--;
     for (let i = popups.length - 1; i >= 0; i--) {
       const p = popups[i], t = clock - p.t0;
-      if (t > 1.4) { popups.splice(i, 1); continue; }
+      if (t > 1.5) { popups.splice(i, 1); continue; }
       _pp.set(player.x, player.y + 2.6, player.z).project(camera);
       if (_pp.z > 1) continue;
-      const r = Math.round((1 - _pp.y) / 2 * rows - 2 - t * 5), c = Math.round((_pp.x + 1) / 2 * cols);
-      const col = t < 0.25 ? "#ffffff" : t < 0.9 ? "#fff1c4" : "#c98a4a";
-      const extra = p.mult > 1 ? " ×" + p.mult : "", c0 = c - Math.floor((p.text.length + extra.length) / 2);
-      for (let k = -1; k <= p.text.length + extra.length; k++) put(r, c0 + k, null, col);
-      text(r, c0, p.text, col);
-      if (extra) text(r, c0 + p.text.length, extra, t < 0.9 ? AMBER : "#8a4a20");
+      const extra = p.mult > 1 ? "×" + p.mult : "";
+      // El multiplicador va al lado si entra; si no, abajo y más chico.
+      const w1 = bigWidth(p.text, sc, sc), side = extra && w1 + 3 * sc + bigWidth(extra, sc, sc) <= cols - 4;
+      const esc = side ? sc : Math.max(1, sc - 1), w2 = extra ? bigWidth(extra, esc, esc) : 0;
+      const w = side ? w1 + 3 * sc + w2 : w1, h = 5 * sc + (extra && !side ? 5 * esc + esc : 0);
+      // Arranca un poco más arriba del auto y sube; sin salirse de la pantalla.
+      const top = clamp(Math.round((1 - _pp.y) / 2 * rows - h - 3 - t * 7), 1, rows - h - 1);
+      const left = clamp(Math.round((_pp.x + 1) / 2 * cols - w / 2), 1, Math.max(1, cols - w - 1));
+      const fade = t > 1.1 ? (t - 1.1) / 0.4 : 0;
+      const col = t < 0.2 ? "#ffffff" : t < 0.9 ? "#fff1c4" : "#e0a060";
+      // Un fondo negro apenas más grande que el cartel, para que se lea sobre cualquier cosa.
+      if (fade === 0) for (let r = top - 1; r <= top + h; r++) for (let c = left - 2; c < left + w + 2; c++) put(r, c, null, col);
+      const draw = (str, x0, y0, sc, color) => {
+        let cx = x0;
+        for (const ch of str) {
+          BIG[ch].forEach((line, y) => {
+            for (let yy = 0; yy < sc; yy++) for (let x = 0; x < line.length; x++) for (let xx = 0; xx < sc; xx++) {
+              if (line[x] === " ") continue;
+              const r = y0 + y * sc + yy, c = cx + x * sc + xx;
+              if (fade && hash(r * 7 + c, 5) < fade) continue;
+              put(r, c, t < 0.2 ? "$" : (r + c) % 3 ? "$" : "@", color);
+            }
+          });
+          cx += BIG[ch][0].length * sc + sc;
+        }
+      };
+      draw(p.text, left, top, sc, col);
+      const ecol = t < 0.9 ? AMBER : "#b0602a";
+      if (extra && side) draw(extra, left + w1 + 3 * sc, top, sc, ecol);
+      else if (extra) draw(extra, left + w1 - w2, top + 6 * sc, esc, ecol);
     }
   }
   function lightBar() {
@@ -2337,7 +2365,9 @@
     "7": ["█████", "    █", "   █ ", "  █  ", "  █  "],
     "8": [" ███ ", "█   █", " ███ ", "█   █", " ███ "],
     "9": [" ███ ", "█   █", " ████", "    █", " ███ "],
-    ".": ["  ", "  ", "  ", "  ", "█ "]
+    ".": ["  ", "  ", "  ", "  ", "█ "],
+    "+": ["     ", "  █  ", "█████", "  █  ", "     "],
+    "×": ["     ", "█   █", " █ █ ", "  █  ", " █ █ "]
   };
   // Texto en letras grandes, centrado: cada bloque es un carácter denso con un brillo que baja.
   // gap: el espacio entre letras (por defecto, un bloque).
