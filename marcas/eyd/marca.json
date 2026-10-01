@@ -1,0 +1,53 @@
+{
+  "id": "eyd",
+  "nombre": "E&D",
+  "sector": { "pendiente": "Sector o industria del cliente." },
+  "estudio": "Bong Studio",
+  "version": "0.1.0",
+  "descripcion": { "pendiente": "Qué es la marca en dos o tres oraciones: quién es el cliente y qué resolvió el sistema." },
+  "principios": { "pendiente": "Tres a cinco reglas madre del sistema, en una oración cada una." },
+
+  "colores": { "pendiente": "Lista de { id, nombre, hex, rol } con rol principal, complementario o neutro." },
+  "paleta": {
+    "principales": { "pendiente": "Ids de los colores principales." },
+    "duplas": { "pendiente": "Pares aprobados, como listas de ids." },
+    "terciarias": { "pendiente": "Tríos aprobados, como listas de ids." }
+  },
+
+  "tipografia": {
+    "principal": { "rol": { "pendiente": "Para qué se usa." }, "familia": { "pendiente": "Familia, pesos y licencia." } },
+    "secundaria": { "rol": { "pendiente": "Para qué se usa." }, "familia": { "pendiente": "Familia, pesos y licencia." } }
+  },
+
+  "formas": {
+    "viewBox": "0 0 48 48",
+    "items": { "pendiente": "Recursos gráficos del sistema: { id, nombre, svg } con el contenido interno del SVG." }
+  },
+
+  "patron": { "pendiente": "Si el sistema tiene patrón: piezas (paths a sangre en 48x48), paletas { id, nombre, fondo, formas } y defaults. Si no tiene, borrar esta clave." },
+
+  "iconos": {
+    "viewBox": "0 0 24 24",
+    "trazo": { "ancho": 2, "terminaciones": "round", "uniones": "round" },
+    "categorias": { "pendiente": "Lista de { id, color } con el color por categoría." },
+    "items": { "pendiente": "Lista de { id, nombre, categoria, claves, svg }." }
+  },
+
+  "logo": {
+    "reglas": { "pendiente": "Reglas de uso del logo." },
+    "area_resguardo": { "pendiente": "Área de resguardo y tamaño mínimo." },
+    "archivos": { "pendiente": "Links a las versiones del logo en SVG." }
+  },
+
+  "voz": {
+    "nota": { "pendiente": "Tono de la marca en dos oraciones." },
+    "preferir": [],
+    "evitar": []
+  },
+
+  "glosario": [],
+  "tareas": { "pendiente": "Recetas por tarea: { id, titulo, claves, pasos, herramientas }. Es la entrada del manual: qué necesitás hacer." },
+  "changelog": [
+    { "version": "0.1.0", "fecha": "2026-10", "cambio": "Alta de la marca en el framework." }
+  ]
+}

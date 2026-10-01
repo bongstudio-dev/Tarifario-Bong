@@ -1,0 +1,662 @@
+{
+  "id": "profertil",
+  "nombre": "Profertil",
+  "sector": "Agroindustria",
+  "estudio": "Bong Studio",
+  "version": "1.4.0",
+  "descripcion": "Principal productora de fertilizantes nitrogenados de Argentina. Una marca instalada durante veinticinco años a la que le faltaba un sistema para usarla: del logo se extrajo la hoja de la espiga de trigo y de la hoja, un alfabeto de formas.",
+  "principios": [
+    "Ninguna forma es arbitraria: todas descienden de la hoja del logo.",
+    "Las formas son pregnantes solas y modulares en combinación; funcionan como máscaras y ordenadores del layout.",
+    "No se eligen colores sueltos: se usa una principal, una dupla o una terciaria ya aprobadas.",
+    "El logotipo se conserva tal cual. No se redibuja, no se deforma, no se recolorea fuera de la paleta."
+  ],
+  "colores": [
+    {
+      "id": "azul",
+      "nombre": "Azul Profertil",
+      "hex": "#0B3FA8",
+      "rol": "principal"
+    },
+    {
+      "id": "verde",
+      "nombre": "Verde",
+      "hex": "#5FB52C",
+      "rol": "principal"
+    },
+    {
+      "id": "amarillo",
+      "nombre": "Amarillo",
+      "hex": "#F0C419",
+      "rol": "principal"
+    },
+    {
+      "id": "azul-claro",
+      "nombre": "Azul claro",
+      "hex": "#3D8BFD",
+      "rol": "complementario"
+    },
+    {
+      "id": "naranja",
+      "nombre": "Naranja",
+      "hex": "#E2801E",
+      "rol": "complementario"
+    },
+    {
+      "id": "terra",
+      "nombre": "Terra",
+      "hex": "#7C4A15",
+      "rol": "complementario"
+    },
+    {
+      "id": "verde-osc",
+      "nombre": "Verde oscuro",
+      "hex": "#2F7D20",
+      "rol": "complementario"
+    },
+    {
+      "id": "crema",
+      "nombre": "Crema",
+      "hex": "#F2EFE6",
+      "rol": "neutro"
+    },
+    {
+      "id": "tinta",
+      "nombre": "Tinta",
+      "hex": "#16202B",
+      "rol": "neutro",
+      "nota": "Texto sobre fondos claros."
+    }
+  ],
+  "paleta": {
+    "nota": "Tres niveles, cada uno construido sobre el anterior: 3 principales, 4 duplas, 4 terciarias.",
+    "principales": [
+      "azul",
+      "verde",
+      "amarillo"
+    ],
+    "duplas": [
+      [
+        "azul",
+        "amarillo"
+      ],
+      [
+        "verde",
+        "azul-claro"
+      ],
+      [
+        "amarillo",
+        "naranja"
+      ],
+      [
+        "terra",
+        "verde"
+      ]
+    ],
+    "terciarias": [
+      [
+        "azul",
+        "amarillo",
+        "crema"
+      ],
+      [
+        "verde",
+        "azul-claro",
+        "amarillo"
+      ],
+      [
+        "amarillo",
+        "naranja",
+        "terra"
+      ],
+      [
+        "terra",
+        "verde",
+        "crema"
+      ]
+    ]
+  },
+  "tipografia": {
+    "principal": {
+      "rol": "Geométrica. Dialoga con la geometría del sistema de formas.",
+      "familia": {
+        "pendiente": "Nombre de la familia principal, pesos y licencia, según el manual."
+      },
+      "muestra": "Vida para nuestra tierra"
+    },
+    "secundaria": {
+      "rol": "Lectura corrida: texto largo del manual, informes técnicos y comunicación con productores.",
+      "familia": {
+        "pendiente": "Nombre de la familia secundaria, pesos y licencia, según el manual."
+      }
+    }
+  },
+  "formas": {
+    "nota": "Alfabeto de formas. Todas descienden de la hoja de la espiga del logo. viewBox 0 0 48 48, se rellenan con un color de la paleta.",
+    "viewBox": "0 0 48 48",
+    "items": [
+      {
+        "id": "hoja",
+        "nombre": "Hoja",
+        "svg": "<path d=\"M4 44A40 40 0 0 1 44 4 40 40 0 0 1 4 44Z\"/>",
+        "nota": "La pieza de origen, extraída del logo."
+      },
+      {
+        "id": "cuarto",
+        "nombre": "Cuarto",
+        "svg": "<path d=\"M4 44V4h40A40 40 0 0 1 4 44Z\"/>"
+      },
+      {
+        "id": "medio",
+        "nombre": "Medio",
+        "svg": "<path d=\"M4 34a20 20 0 0 1 40 0Z\"/>"
+      },
+      {
+        "id": "circulo",
+        "nombre": "Círculo",
+        "svg": "<circle cx=\"24\" cy=\"24\" r=\"20\"/>"
+      },
+      {
+        "id": "onda",
+        "nombre": "Onda",
+        "svg": "<path d=\"M4 44V28q10-13 20 0t20 0v16Z\"/>"
+      },
+      {
+        "id": "espiga",
+        "nombre": "Espiga",
+        "svg": "<path d=\"M22 44V16h4v28Z\"/><path d=\"M24 32c0-7 5-12 12-12 0 7-5 12-12 12Z\"/><path d=\"M24 32c0-7-5-12-12-12 0 7 5 12 12 12Z\"/><path d=\"M24 20c0-7 5-12 12-12 0 7-5 12-12 12Z\"/><path d=\"M24 20c0-7-5-12-12-12 0 7 5 12 12 12Z\"/>",
+        "nota": "Referencia directa al logo."
+      },
+      {
+        "id": "gota",
+        "nombre": "Gota",
+        "svg": "<path d=\"M24 5c9 12 13 17 13 22a13 13 0 0 1-26 0c0-5 4-10 13-22Z\"/>"
+      },
+      {
+        "id": "arco",
+        "nombre": "Arco",
+        "svg": "<path d=\"M4 44A40 40 0 0 1 44 4v14A26 26 0 0 0 18 44Z\"/>"
+      },
+      {
+        "id": "estrella",
+        "nombre": "Estrella",
+        "svg": "<path d=\"M24 4c2 11 9 18 20 20-11 2-18 9-20 20-2-11-9-18-20-20 11-2 18-9 20-20Z\"/>"
+      },
+      {
+        "id": "casco",
+        "nombre": "Casco",
+        "svg": "<path d=\"M9 33a15 15 0 0 1 30 0Z\"/><path d=\"M4 35h40v6H4Z\"/>"
+      },
+      {
+        "id": "c",
+        "nombre": "C",
+        "svg": "<path d=\"M24 4a20 20 0 1 0 0 40V33a9 9 0 1 1 0-18Z\"/>"
+      },
+      {
+        "id": "ondas",
+        "nombre": "Ondas",
+        "svg": "<path d=\"M4 38q10-9 20 0t20 0v6H4Z\"/><path d=\"M4 26q10-9 20 0t20 0v6q-10-9-20 0T4 32Z\"/><path d=\"M4 14q10-9 20 0t20 0v6q-10-9-20 0T4 20Z\"/>"
+      }
+    ]
+  },
+  "patron": {
+    "nota": "El patrón se arma con cuatro piezas a sangre que descienden de la hoja, rotadas de a 90°. Es lo mismo que hace el generador web.",
+    "piezas": [
+      {
+        "id": "hoja",
+        "d": "M0 48A48 48 0 0 1 48 0A48 48 0 0 1 0 48Z"
+      },
+      {
+        "id": "cuarto",
+        "d": "M0 0H48A48 48 0 0 1 0 48Z"
+      },
+      {
+        "id": "medio",
+        "d": "M0 0H48A24 24 0 0 1 0 0Z"
+      },
+      {
+        "id": "circulo",
+        "d": "M0 24a24 24 0 1 0 48 0a24 24 0 1 0-48 0Z"
+      }
+    ],
+    "paletas": [
+      {
+        "id": "azul",
+        "nombre": "Azul",
+        "fondo": "azul",
+        "formas": [
+          "amarillo",
+          "crema",
+          "azul-claro"
+        ]
+      },
+      {
+        "id": "verde",
+        "nombre": "Verde",
+        "fondo": "verde",
+        "formas": [
+          "azul",
+          "crema",
+          "azul-claro"
+        ]
+      },
+      {
+        "id": "terra",
+        "nombre": "Terra",
+        "fondo": "terra",
+        "formas": [
+          "amarillo",
+          "naranja",
+          "verde"
+        ]
+      }
+    ],
+    "defaults": {
+      "columnas": 6,
+      "vacio": 0.22
+    }
+  },
+  "iconos": {
+    "nota": "164 íconos en seis categorías que replican las áreas de la compañía. Trazo unificado, grilla de 24 px. Acá están cargados los 18 de la muestra; el resto se suma exportando del Figma.",
+    "total_en_manual": 164,
+    "viewBox": "0 0 24 24",
+    "trazo": {
+      "ancho": 2,
+      "terminaciones": "round",
+      "uniones": "round"
+    },
+    "categorias": [
+      {
+        "id": "Producción",
+        "color": "verde"
+      },
+      {
+        "id": "Sostenibilidad",
+        "color": "verde-osc"
+      },
+      {
+        "id": "Comunidad",
+        "color": "amarillo"
+      },
+      {
+        "id": "Comercial",
+        "color": "naranja"
+      },
+      {
+        "id": "Seguridad",
+        "color": "azul-claro"
+      },
+      {
+        "id": "Datos",
+        "color": "terra"
+      }
+    ],
+    "items": [
+      {
+        "id": "planta",
+        "nombre": "Fertilizante",
+        "categoria": "Producción",
+        "claves": [
+          "grano",
+          "nutriente",
+          "urea",
+          "planta"
+        ],
+        "svg": "<path d=\"M12 21v-8\"/><path d=\"M12 13c0-4 3-7 7-7 0 4-3 7-7 7Z\"/><path d=\"M12 16c0-3-2-5-5-5 0 3 2 5 5 5Z\"/>"
+      },
+      {
+        "id": "fabrica",
+        "nombre": "Planta industrial",
+        "categoria": "Producción",
+        "claves": [
+          "fabrica",
+          "industria",
+          "bahia"
+        ],
+        "svg": "<path d=\"M3 21V10l6 4V10l6 4V7l6 4v10Z\"/><path d=\"M3 21h18\"/>"
+      },
+      {
+        "id": "camion",
+        "nombre": "Logística",
+        "categoria": "Producción",
+        "claves": [
+          "camion",
+          "transporte",
+          "despacho"
+        ],
+        "svg": "<path d=\"M2 7h11v10H2Z\"/><path d=\"M13 10h4l4 4v3h-8Z\"/><circle cx=\"7\" cy=\"19\" r=\"1.6\"/><circle cx=\"17\" cy=\"19\" r=\"1.6\"/>"
+      },
+      {
+        "id": "hoja",
+        "nombre": "Hoja",
+        "categoria": "Sostenibilidad",
+        "claves": [
+          "verde",
+          "ambiente",
+          "cultivo",
+          "brote"
+        ],
+        "svg": "<path d=\"M20 4c-9 0-15 4-15 10a6 6 0 0 0 11 4c4-3 5-9 4-14Z\"/><path d=\"M6 20c1-5 4-9 9-11\"/>"
+      },
+      {
+        "id": "gota",
+        "nombre": "Agua",
+        "categoria": "Sostenibilidad",
+        "claves": [
+          "gota",
+          "riego",
+          "hidrico"
+        ],
+        "svg": "<path d=\"M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11Z\"/>"
+      },
+      {
+        "id": "ciclo",
+        "nombre": "Economía circular",
+        "categoria": "Sostenibilidad",
+        "claves": [
+          "ciclo",
+          "reciclaje",
+          "circular"
+        ],
+        "svg": "<path d=\"M4.5 12a7.5 7.5 0 0 1 13-5\"/><path d=\"M19.5 12a7.5 7.5 0 0 1-13 5\"/><path d=\"M17.5 3v4h-4\"/><path d=\"M6.5 21v-4h4\"/>"
+      },
+      {
+        "id": "escuela",
+        "nombre": "Escuelas",
+        "categoria": "Comunidad",
+        "claves": [
+          "educacion",
+          "ingeniero",
+          "white",
+          "programa"
+        ],
+        "svg": "<path d=\"M12 3 21 8v13H3V8Z\"/><path d=\"M9 21v-7h6v7\"/>"
+      },
+      {
+        "id": "personas",
+        "nombre": "Equipos",
+        "categoria": "Comunidad",
+        "claves": [
+          "personas",
+          "gente",
+          "areas"
+        ],
+        "svg": "<circle cx=\"9\" cy=\"8\" r=\"3.2\"/><circle cx=\"17.5\" cy=\"9\" r=\"2.4\"/><path d=\"M3 20a6 6 0 0 1 12 0\"/><path d=\"M15.8 20a4.6 4.6 0 0 1 5.2-2.6\"/>"
+      },
+      {
+        "id": "manos",
+        "nombre": "Alianzas",
+        "categoria": "Comunidad",
+        "claves": [
+          "red",
+          "vinculo",
+          "acuerdo",
+          "proveedores"
+        ],
+        "svg": "<circle cx=\"12\" cy=\"6.5\" r=\"2.5\"/><circle cx=\"6\" cy=\"17\" r=\"2.5\"/><circle cx=\"18\" cy=\"17\" r=\"2.5\"/><path d=\"M10.4 8.7 7.6 14.6\"/><path d=\"m13.6 8.7 2.8 5.9\"/><path d=\"M8.5 17h7\"/>"
+      },
+      {
+        "id": "campo",
+        "nombre": "Campo",
+        "categoria": "Comercial",
+        "claves": [
+          "surco",
+          "productor",
+          "agro",
+          "siembra"
+        ],
+        "svg": "<path d=\"M2 20c4.5-2 15.5-2 20 0\"/><path d=\"M4 14.5c3.5-1.5 12.5-1.5 16 0\"/><path d=\"M6 9.5c2.5-1 9.5-1 12 0\"/><path d=\"M12 20V6\"/>"
+      },
+      {
+        "id": "bolsa",
+        "nombre": "Producto",
+        "categoria": "Comercial",
+        "claves": [
+          "bolsa",
+          "venta",
+          "despacho"
+        ],
+        "svg": "<path d=\"M6.5 8h11v13h-11Z\"/><path d=\"M6.5 8 8 4.5h8L17.5 8\"/><path d=\"M10 12h4\"/>"
+      },
+      {
+        "id": "grafico",
+        "nombre": "Resultados",
+        "categoria": "Comercial",
+        "claves": [
+          "grafico",
+          "ventas",
+          "rendimiento"
+        ],
+        "svg": "<path d=\"M4 20h16\"/><path d=\"M7.5 20v-5\"/><path d=\"M12 20v-9\"/><path d=\"M16.5 20v-3\"/>"
+      },
+      {
+        "id": "casco",
+        "nombre": "Casco",
+        "categoria": "Seguridad",
+        "claves": [
+          "proteccion",
+          "epp",
+          "obra"
+        ],
+        "svg": "<path d=\"M4.5 16a7.5 7.5 0 0 1 15 0Z\"/><path d=\"M3 16h18\"/><path d=\"M9.5 8.7V6h5v2.7\"/>"
+      },
+      {
+        "id": "escudo",
+        "nombre": "Protección",
+        "categoria": "Seguridad",
+        "claves": [
+          "escudo",
+          "seguro",
+          "resguardo"
+        ],
+        "svg": "<path d=\"M12 3l8 3v6c0 5-3.6 7.9-8 9-4.4-1.1-8-4-8-9V6Z\"/>"
+      },
+      {
+        "id": "alerta",
+        "nombre": "Alerta",
+        "categoria": "Seguridad",
+        "claves": [
+          "riesgo",
+          "aviso",
+          "emergencia"
+        ],
+        "svg": "<path d=\"M12 4l9 16H3Z\"/><path d=\"M12 10v4\"/><path d=\"M12 17h.01\"/>"
+      },
+      {
+        "id": "matraz",
+        "nombre": "Laboratorio",
+        "categoria": "Datos",
+        "claves": [
+          "analisis",
+          "calidad",
+          "ensayo"
+        ],
+        "svg": "<path d=\"M10 3v6.5L4.5 20h15L14 9.5V3\"/><path d=\"M9 3h6\"/><path d=\"M7.6 15h8.8\"/>"
+      },
+      {
+        "id": "grilla",
+        "nombre": "Grilla",
+        "categoria": "Datos",
+        "claves": [
+          "tabla",
+          "datos",
+          "estructura"
+        ],
+        "svg": "<path d=\"M4 4h7v7H4Z\"/><path d=\"M13 4h7v7h-7Z\"/><path d=\"M4 13h7v7H4Z\"/><path d=\"M13 13h7v7h-7Z\"/>"
+      },
+      {
+        "id": "doc",
+        "nombre": "Informe",
+        "categoria": "Datos",
+        "claves": [
+          "documento",
+          "reporte",
+          "datos"
+        ],
+        "svg": "<path d=\"M6 3h8l4 4v14H6Z\"/><path d=\"M14 3v4h4\"/><path d=\"M9 13h6\"/><path d=\"M9 17h4\"/>"
+      }
+    ]
+  },
+  "logo": {
+    "reglas": [
+      "Se usa el archivo vectorial original. Nunca se redibuja ni se reconstruye desde una captura.",
+      "Se respeta el área de resguardo: si algo entra ahí, el logo deja de leerse como logo."
+    ],
+    "area_resguardo": {
+      "pendiente": "Medida del área de resguardo (en unidades del logo) y tamaño mínimo, según el manual v1.3.2."
+    },
+    "archivos": {
+      "pendiente": "Links a las versiones del logo (positivo, negativo, monocromo) en SVG."
+    }
+  },
+  "voz": {
+    "nota": {
+      "pendiente": "Tono y reglas de redacción del manual. Hasta cargarlas, revisar_texto solo controla terminología."
+    },
+    "preferir": [],
+    "evitar": []
+  },
+  "glosario": [
+    {
+      "termino": "Área de resguardo",
+      "definicion": "El aire mínimo alrededor del logo. Si algo entra ahí, el logo deja de leerse como logo."
+    },
+    {
+      "termino": "Vectorial",
+      "definicion": "Un archivo que se agranda todo lo que quieras sin pixelarse. Es el que hay que mandarle al imprentero."
+    },
+    {
+      "termino": "Dupla",
+      "definicion": "Una combinación de dos colores del sistema que ya está aprobada. No hace falta elegir: están armadas."
+    },
+    {
+      "termino": "Terciaria",
+      "definicion": "Una dupla más un tercer color. Sirve cuando la pieza necesita un acento más sin salirse del sistema.",
+      "borrador": true
+    },
+    {
+      "termino": "Patrón",
+      "definicion": "Una composición hecha con las formas del sistema. Se genera con el generador, no se dibuja a mano.",
+      "borrador": true
+    }
+  ],
+  "tareas": [
+    {
+      "id": "presentacion",
+      "titulo": "Armar una presentación",
+      "claves": [
+        "presentacion",
+        "ppt",
+        "slides",
+        "diapositivas",
+        "powerpoint",
+        "keynote",
+        "deck"
+      ],
+      "pasos": [
+        "Elegí una dupla para toda la presentación y no la cambies entre láminas.",
+        "Portada: patrón generado sobre la principal de la dupla, título en la tipografía principal.",
+        "Láminas de contenido: fondo crema, texto en tinta, la dupla como acento.",
+        "Íconos del set oficial en el color de la dupla, nunca íconos de stock."
+      ],
+      "herramientas": [
+        "generar_patron",
+        "buscar_iconos",
+        "validar_combinacion"
+      ],
+      "borrador": true
+    },
+    {
+      "id": "mail",
+      "titulo": "Mandar un mail o newsletter",
+      "claves": [
+        "mail",
+        "email",
+        "correo",
+        "newsletter",
+        "firma"
+      ],
+      "pasos": [
+        "Cabecera con una franja de patrón de pocas filas.",
+        "Texto en tinta sobre blanco o crema; el azul para links y botones.",
+        "Un solo ícono por bloque, del set oficial."
+      ],
+      "herramientas": [
+        "generar_patron",
+        "buscar_iconos",
+        "contraste"
+      ],
+      "borrador": true
+    },
+    {
+      "id": "cartel",
+      "titulo": "Hacer un cartel, banner o pieza de vía pública",
+      "claves": [
+        "cartel",
+        "banner",
+        "afiche",
+        "cartel de obra",
+        "señaletica",
+        "via publica",
+        "stand",
+        "lona"
+      ],
+      "pasos": [
+        "Una sola forma grande del alfabeto como máscara u ordenador del layout.",
+        "Una dupla, sin sumar colores.",
+        "Verificá contraste del texto contra el fondo antes de mandar a imprenta.",
+        "Mandá el archivo vectorial al imprentero."
+      ],
+      "herramientas": [
+        "formas",
+        "validar_combinacion",
+        "contraste"
+      ],
+      "borrador": true
+    },
+    {
+      "id": "redes",
+      "titulo": "Publicar en redes",
+      "claves": [
+        "redes",
+        "instagram",
+        "linkedin",
+        "post",
+        "historia",
+        "story",
+        "posteo"
+      ],
+      "pasos": [
+        "Fondo en una principal, patrón o forma como recurso.",
+        "Un ícono por categoría para que se lea de qué área es el contenido."
+      ],
+      "herramientas": [
+        "generar_patron",
+        "buscar_iconos"
+      ],
+      "borrador": true
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.4.0",
+      "fecha": "2026-07",
+      "cambio": "Se incorpora el programa comunitario de escuelas."
+    },
+    {
+      "version": "1.3.2",
+      "fecha": "2026-05",
+      "cambio": "Corrección del área de resguardo en aplicaciones chicas."
+    },
+    {
+      "version": "1.3.0",
+      "fecha": "2026-04",
+      "cambio": "Nuevas paletas terciarias y reglas de combinación."
+    },
+    {
+      "version": "1.0.0",
+      "fecha": "2026-02",
+      "cambio": "Primera versión entregada a las siete áreas."
+    }
+  ]
+}
