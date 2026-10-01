@@ -317,13 +317,71 @@ export function revisarTexto(marca, texto) {
       }
     }
   }
-  const sinReglas = !arr(voz.evitar).length && !arr(voz.preferir).length;
+  for (const o of arr(marca.obsoleto).filter((x) => x.tipo === "termino")) {
+    for (const t of [o.nombre, ...arr(o.alias)]) {
+      if (t && plano.includes(normalizar(t))) {
+        hallazgos.push({ tipo: "obsoleto", encontrado: t, usar: o.reemplazo, desde: o.desde, motivo: o.motivo });
+        break;
+      }
+    }
+  }
+  const sinReglas = !arr(voz.evitar).length && !arr(voz.preferir).length && !arr(marca.obsoleto).length;
   return {
     hallazgos,
     ok: hallazgos.length === 0,
     ...(sinReglas ? { aviso: "La marca no tiene reglas de voz cargadas todavía: no se controló nada." } : {}),
     nota: voz.nota
   };
+}
+
+/* --- Vigencia ---------------------------------------------------------------- */
+
+/* El agente no sabe que archivo es el actual: va a elegir algo razonable y
+   seguir. Esto se lo dice. Cualquier cosa que alguien encuentre en una
+   carpeta vieja (un hex, un logo, un nombre de archivo, una palabra) se
+   chequea contra la marca vigente y contra la lista de lo retirado. */
+export function vigencia(marca, consulta) {
+  const q = normalizar(consulta);
+  const retirado = arr(marca.obsoleto).find((o) =>
+    [o.nombre, o.valor, ...arr(o.alias)].filter(Boolean).some((x) => {
+      const n = normalizar(x);
+      return n === q || (q.length > 3 && (n.includes(q) || q.includes(n)));
+    }) || (o.valor && hexNormal(o.valor) && hexNormal(o.valor) === hexNormal(consulta))
+  );
+  if (retirado) {
+    return { vigente: false, que: retirado.tipo, nombre: retirado.nombre, reemplazo: retirado.reemplazo, desde: retirado.desde, motivo: retirado.motivo, versionActual: marca.version };
+  }
+
+  const color = resolverColor(marca, consulta);
+  if (color?.deLaMarca) return { vigente: true, que: "color", id: color.id, hex: color.hex, versionActual: marca.version };
+
+  const enLista = (lista, que) => {
+    const x = arr(lista).find((i) => normalizar(i.id) === q || normalizar(i.nombre) === q);
+    return x ? { vigente: true, que, id: x.id, nombre: x.nombre, versionActual: marca.version } : null;
+  };
+  const encontrado =
+    enLista(marca.iconos?.items, "icono") ||
+    enLista(marca.formas?.items, "forma") ||
+    enLista(arr(marca.logo?.archivos), "logo");
+  if (encontrado) return encontrado;
+
+  if (color) {
+    return { vigente: false, que: "color", hex: color.hex, motivo: "No es un color de la marca.", reemplazo: color.masCercano.id, masCercano: color.masCercano, versionActual: marca.version };
+  }
+  return {
+    vigente: null,
+    motivo: "No está en la marca vigente ni en la lista de retirados. No se puede confirmar: tratalo como no vigente y reportalo.",
+    versionActual: marca.version
+  };
+}
+
+/* Quien decide cada parte del sistema. Un documento de voz cuyo dueno ya no
+   esta en la empresa es un documento sin dueno: aca se ve. */
+export function responsable(marca, area) {
+  const lista = arr(marca.responsables);
+  if (!area) return lista;
+  const q = normalizar(area);
+  return lista.find((r) => arr(r.areas).some((a) => normalizar(a) === q || q.includes(normalizar(a)))) || lista.find((r) => arr(r.areas).includes("todo")) || null;
 }
 
 /* --- Exportables ------------------------------------------------------------- */
@@ -350,8 +408,10 @@ export function resumen(marca) {
       iconos: marca.iconos?.items?.length || 0,
       iconosEnManual: marca.iconos?.total_en_manual,
       glosario: marca.glosario?.length || 0,
-      tareas: arr(marca.tareas).map((t) => t.titulo)
+      tareas: arr(marca.tareas).map((t) => t.titulo),
+      retirados: arr(marca.obsoleto).length
     },
+    responsables: marca.responsables,
     pendientes: pendientes(marca).length,
     ultimoCambio: marca.changelog?.[0]
   };

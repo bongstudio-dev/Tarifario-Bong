@@ -1,6 +1,22 @@
 # Framework de marcas Bong
 
-Lo del capítulo 4 del caso Profertil, llevado un paso más allá: **un sistema
+Un sistema de marca agéntico, en el sentido del ensayo de littleplains
+(*Agentic Systems Are the Future of Brands*): cada pieza que sale es una
+decisión sobre qué es la marca, cada vez las toman más personas y más agentes,
+y todos trabajan desde versiones distintas de la compañía. El agente, además,
+"no sabe qué archivo está vigente: va a hacer una elección razonable y seguir".
+
+El framework ataca eso en tres frentes:
+
+1. **Una sola fuente de verdad**, el `marca.json`, que leen el MCP y el portal web por igual.
+2. **Vigencia explícita**: lo retirado está listado con su reemplazo, así un
+   logo de 2019 encontrado en una carpeta se reconoce como viejo (`es_vigente`).
+3. **Un sistema vivo**: cuando el sistema no cubre algo, el agente lo resuelve
+   con lo más cercano aprobado, lo dice, y lo anota (`reportar_hueco`). Ese
+   registro, con dueño para cada área (`responsables`), es la lista de trabajo
+   de la próxima versión del manual. No hace falta esperar una reunión o un PDF nuevo.
+
+Es lo mismo que plantea el capítulo 4 del caso Profertil, llevado un paso más allá: **un sistema
 que depende del estudio es un sistema incompleto**. El generador de patrones y
 el buscador de íconos ya sacaban al estudio del medio para las piezas
 cotidianas. Esto le da el mismo sistema a la IA que usa el cliente: cualquier
@@ -41,10 +57,14 @@ dos versiones parecidas.
 | `tipografia`, `reglas_logo`, `glosario`, `changelog` | El manual, consultable |
 | `revisar_texto` | Voz y terminología de la marca |
 | `tokens` | Variables CSS o JSON para proveedores web |
+| `es_vigente` | ¿Este hex, logo, archivo o término es de la versión actual? Si no, qué lo reemplaza |
+| `responsables` | Quién decide cada parte del sistema, para saber con quién validar |
+| `reportar_hueco` | Anota lo que el sistema no cubrió y qué decidió el agente en su lugar |
 
 El servidor le pasa a Claude unas instrucciones de uso al conectarse: arrancar
 por `que_necesitas_hacer`, no inventar colores ni íconos, validar combinaciones
-y contraste, y **decir que falta un dato** cuando viene como
+y contraste, pasar por `es_vigente` todo lo que la persona traiga de afuera,
+reportar los huecos, y **decir que falta un dato** cuando viene como
 `{ "pendiente": "…" }` en vez de completarlo. Eso último es lo que permite
 publicar una marca a medio cargar sin que la IA rellene los huecos.
 
@@ -69,6 +89,20 @@ Los SVG de íconos y formas van como el contenido interno del `<svg>` (los
 `<path>`, sin la etiqueta de afuera), en la grilla del `viewBox` declarado.
 Para Profertil salieron de los `<symbol>` de `caso-profertil-maqueta.html`;
 para una marca nueva salen del Figma.
+
+## El registro de huecos
+
+Cada `reportar_hueco` suma una línea a `registro/<marca>.jsonl` (o a la
+carpeta de `REGISTRO`), con fecha, versión de la marca, qué se pidió, qué
+faltaba y qué decidió el agente. Claude también lo puede leer como recurso
+(`marca://<id>/huecos.json`). No se versiona en git: es dato de uso del cliente.
+
+El ciclo es: el registro se revisa con el responsable, lo que se resuelve
+entra al `marca.json` con una versión nueva y su línea en el changelog, y el
+MCP sirve esa versión desde el próximo pedido. `validar.mjs` no deja publicar
+una versión sin su entrada en el changelog.
+
+En un host con disco efímero, `REGISTRO` tiene que apuntar a un volumen persistente.
 
 ## Conectarlo
 
@@ -112,7 +146,9 @@ el link de descarga junto con el código.
 
 ## Qué falta
 
-- **Profertil**: las familias tipográficas, la medida del área de resguardo,
+- **Profertil**: la lista de lo retirado (`obsoleto`: qué colores de la paleta
+  vieja quedaron afuera, versiones anteriores del logo), los contactos de
+  `responsables`, las familias tipográficas, la medida del área de resguardo,
   los archivos del logo y las reglas de voz. Las cuatro recetas de
   `tareas` y dos entradas del glosario las escribimos nosotros a partir de lo
   que dice el caso y están marcadas `"borrador": true`: hay que pasarlas contra

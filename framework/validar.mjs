@@ -77,8 +77,30 @@ function revisar(id, marca) {
   });
 
   /* Las herramientas que nombra una receta tienen que existir en el MCP. */
-  const tools = new Set(["marca", "que_necesitas_hacer", "colores", "validar_combinacion", "contraste", "buscar_iconos", "icono", "forma", "formas", "generar_patron", "tipografia", "reglas_logo", "glosario", "revisar_texto", "tokens", "changelog"]);
+  const tools = new Set(["marca", "que_necesitas_hacer", "colores", "validar_combinacion", "contraste", "buscar_iconos", "icono", "forma", "formas", "generar_patron", "tipografia", "reglas_logo", "glosario", "revisar_texto", "tokens", "changelog", "es_vigente", "responsables", "reportar_hueco"]);
   N.arr(marca.tareas).forEach((t) => N.arr(t.herramientas).forEach((h) => { if (!tools.has(h)) e(`tarea ${t.id}: herramienta "${h}" no existe`); }));
+
+  /* El manual se versiona como software: la version de la marca es la del
+     ultimo cambio anotado. Si se toca el marca.json sin anotar, no pasa. */
+  const ultimo = N.arr(marca.changelog)[0];
+  if (!ultimo) e("changelog vacío");
+  else if (ultimo.version !== marca.version) e(`version ${marca.version} sin entrada en el changelog (la última es ${ultimo.version})`);
+
+  /* Un color retirado tiene que apuntar a uno vigente, y no puede ser a la
+     vez vigente y retirado. */
+  N.arr(marca.obsoleto).forEach((o, i) => {
+    if (!o.tipo || !o.nombre) e(`obsoleto[${i}]: falta tipo o nombre`);
+    if (o.tipo === "color") {
+      if (o.reemplazo) existe(o.reemplazo, `obsoleto[${i}].reemplazo`);
+      const hex = N.hexNormal(o.valor || "");
+      if (hex && colores.some((c) => N.hexNormal(c.hex) === hex)) e(`obsoleto[${i}]: ${hex} figura también como color vigente`);
+    }
+  });
+
+  const responsables = N.arr(marca.responsables);
+  if (responsables.length && !responsables.some((r) => N.arr(r.areas).includes("todo"))) {
+    e('responsables: nadie tiene el área "todo"; los huecos no tienen a quién ir');
+  }
 
   /* Contraste: avisa, no corta. Una dupla puede ser decorativa. */
   const avisos = [];

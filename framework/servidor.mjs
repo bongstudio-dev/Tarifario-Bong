@@ -16,6 +16,8 @@
                    "Authorization: Bearer <token>" o en la ruta /<token>/mcp
      URL_PUBLICA   base publica (https://marca.bongstudio.ar/<token>). Si esta,
                    las tools devuelven links descargables a los SVG.
+     REGISTRO      carpeta donde se anotan los huecos que reportan los
+                   agentes (registro/ en la raiz del repo).
 
    Sin dependencias: el protocolo es JSON-RPC 2.0, y con stdio y HTTP plano
    alcanza para Claude Desktop, Claude Code y los conectores de claude.ai.
@@ -28,6 +30,29 @@ import { fileURLToPath } from "node:url";
 import * as N from "./nucleo.mjs";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/* --- Registro de huecos -------------------------------------------------------
+   Cuando el sistema no cubre un pedido, el agente igual va a resolverlo de
+   alguna forma. Lo que no puede pasar es que eso quede invisible: cada hueco
+   se anota aca, y es la lista de trabajo para la proxima version del manual.
+   Un JSONL por marca, append-only. */
+function rutaRegistro(marca) {
+  return path.join(process.env.REGISTRO ? path.resolve(process.env.REGISTRO) : path.join(RAIZ, "registro"), `${marca.id}.jsonl`);
+}
+
+function anotarHueco(marca, hueco) {
+  const ruta = rutaRegistro(marca);
+  fs.mkdirSync(path.dirname(ruta), { recursive: true });
+  const entrada = { fecha: new Date().toISOString(), version: marca.version, ...hueco };
+  fs.appendFileSync(ruta, JSON.stringify(entrada) + "\n");
+  return entrada;
+}
+
+function leerHuecos(marca) {
+  const ruta = rutaRegistro(marca);
+  if (!fs.existsSync(ruta)) return [];
+  return fs.readFileSync(ruta, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+}
 const VERSIONES = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 
 /* --- Argumentos ------------------------------------------------------------ */
@@ -217,6 +242,39 @@ export function crearTools(marca, { urlPublica } = {}) {
       description: "Historial de versiones del sistema. El manual se versiona como software.",
       inputSchema: { type: "object", properties: {} },
       run: () => json({ version: marca.version, cambios: N.arr(marca.changelog) })
+    },
+    {
+      name: "es_vigente",
+      title: "¿Esto está vigente?",
+      description: "Chequea si algo que alguien encontró (un hex, un logo, un nombre de archivo, una tipografía, una palabra) es de la versión actual de la marca o quedó retirado, y qué lo reemplaza. Usala siempre que la persona traiga un archivo, una pieza vieja o un color que no salió de estas tools.",
+      inputSchema: { type: "object", properties: { que: { type: "string", description: "Lo que hay que chequear: \"#1A47B8\", \"logo_2019.png\", \"Profertil S.A.\"." } }, required: ["que"] },
+      run: ({ que }) => json(N.vigencia(marca, que))
+    },
+    {
+      name: "responsables",
+      title: "¿A quién le pregunto?",
+      description: "Quién decide cada parte del sistema (marca, voz, logo, web, sistema). Usala cuando algo no está cubierto o está pendiente, para decirle a la persona con quién validarlo.",
+      inputSchema: { type: "object", properties: { area: { type: "string", description: "Sobre qué: voz, logo, colores, web… Vacío lista todos." } } },
+      run: ({ area }) => json(N.responsable(marca, area) ?? { aviso: "No hay responsable cargado para esa área." })
+    },
+    {
+      name: "reportar_hueco",
+      title: "Reportar un hueco del sistema",
+      description: "Anota algo que el sistema no cubre: un pedido sin receta, un dato pendiente que hizo falta, un caso que el manual no anticipó, o una decisión que tuviste que tomar por tu cuenta. Llamala cada vez que pase, sin pedir permiso: es como el sistema se entera de dónde le falta.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          pedido: { type: "string", description: "Qué pidió la persona." },
+          falta: { type: "string", description: "Qué no estaba en el sistema." },
+          decision: { type: "string", description: "Qué hiciste en su lugar, si hiciste algo." }
+        },
+        required: ["pedido", "falta"]
+      },
+      run: ({ pedido, falta, decision }) => {
+        const entrada = anotarHueco(marca, { pedido, falta, decision });
+        const quien = N.responsable(marca, falta);
+        return json({ anotado: true, fecha: entrada.fecha, ...(quien ? { validarCon: quien } : {}) });
+      }
     }
   ];
 }
@@ -231,7 +289,9 @@ function instrucciones(marca) {
     "- Antes de producir cualquier pieza, llamá a que_necesitas_hacer con lo que te pidieron y seguí la receta.",
     "- Usá solo colores, combinaciones, formas e íconos que salgan de estas tools. No inventes hex ni dibujes íconos propios.",
     "- Si combinás colores, pasalos por validar_combinacion. Si ponés texto sobre color, pasalo por contraste.",
+    "- Si la persona trae un archivo, una pieza vieja, un logo o un color que no salió de estas tools, pasalo por es_vigente antes de usarlo. Hay versiones viejas de la marca dando vueltas.",
     "- Si un dato viene como { pendiente: ... }, la marca todavía no lo tiene cargado: decilo y no lo completes por tu cuenta.",
+    "- Si el sistema no cubre lo que te piden, vas a tener que decidir algo. Elegí lo más cercano que sí esté aprobado, decí que es una decisión tuya y no del sistema, llamá a reportar_hueco y decile a la persona con quién validarlo (responsables).",
     "- Si algo de lo que te piden contradice el sistema, explicá por qué y ofrecé la alternativa que sí está aprobada."
   ].join("\n");
 }
@@ -243,7 +303,8 @@ function recursos(marca) {
   return [
     { uri: `${base}/marca.json`, name: `${marca.nombre} — sistema completo`, mimeType: "application/json", leer: () => JSON.stringify(marca, null, 2) },
     { uri: `${base}/tokens.css`, name: `${marca.nombre} — tokens CSS`, mimeType: "text/css", leer: () => N.tokensCss(marca) },
-    { uri: `${base}/pendientes.json`, name: `${marca.nombre} — datos que faltan cargar`, mimeType: "application/json", leer: () => JSON.stringify(N.pendientes(marca), null, 2) }
+    { uri: `${base}/pendientes.json`, name: `${marca.nombre} — datos que faltan cargar`, mimeType: "application/json", leer: () => JSON.stringify(N.pendientes(marca), null, 2) },
+    { uri: `${base}/huecos.json`, name: `${marca.nombre} — huecos reportados por los agentes`, mimeType: "application/json", leer: () => JSON.stringify(leerHuecos(marca), null, 2) }
   ];
 }
 

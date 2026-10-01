@@ -12,10 +12,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
+import os from "node:os";
+import * as N from "./nucleo.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const SERVIDOR = path.join(AQUI, "servidor.mjs");
 const MARCAS = fs.readdirSync(path.join(AQUI, "..", "marcas")).filter((d) => !d.startsWith("_"));
+/* Los huecos de la prueba van a una carpeta temporal, no al registro real. */
+const REGISTRO = fs.mkdtempSync(path.join(os.tmpdir(), "bong-registro-"));
+process.env.REGISTRO = REGISTRO;
 
 function clienteStdio(marca) {
   const p = spawn(process.execPath, [SERVIDOR, "--marca", marca], { stdio: ["pipe", "pipe", "inherit"] });
@@ -59,7 +64,10 @@ const llamadas = {
   glosario: { termino: "dupla" },
   revisar_texto: { texto: "Hola" },
   tokens: { formato: "css" },
-  changelog: {}
+  changelog: {},
+  es_vigente: { que: "#0B3FA8" },
+  responsables: {},
+  reportar_hueco: { pedido: "un video vertical", falta: "no hay receta para video", decision: "usé la receta de redes" }
 };
 
 let ok = 0;
@@ -119,6 +127,18 @@ for (const marca of MARCAS) {
     assert.equal(a, b);
     assert.ok(a.startsWith("<svg") && a.includes("#0B3FA8"));
     bien("reglas del sistema: duplas, hex fuera de paleta, recetas, categorías, patrón determinista");
+
+    assert.equal((await t("es_vigente", { que: "azul" })).vigente, true);
+    const ajeno = await t("es_vigente", { que: "#0A40A0" });
+    assert.equal(ajeno.vigente, false);
+    assert.equal(ajeno.reemplazo, "azul");
+    assert.equal((await t("es_vigente", { que: "logo_2019_final.png" })).vigente, null);
+    const hueco = await t("reportar_hueco", { pedido: "cartel en inglés", falta: "voz en inglés" });
+    assert.equal(hueco.anotado, true);
+    assert.equal(hueco.validarCon.quien, "Comunicaciones Integradas · Profertil");
+    const leidos = JSON.parse((await c.pedir("resources/read", { uri: "marca://profertil/huecos.json" })).result.contents[0].text);
+    assert.ok(leidos.some((h) => h.falta === "voz en inglés" && h.version === "1.4.0"));
+    bien("vigencia, responsables y registro de huecos");
   }
   c.cerrar();
 }
@@ -153,4 +173,22 @@ try {
   h.kill();
 }
 
+/* Lo retirado, con una marca de juguete: Profertil todavia no tiene la
+   lista cargada. */
+const juguete = {
+  id: "juguete", version: "2.0.0",
+  colores: [{ id: "azul", nombre: "Azul", hex: "#0B3FA8" }],
+  obsoleto: [
+    { tipo: "color", nombre: "Azul 2015", valor: "#1A47B8", reemplazo: "azul", desde: "2.0.0", motivo: "Se unificó el azul." },
+    { tipo: "logo", nombre: "Logo con bajada", alias: ["logo_2019"], reemplazo: "Logo sin bajada", desde: "2.0.0" },
+    { tipo: "termino", nombre: "S.A.", alias: ["Sociedad Anónima"], reemplazo: "el nombre solo", desde: "2.0.0" }
+  ],
+  voz: {}
+};
+assert.equal(N.vigencia(juguete, "#1a47b8").reemplazo, "azul");
+assert.equal(N.vigencia(juguete, "logo_2019_final.png").vigente, false);
+assert.equal(N.revisarTexto(juguete, "Juguete S.A. presenta").hallazgos[0].tipo, "obsoleto");
+bien("lo retirado: hex viejo, logo viejo por nombre de archivo, término en un texto");
+
+fs.rmSync(REGISTRO, { recursive: true, force: true });
 console.log(`\n${ok} chequeos ok`);

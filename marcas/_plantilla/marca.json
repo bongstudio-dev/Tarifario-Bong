@@ -1,53 +1,105 @@
 {
   "id": "PLANTILLA",
   "nombre": "PLANTILLA",
-  "sector": { "pendiente": "Sector o industria del cliente." },
+  "sector": {
+    "pendiente": "Sector o industria del cliente."
+  },
   "estudio": "Bong Studio",
   "version": "0.1.0",
-  "descripcion": { "pendiente": "Qué es la marca en dos o tres oraciones: quién es el cliente y qué resolvió el sistema." },
-  "principios": { "pendiente": "Tres a cinco reglas madre del sistema, en una oración cada una." },
-
-  "colores": { "pendiente": "Lista de { id, nombre, hex, rol } con rol principal, complementario o neutro." },
+  "descripcion": {
+    "pendiente": "Qué es la marca en dos o tres oraciones: quién es el cliente y qué resolvió el sistema."
+  },
+  "principios": {
+    "pendiente": "Tres a cinco reglas madre del sistema, en una oración cada una."
+  },
+  "responsables": {
+    "pendiente": "Quién decide cada parte: lista de { quien, areas, contacto }. Áreas: todo, marca, voz, logo, colores, sistema, web… Siempre del lado del cliente alguien con \"todo\"."
+  },
+  "colores": {
+    "pendiente": "Lista de { id, nombre, hex, rol } con rol principal, complementario o neutro."
+  },
   "paleta": {
-    "principales": { "pendiente": "Ids de los colores principales." },
-    "duplas": { "pendiente": "Pares aprobados, como listas de ids." },
-    "terciarias": { "pendiente": "Tríos aprobados, como listas de ids." }
+    "principales": {
+      "pendiente": "Ids de los colores principales."
+    },
+    "duplas": {
+      "pendiente": "Pares aprobados, como listas de ids."
+    },
+    "terciarias": {
+      "pendiente": "Tríos aprobados, como listas de ids."
+    }
   },
-
   "tipografia": {
-    "principal": { "rol": { "pendiente": "Para qué se usa." }, "familia": { "pendiente": "Familia, pesos y licencia." } },
-    "secundaria": { "rol": { "pendiente": "Para qué se usa." }, "familia": { "pendiente": "Familia, pesos y licencia." } }
+    "principal": {
+      "rol": {
+        "pendiente": "Para qué se usa."
+      },
+      "familia": {
+        "pendiente": "Familia, pesos y licencia."
+      }
+    },
+    "secundaria": {
+      "rol": {
+        "pendiente": "Para qué se usa."
+      },
+      "familia": {
+        "pendiente": "Familia, pesos y licencia."
+      }
+    }
   },
-
   "formas": {
     "viewBox": "0 0 48 48",
-    "items": { "pendiente": "Recursos gráficos del sistema: { id, nombre, svg } con el contenido interno del SVG." }
+    "items": {
+      "pendiente": "Recursos gráficos del sistema: { id, nombre, svg } con el contenido interno del SVG."
+    }
   },
-
-  "patron": { "pendiente": "Si el sistema tiene patrón: piezas (paths a sangre en 48x48), paletas { id, nombre, fondo, formas } y defaults. Si no tiene, borrar esta clave." },
-
+  "patron": {
+    "pendiente": "Si el sistema tiene patrón: piezas (paths a sangre en 48x48), paletas { id, nombre, fondo, formas } y defaults. Si no tiene, borrar esta clave."
+  },
   "iconos": {
     "viewBox": "0 0 24 24",
-    "trazo": { "ancho": 2, "terminaciones": "round", "uniones": "round" },
-    "categorias": { "pendiente": "Lista de { id, color } con el color por categoría." },
-    "items": { "pendiente": "Lista de { id, nombre, categoria, claves, svg }." }
+    "trazo": {
+      "ancho": 2,
+      "terminaciones": "round",
+      "uniones": "round"
+    },
+    "categorias": {
+      "pendiente": "Lista de { id, color } con el color por categoría."
+    },
+    "items": {
+      "pendiente": "Lista de { id, nombre, categoria, claves, svg }."
+    }
   },
-
   "logo": {
-    "reglas": { "pendiente": "Reglas de uso del logo." },
-    "area_resguardo": { "pendiente": "Área de resguardo y tamaño mínimo." },
-    "archivos": { "pendiente": "Links a las versiones del logo en SVG." }
+    "reglas": {
+      "pendiente": "Reglas de uso del logo."
+    },
+    "area_resguardo": {
+      "pendiente": "Área de resguardo y tamaño mínimo."
+    },
+    "archivos": {
+      "pendiente": "Links a las versiones del logo en SVG."
+    }
   },
-
   "voz": {
-    "nota": { "pendiente": "Tono de la marca en dos oraciones." },
+    "nota": {
+      "pendiente": "Tono de la marca en dos oraciones."
+    },
     "preferir": [],
     "evitar": []
   },
-
   "glosario": [],
-  "tareas": { "pendiente": "Recetas por tarea: { id, titulo, claves, pasos, herramientas }. Es la entrada del manual: qué necesitás hacer." },
+  "tareas": {
+    "pendiente": "Recetas por tarea: { id, titulo, claves, pasos, herramientas }. Es la entrada del manual: qué necesitás hacer."
+  },
+  "obsoleto": {
+    "pendiente": "Lo que la marca retiró y alguien puede seguir encontrando en una carpeta vieja: { tipo (color, logo, archivo, tipografia, termino), nombre, valor, alias, reemplazo, desde, motivo }."
+  },
   "changelog": [
-    { "version": "0.1.0", "fecha": "AAAA-MM", "cambio": "Alta de la marca en el framework." }
+    {
+      "version": "0.1.0",
+      "fecha": "AAAA-MM",
+      "cambio": "Alta de la marca en el framework."
+    }
   ]
 }

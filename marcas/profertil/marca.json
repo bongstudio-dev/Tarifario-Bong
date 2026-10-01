@@ -11,6 +11,34 @@
     "No se eligen colores sueltos: se usa una principal, una dupla o una terciaria ya aprobadas.",
     "El logotipo se conserva tal cual. No se redibuja, no se deforma, no se recolorea fuera de la paleta."
   ],
+  "responsables": [
+    {
+      "quien": "Comunicaciones Integradas · Profertil",
+      "areas": [
+        "todo",
+        "marca",
+        "voz",
+        "logo",
+        "aprobaciones"
+      ],
+      "contacto": {
+        "pendiente": "Nombre y mail de la persona de referencia en Comunicaciones Integradas."
+      }
+    },
+    {
+      "quien": "Bong Studio",
+      "areas": [
+        "sistema",
+        "colores",
+        "formas",
+        "patron",
+        "iconos",
+        "tipografia",
+        "manual"
+      ],
+      "contacto": { "pendiente": "Mail de contacto del estudio para consultas del sistema." }
+    }
+  ],
   "colores": [
     {
       "id": "azul",
@@ -637,6 +665,9 @@
       "borrador": true
     }
   ],
+  "obsoleto": {
+    "pendiente": "Lo que el sistema retiró: colores de la paleta anterior que no se conservaron, versiones viejas del logo, tipografías y términos en desuso. Cada uno como { tipo, nombre, valor, alias, reemplazo, desde, motivo }. El diagnóstico conservó el logotipo y parte de la paleta: falta listar qué quedó afuera."
+  },
   "changelog": [
     {
       "version": "1.4.0",
