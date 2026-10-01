@@ -85,6 +85,13 @@
       "rol": "neutro"
     },
     {
+      "id": "blanco",
+      "nombre": "Blanco",
+      "hex": "#FFFFFF",
+      "rol": "neutro",
+      "nota": "Formas y texto sobre las principales."
+    },
+    {
       "id": "tinta",
       "nombre": "Tinta",
       "hex": "#16202B",
