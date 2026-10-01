@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<title>Notas Profertil</title>
+<meta name="description" content="Maqueta del archivo de notas de Profertil: buscador, grilla y filtros por fuente, tema y año sobre el sistema de marca.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   Notas Profertil — maqueta del archivo de notas.
+   Layout: buscador fijo arriba, grilla tipo masonry que se llena de a tandas,
+   y un panel de filtros flotante abajo (fuente / tema / año).
+   La paleta "p-" es la del sistema de marca de Profertil, igual que en
+   caso-profertil-maqueta.html. Los temas toman un color de esa paleta y la
+   pastilla se tiñe con color-mix, asi que funciona en los dos temas.
+   ========================================================================== */
+:root {
+  --p-azul: #0b3fa8;
+  --p-azul-claro: #3d8bfd;
+  --p-verde: #5fb52c;
+  --p-verde-osc: #2f7d20;
+  --p-amarillo: #f0c419;
+  --p-naranja: #e2801e;
+  --p-terra: #7c4a15;
+  --p-crema: #f2efe6;
+
+  --bg: #e6e9ef;
+  --card: #ffffff;
+  --ink: #121c33;
+  --ink-2: #4b5670;
+  --ink-3: #78839c;
+  --line: rgba(18, 28, 51, 0.09);
+  --glass: rgba(255, 255, 255, 0.74);
+  --glass-line: rgba(255, 255, 255, 0.9);
+  --accent: var(--p-azul);
+  --badge: #16213d;
+  --badge-fg: #ffffff;
+  --mark: rgba(240, 196, 25, 0.45);
+  --shadow: 0 1px 2px rgba(18, 28, 51, 0.05), 0 10px 30px -14px rgba(18, 28, 51, 0.22);
+  --tint-mix: #ffffff;
+  --tint-amt: 24%;
+  --tint-ink: #000000;
+  --tint-ink-amt: 64%;
+
+  --font-display: "Outfit", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --r-card: 24px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1226;
+    --card: #131d37;
+    --ink: #edf1fa;
+    --ink-2: #a8b2ca;
+    --ink-3: #7681a0;
+    --line: rgba(237, 241, 250, 0.09);
+    --glass: rgba(19, 29, 55, 0.76);
+    --glass-line: rgba(237, 241, 250, 0.12);
+    --accent: #7aa9ff;
+    --badge: #edf1fa;
+    --badge-fg: #0a1226;
+    --mark: rgba(240, 196, 25, 0.35);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px -16px rgba(0, 0, 0, 0.6);
+    --tint-mix: #131d37;
+    --tint-amt: 40%;
+    --tint-ink: #ffffff;
+    --tint-ink-amt: 55%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1226;
+  --card: #131d37;
+  --ink: #edf1fa;
+  --ink-2: #a8b2ca;
+  --ink-3: #7681a0;
+  --line: rgba(237, 241, 250, 0.09);
+  --glass: rgba(19, 29, 55, 0.76);
+  --glass-line: rgba(237, 241, 250, 0.12);
+  --accent: #7aa9ff;
+  --badge: #edf1fa;
+  --badge-fg: #0a1226;
+  --mark: rgba(240, 196, 25, 0.35);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px -16px rgba(0, 0, 0, 0.6);
+  --tint-mix: #131d37;
+  --tint-amt: 40%;
+  --tint-ink: #ffffff;
+  --tint-ink-amt: 55%;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { width: min(100% - 32px, 1320px); margin-inline: auto; }
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* --- Cabecera ------------------------------------------------------------- */
+.head { padding-block: 28px 18px; display: grid; gap: 22px; }
+.brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 13px;
+  background: var(--p-azul);
+  display: grid; place-items: center; flex: none;
+}
+.brand-mark svg { width: 64%; height: 64%; fill: var(--p-amarillo); }
+@supports (corner-shape: squircle) { .brand-mark { corner-shape: squircle; } }
+.brand-name { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.03em; }
+.brand-sep { color: var(--ink-3); font-weight: 400; margin-inline: 2px; }
+.brand-sec { font-weight: 500; font-size: 1.15rem; letter-spacing: -0.03em; color: var(--ink-2); }
+.sample {
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 1px dashed var(--ink-3);
+  border-radius: 999px;
+}
+.title-row { display: grid; gap: 10px; max-width: 880px; }
+h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 7vw, 4.6rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+h1 em { font-style: normal; color: var(--accent); }
+.lede {
+  margin: 0;
+  max-width: 58ch;
+  font-family: var(--font-serif);
+  font-size: clamp(1.02rem, 1.7vw, 1.2rem);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.stats { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.stats span b { color: var(--ink); font-weight: 400; }
+
+/* --- Buscador ------------------------------------------------------------- */
+.search-bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  padding-block: 10px;
+}
+.search {
+  width: min(100%, 760px);
+  margin-inline: auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 8px 7px 7px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+}
+.search-ico {
+  width: 46px; height: 46px; flex: none;
+  border-radius: 999px;
+  background: var(--card);
+  display: grid; place-items: center;
+  box-shadow: 0 1px 3px rgba(18, 28, 51, 0.12);
+}
+.search-ico svg { width: 22px; height: 22px; }
+.search input {
+  flex: 1; min-width: 0;
+  border: 0; background: transparent; outline: none;
+  font-family: var(--font-serif);
+  font-size: 1.12rem;
+  color: var(--ink);
+  padding: 8px 2px;
+}
+.search input::placeholder { color: var(--ink-3); }
+.search input::-webkit-search-cancel-button { display: none; }
+.search-count {
+  flex: none;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.search-clear {
+  flex: none; width: 34px; height: 34px; border-radius: 999px;
+  border: 0; background: transparent; cursor: pointer; color: var(--ink-3);
+  display: grid; place-items: center;
+}
+.search-clear:hover { color: var(--ink); background: var(--line); }
+.search-clear svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* --- Barra de resultado --------------------------------------------------- */
+.result-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding-block: 8px 16px;
+}
+.result-text { margin: 0; color: var(--ink-2); font-size: 0.98rem; min-width: 0; }
+.result-text b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--line); }
+.seg button {
+  border: 0; background: transparent; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 0.86rem; color: var(--ink-2);
+}
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(18, 28, 51, 0.12); }
+
+/* --- Grilla --------------------------------------------------------------- */
+.grid { display: flex; gap: 16px; align-items: flex-start; padding-bottom: 150px; }
+.gcol { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.sentinel { height: 1px; }
+
+.card {
+  position: relative;
+  display: grid;
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: left;
+  border: 0; padding: 0;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+  animation: entra 420ms var(--ease) both;
+}
+.card:hover { transform: translateY(-3px); }
+@keyframes entra { from { transform: translateY(8px); } to { transform: none; } }
+@supports (corner-shape: squircle) { .card, .media, .modal-art { corner-shape: squircle; } }
+
+.media {
+  position: relative;
+  margin: 8px 8px 0;
+  border-radius: 17px;
+  overflow: hidden;
+  line-height: 0;
+  max-width: 100%;
+}
+.media svg { display: block; width: 100%; height: auto; }
+.badge {
+  width: 34px; height: 34px; border-radius: 999px;
+  background: var(--badge); color: var(--badge-fg);
+  display: grid; place-items: center; flex: none;
+  font-family: var(--font-display); font-weight: 700; font-size: 0.86rem; letter-spacing: -0.04em;
+}
+.badge svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.media .badge { position: absolute; top: 10px; left: 10px; background: #16213d; color: #fff; }
+.play {
+  position: absolute; top: 10px; right: 10px;
+  width: 38px; height: 38px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  display: grid; place-items: center;
+}
+.play svg { width: 14px; height: 14px; fill: #121c33; margin-left: 2px; }
+.dur {
+  position: absolute; right: 10px; bottom: 10px;
+  padding: 3px 7px; border-radius: 7px;
+  background: rgba(10, 18, 38, 0.78); color: #fff;
+  font-family: var(--font-mono); font-size: 0.64rem; line-height: 1.3;
+}
+
+.lead { padding: 18px 18px 4px; display: grid; gap: 14px; justify-items: start; }
+.lead h3 {
+  margin: 0;
+  font-size: 1.22rem;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.meta { padding: 14px 18px 18px; display: grid; gap: 8px; min-width: 0; }
+.who {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.who b { font-weight: 400; color: var(--ink-2); }
+.ttl {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  line-height: 1.32;
+  color: var(--ink);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.exc { color: var(--ink-2); font-size: 0.98rem; }
+.ttl mark, .lead mark, .modal mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+.tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+.more { font-family: var(--font-serif); color: var(--ink-3); font-size: 0.95rem; padding-left: 4px; }
+
+/* --- Pastillas de tema ---------------------------------------------------- */
+.pill {
+  --h: var(--p-azul);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px 6px;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(in srgb, var(--h) var(--tint-amt), var(--tint-mix));
+  color: color-mix(in srgb, var(--h) var(--tint-ink-amt), var(--tint-ink));
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+button.pill { cursor: pointer; transition: background 160ms ease, color 160ms ease, transform 200ms var(--ease); }
+button.pill:hover { transform: translateY(-1px); }
+button.pill[aria-pressed="true"] { background: var(--h); color: var(--on, #fff); }
+.pill .n { font-family: var(--font-mono); font-size: 0.66rem; opacity: 0.7; font-variant-numeric: tabular-nums; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 14px 8px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 0.98rem;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(18, 28, 51, 0.08);
+  transition: background 160ms ease, color 160ms ease;
+}
+.chip svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chip .in { font-family: var(--font-display); font-weight: 700; font-size: 0.82rem; letter-spacing: -0.04em; }
+.chip .n { font-family: var(--font-mono); font-size: 0.66rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.chip[aria-pressed="true"] .n { color: inherit; opacity: 0.7; }
+
+/* --- Panel de filtros ----------------------------------------------------- */
+.filters {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 40;
+  width: min(100% - 24px, 760px);
+  max-height: calc(100% - 120px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  border-radius: 30px;
+  background: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: 0 20px 60px -20px rgba(10, 18, 38, 0.45);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  overflow: hidden;
+}
+.f-body { overflow-y: auto; padding: 20px 22px 6px; display: grid; gap: 16px; }
+.filters:not(.open) .f-body { display: none; }
+.f-group { display: grid; gap: 9px; }
+.f-group .mono { font-family: var(--font-serif); font-style: italic; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.86rem; }
+.f-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.f-foot {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+.filters:not(.open) .f-foot { border-top: 0; }
+.f-toggle {
+  display: inline-flex; align-items: center; gap: 10px;
+  border: 0; background: transparent; cursor: pointer;
+  font-family: var(--font-serif); font-size: 1.12rem;
+  padding: 6px 10px; border-radius: 999px;
+}
+.f-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 300ms var(--ease); }
+.filters.open .f-toggle svg { transform: rotate(180deg); }
+.f-count {
+  min-width: 22px; height: 22px; padding: 0 6px;
+  border-radius: 999px; background: var(--p-azul); color: #fff;
+  display: inline-grid; place-items: center;
+  font-family: var(--font-mono); font-size: 0.68rem;
+}
+.f-clear {
+  border: 0; background: transparent; cursor: pointer;
+  color: var(--accent); font-size: 0.9rem; padding: 6px 10px; border-radius: 999px;
+}
+.f-clear:hover { background: var(--line); }
+
+/* --- Vacio ---------------------------------------------------------------- */
+.empty { padding: 60px 0 180px; display: grid; justify-items: center; gap: 14px; text-align: center; }
+.empty svg { width: 120px; height: 60px; }
+.empty p { margin: 0; max-width: 40ch; color: var(--ink-2); font-family: var(--font-serif); font-size: 1.1rem; }
+.btn {
+  border: 0; cursor: pointer;
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--p-azul); color: #fff; font-weight: 500;
+}
+
+/* --- Detalle de nota ------------------------------------------------------ */
+dialog.modal {
+  width: min(100% - 24px, 720px);
+  max-height: calc(100% - 32px);
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+dialog.modal[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; animation: sube 360ms var(--ease); }
+@keyframes sube { from { transform: translateY(16px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+dialog.modal::backdrop { background: rgba(10, 18, 38, 0.55); backdrop-filter: blur(4px); }
+.m-scroll { overflow-y: auto; padding: 10px; }
+.modal-art { position: relative; border-radius: 20px; overflow: hidden; line-height: 0; }
+.modal-art svg { width: 100%; height: auto; display: block; }
+.modal-art .badge { position: absolute; top: 14px; left: 14px; width: 40px; height: 40px; background: #16213d; color: #fff; }
+.m-body { padding: 20px 16px 12px; display: grid; gap: 14px; }
+.m-src { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.m-body h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4.4vw, 2.3rem);
+  font-weight: 600; line-height: 1.04; letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.m-who { margin: 0; font-family: var(--font-serif); color: var(--ink-2); font-size: 1rem; }
+.m-text { display: grid; gap: 12px; max-width: 62ch; }
+.m-text p { margin: 0; font-family: var(--font-serif); font-size: 1.08rem; line-height: 1.6; color: var(--ink); }
+.m-data {
+  margin: 4px 0 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1px; background: var(--line);
+  border-radius: 16px; overflow: hidden;
+}
+.m-data div { background: var(--card); padding: 12px 14px; display: grid; gap: 3px; }
+.m-data dd { margin: 0; font-size: 0.95rem; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.m-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+.m-nav .pos { font-variant-numeric: tabular-nums; }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 999px;
+  border: 0; background: var(--line); cursor: pointer;
+  display: grid; place-items: center;
+}
+.icon-btn:hover { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.icon-btn:disabled { opacity: 0.35; cursor: default; }
+.icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.m-nav-group { display: flex; gap: 6px; }
+
+@media (max-width: 640px) {
+  .grid, .gcol { gap: 10px; }
+  .card { border-radius: 20px; }
+  .media { margin: 6px 6px 0; border-radius: 15px; }
+  .media .badge { width: 28px; height: 28px; top: 8px; left: 8px; }
+  .media .badge svg { width: 13px; height: 13px; }
+  .play { width: 30px; height: 30px; top: 8px; right: 8px; }
+  .play svg { width: 11px; height: 11px; }
+  .lead { padding: 14px 13px 2px; gap: 10px; }
+  .lead h3 { font-size: 1.04rem; }
+  .lead .badge { width: 28px; height: 28px; font-size: 0.76rem; }
+  .lead .badge svg { width: 13px; height: 13px; }
+  .meta { padding: 10px 13px 14px; gap: 6px; }
+  .who { font-size: 0.82rem; }
+  .ttl { font-size: 0.96rem; }
+  .pill { font-size: 0.82rem; padding: 4px 10px 5px; }
+  .tags { gap: 5px; }
+  .search-ico { width: 40px; height: 40px; }
+  .search input { font-size: 1rem; }
+  .f-body { padding: 18px 16px 4px; }
+  .chip { font-size: 0.92rem; padding: 6px 12px 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Alfabeto de formas del sistema: todo desciende de la hoja de la espiga -->
+    <symbol id="f-hoja" viewBox="0 0 48 48"><path d="M4 44A40 40 0 0 1 44 4 40 40 0 0 1 4 44Z"/></symbol>
+    <symbol id="f-cuarto" viewBox="0 0 48 48"><path d="M4 44V4h40A40 40 0 0 1 4 44Z"/></symbol>
+    <symbol id="f-medio" viewBox="0 0 48 48"><path d="M4 34a20 20 0 0 1 40 0Z"/></symbol>
+    <symbol id="f-circulo" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"/></symbol>
+    <symbol id="f-onda" viewBox="0 0 48 48"><path d="M4 44V28q10-13 20 0t20 0v16Z"/></symbol>
+    <symbol id="f-espiga" viewBox="0 0 48 48"><path d="M22 44V16h4v28Z"/><path d="M24 32c0-7 5-12 12-12 0 7-5 12-12 12Z"/><path d="M24 32c0-7-5-12-12-12 0 7 5 12 12 12Z"/><path d="M24 20c0-7 5-12 12-12 0 7-5 12-12 12Z"/><path d="M24 20c0-7-5-12-12-12 0 7 5 12 12 12Z"/></symbol>
+    <symbol id="f-gota" viewBox="0 0 48 48"><path d="M24 5c9 12 13 17 13 22a13 13 0 0 1-26 0c0-5 4-10 13-22Z"/></symbol>
+    <symbol id="f-arco" viewBox="0 0 48 48"><path d="M4 44A40 40 0 0 1 44 4v14A26 26 0 0 0 18 44Z"/></symbol>
+    <symbol id="f-estrella" viewBox="0 0 48 48"><path d="M24 4c2 11 9 18 20 20-11 2-18 9-20 20-2-11-9-18-20-20 11-2 18-9 20-20Z"/></symbol>
+    <symbol id="f-c" viewBox="0 0 48 48"><path d="M24 4a20 20 0 1 0 0 40V33a9 9 0 1 1 0-18Z"/></symbol>
+    <symbol id="f-ondas" viewBox="0 0 48 48"><path d="M4 38q10-9 20 0t20 0v6H4Z"/><path d="M4 26q10-9 20 0t20 0v6q-10-9-20 0T4 32Z"/><path d="M4 14q10-9 20 0t20 0v6q-10-9-20 0T4 20Z"/></symbol>
+  </defs>
+</svg>
+
+<header class="wrap head">
+  <div class="brand">
+    <span class="brand-mark"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#f-espiga"/></svg></span>
+    <span class="brand-name">Profertil</span>
+    <span class="brand-sep">/</span>
+    <span class="brand-sec">Notas</span>
+    <span class="mono sample">Maqueta · datos de ejemplo</span>
+  </div>
+  <div class="title-row">
+    <h1>Todo lo que contamos, <em>en un solo lugar</em></h1>
+    <p class="lede" id="lede">Notas de la intranet, el newsletter, prensa y redes desde 2019. Buscá por palabra o filtrá por fuente, tema y año.</p>
+  </div>
+  <div class="stats mono" id="stats"></div>
+</header>
+
+<div class="search-bar">
+  <div class="wrap">
+    <label class="search" for="q">
+      <span class="search-ico" aria-hidden="true">
+        <svg viewBox="0 0 48 48"><use href="#f-hoja" fill="var(--p-verde)"/><g transform="rotate(180 24 24)"><use href="#f-hoja" fill="var(--p-azul)" opacity=".9"/></g></svg>
+      </span>
+      <input id="q" type="search" autocomplete="off" placeholder="Escribí para encontrar una nota…" aria-label="Buscar notas">
+      <button class="search-clear" id="qClear" type="button" aria-label="Borrar búsqueda" hidden><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <span class="search-count mono" id="qCount">0</span>
+    </label>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="result-row">
+    <p class="result-text" id="resultText" aria-live="polite"></p>
+    <div class="seg" role="group" aria-label="Orden">
+      <button type="button" id="sortNew" aria-pressed="true">Más recientes</button>
+      <button type="button" id="sortOld" aria-pressed="false">Más antiguas</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>
+    <svg viewBox="0 0 96 48" aria-hidden="true"><use href="#f-medio" x="0" y="0" width="48" height="48" fill="var(--p-amarillo)"/><use href="#f-gota" x="48" y="0" width="48" height="48" fill="var(--p-azul-claro)"/></svg>
+    <p id="emptyText">Ninguna nota coincide con esa búsqueda.</p>
+    <button class="btn" id="emptyReset" type="button">Ver todas las notas</button>
+  </div>
+  <div class="sentinel" id="sentinel"></div>
+</main>
+
+<section class="filters" id="filters" aria-label="Filtros">
+  <div class="f-body" id="fBody">
+    <div class="f-group"><p class="mono" style="margin:0">Fuente</p><div class="f-row" id="fSources"></div></div>
+    <div class="f-group"><p class="mono" style="margin:0">Temas</p><div class="f-row" id="fTopics"></div></div>
+    <div class="f-group"><p class="mono" style="margin:0">Año</p><div class="f-row" id="fYears"></div></div>
+  </div>
+  <div class="f-foot">
+    <button class="f-toggle" id="fToggle" type="button" aria-expanded="false" aria-controls="fBody">Filtros <span class="f-count" id="fCount" hidden>0</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+    <button class="f-clear" id="fClear" type="button" hidden>Limpiar</button>
+  </div>
+</section>
+
+<dialog class="modal" id="modal" aria-labelledby="mTitle">
+  <div class="m-scroll" id="mScroll"></div>
+  <div class="m-nav">
+    <div class="m-nav-group">
+      <button class="icon-btn" id="mPrev" type="button" aria-label="Nota anterior"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
+      <button class="icon-btn" id="mNext" type="button" aria-label="Nota siguiente"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+    </div>
+    <span class="mono pos" id="mPos"></span>
+    <button class="icon-btn" id="mClose" type="button" aria-label="Cerrar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------------------
+     Datos. Esto es lo unico que cambia cuando lleguen las notas reales:
+     un array de objetos con la misma forma que arma generarNotas().
+     { id, titulo, resumen, fuente, autor, handle, fecha, temas[], arte }
+     Mientras tanto se generan ~400 notas verosimiles con semilla fija,
+     asi la maqueta muestra siempre lo mismo.
+     --------------------------------------------------------------------- */
+  var CSS = function (v) { return "var(" + v + ")"; };
+
+  var FUENTES = [
+    { id: "intranet", nombre: "Intranet", ico: '<svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4Z"/><path d="M10 20v-5h4v5"/></svg>' },
+    { id: "newsletter", nombre: "Newsletter", ico: '<svg viewBox="0 0 24 24"><path d="M3 6h18v12H3Z"/><path d="m3 7 9 6 9-6"/></svg>' },
+    { id: "prensa", nombre: "Prensa", ico: '<svg viewBox="0 0 24 24"><path d="M4 5h12v14H6a2 2 0 0 1-2-2Z"/><path d="M16 9h4v8a2 2 0 0 1-4 0"/><path d="M7 9h6M7 12.5h6M7 16h4"/></svg>' },
+    { id: "linkedin", nombre: "LinkedIn", ico: '<span class="in">in</span>' },
+    { id: "instagram", nombre: "Instagram", ico: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg>' },
+    { id: "youtube", nombre: "YouTube", ico: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="4"/><path d="m10.5 9.5 4 2.5-4 2.5Z" fill="currentColor"/></svg>' }
+  ];
+  var FUENTE = {};
+  FUENTES.forEach(function (f) { FUENTE[f.id] = f; });
+
+  // Cada tema toma un color de la paleta de Profertil. "on" es el texto
+  // sobre el color pleno (cuando el filtro esta activo).
+  var TEMAS = [
+    { id: "seguridad", nombre: "Seguridad", h: "--p-naranja", on: "#1c1206" },
+    { id: "produccion", nombre: "Producción", h: "--p-azul", on: "#fff" },
+    { id: "agro", nombre: "Agro", h: "--p-verde", on: "#0e1d06" },
+    { id: "comunidad", nombre: "Comunidad", h: "--p-amarillo", on: "#211a02" },
+    { id: "sustentabilidad", nombre: "Sustentabilidad", h: "--p-verde-osc", on: "#fff" },
+    { id: "innovacion", nombre: "Innovación", h: "--p-azul-claro", on: "#06152e" },
+    { id: "personas", nombre: "Personas", h: "--p-terra", on: "#fff" },
+    { id: "institucional", nombre: "Institucional", h: "--p-azul", on: "#fff" },
+    { id: "logistica", nombre: "Logística", h: "--p-azul-claro", on: "#06152e" },
+    { id: "educacion", nombre: "Educación", h: "--p-amarillo", on: "#211a02" },
+    { id: "ambiente", nombre: "Ambiente", h: "--p-verde", on: "#0e1d06" }
+  ];
+  var TEMA = {};
+  TEMAS.forEach(function (t) { TEMA[t.id] = t; });
+
+  var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  var MES_CORTO = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function generarNotas(total) {
+    var rnd = mulberry32(20261002);
+    var pick = function (arr) { return arr[Math.floor(rnd() * arr.length)]; };
+    var entre = function (a, b) { return a + Math.floor(rnd() * (b - a + 1)); };
+
+    var V = {
+      lugar: ["Ingeniero White", "Bahía Blanca", "Puerto Quequén", "San Nicolás", "Pergamino", "Venado Tuerto", "Tres Arroyos", "Coronel Suárez", "Rosario", "Junín", "General Villegas", "Río Cuarto"],
+      cultivo: ["trigo", "maíz", "cebada", "girasol", "soja", "sorgo", "pasturas"],
+      producto: ["urea granulada", "UAN", "fosfato monoamónico", "sulfato de amonio", "mezclas NPS"],
+      area: ["Mantenimiento", "Operaciones", "Laboratorio", "Seguridad e Higiene", "Logística", "Comercial", "Recursos Humanos", "Sistemas", "Medio Ambiente", "Compras"],
+      escuela: ["la Escuela Técnica N.º 1", "la EES N.º 9 de Ingeniero White", "el Instituto Agrotécnico", "la Escuela Agropecuaria de Tres Arroyos", "la Escuela Primaria N.º 14"],
+      evento: ["Expoagro", "Agroactiva", "el Congreso Aapresid", "la Jornada de Fertilidad de Suelos", "el Simposio de Fertilidad"]
+    };
+
+    var T = {
+      seguridad: [
+        "Cumplimos {n} días sin accidentes con pérdida de días",
+        "Simulacro general de emergencia en planta: qué aprendimos",
+        "Semana de la Seguridad {anio}: actividades por turno",
+        "Parada de planta: cómo trabajamos seguros con más de mil contratistas",
+        "Reconocimiento a la brigada de emergencias",
+        "Manejo defensivo: capacitación para transportistas de {lugar}",
+        "Actualizamos el procedimiento de permisos de trabajo",
+        "Trabajo en altura: las cinco reglas que no se negocian",
+        "El área de {area} suma un nuevo comité de seguridad",
+        "Reportar casi-accidentes: por qué cada aviso cuenta",
+        "Nuevos elementos de protección personal para {area}",
+        "Ronda de seguridad con la Dirección en la planta de amoníaco"
+      ],
+      produccion: [
+        "Récord de producción de urea en {mes}",
+        "Terminó la parada programada de la planta de amoníaco",
+        "De gas natural a fertilizante: cómo se produce la urea",
+        "Balance productivo del {semestre} semestre de {anio}",
+        "Puesta en marcha del nuevo sistema de control del granulador",
+        "Mejoras en el reformador primario: más eficiencia, menos consumo",
+        "Un día con el turno noche de la sala de control",
+        "Cuánta urea sale por día y a dónde va",
+        "Reemplazo de catalizador: el paso a paso",
+        "El laboratorio de calidad analiza más de {n} muestras por mes"
+      ],
+      agro: [
+        "Fertilización nitrogenada en {cultivo}: claves para esta campaña",
+        "Ensayo de {producto} en {cultivo} en {lugar}: resultados",
+        "Jornada a campo en {lugar} con productores y asesores",
+        "Muestreo de suelos: cuándo y cómo hacerlo bien",
+        "Azufre y fósforo en {cultivo}: lo que dicen los ensayos",
+        "Las 4R de la nutrición: fuente, dosis, momento y lugar",
+        "Cómo calcular la dosis de nitrógeno según el rendimiento objetivo",
+        "Red de ensayos {anio}: {n} sitios en la región pampeana",
+        "Charla técnica: nutrición de {cultivo} en ambientes de baja fertilidad",
+        "Qué pasó con el uso de fertilizantes en la campaña {campania}"
+      ],
+      comunidad: [
+        "Programa de escuelas: {n} instituciones de Ingeniero White",
+        "Voluntariado corporativo en el barrio del Puerto",
+        "Donamos equipamiento al Hospital Municipal de {lugar}",
+        "Visitas guiadas a planta para familias de la comunidad",
+        "Huerta comunitaria con vecinos de Ingeniero White",
+        "Torneo de fútbol infantil con clubes de la zona",
+        "Ciclo de cine al aire libre en la plaza de Ingeniero White",
+        "Acompañamos a {n} emprendedores locales",
+        "Mesa de diálogo con vecinos: preguntas y respuestas"
+      ],
+      sustentabilidad: [
+        "Presentamos el Reporte de Sustentabilidad {anio}",
+        "Bajamos un {p}% las emisiones por tonelada producida",
+        "Huella de carbono del fertilizante: cómo se mide",
+        "Economía circular: qué hacemos con los residuos de planta",
+        "Indicadores ambientales del {semestre} semestre",
+        "Eficiencia energética: el plan a cinco años",
+        "Uso responsable de fertilizantes en el campo"
+      ],
+      innovacion: [
+        "Mantenimiento predictivo con sensores de vibración",
+        "Un gemelo digital para la planta de urea",
+        "Drones para inspeccionar tanques y chimeneas",
+        "Hackatón interna: {n} equipos y tres ideas que ya se prueban",
+        "Nueva app para que el productor calcule su dosis de nitrógeno",
+        "Automatizamos la carga de camiones en el despacho",
+        "Analítica de datos para anticipar fallas en compresores",
+        "Laboratorio de ideas: cómo presentar un proyecto"
+      ],
+      personas: [
+        "Bienvenidos a los {n} ingresantes del programa de jóvenes profesionales",
+        "{n} años en Profertil: reconocimiento a la trayectoria",
+        "Resultados de la encuesta de clima {anio}",
+        "Programa de liderazgo para supervisores de {area}",
+        "Día de la Familia en planta",
+        "Conocé al equipo de {area}",
+        "Nuevos beneficios para quienes trabajan en Profertil",
+        "Búsqueda interna: {area} incorpora analistas",
+        "Historias de planta: veinte años en la sala de control",
+        "Pausas activas en los turnos rotativos"
+      ],
+      institucional: [
+        "Profertil cumple {aniv} años",
+        "Mensaje de la Dirección por el cierre de {anio}",
+        "Nuevo sistema de marca: dónde están los archivos y cómo usarlos",
+        "Estuvimos en {evento}",
+        "Visita de autoridades provinciales a la planta",
+        "Resultados del ejercicio {anio}",
+        "Así fue la reunión anual con proveedores",
+        "Nueva política de comunicación interna",
+        "Un recorrido por la historia de la planta"
+      ],
+      logistica: [
+        "Récord de despachos desde el puerto de Ingeniero White",
+        "Temporada alta: cómo se organiza la logística de camiones",
+        "Carga de un buque de urea, paso a paso",
+        "Turnos online para transportistas: cómo funciona",
+        "Nuevo depósito en {lugar} para estar más cerca del productor",
+        "Despacho por tren: la apuesta de esta campaña",
+        "Cuántos camiones salen por día en plena siembra de {cultivo}"
+      ],
+      educacion: [
+        "Becas para estudiantes de {escuela}",
+        "Pasantías con la Universidad Nacional del Sur: convocatoria {anio}",
+        "Charla sobre la industria química en {escuela}",
+        "Curso de nutrición de cultivos para productores de {lugar}",
+        "Olimpíada de química con escuelas de la región",
+        "Prácticas profesionalizantes en planta para {escuela}"
+      ],
+      ambiente: [
+        "Monitoreo de calidad de aire: resultados de {mes}",
+        "Reutilizamos {p}% del agua del proceso",
+        "Plantamos {n} árboles en el corredor verde de Ingeniero White",
+        "Estudio de biodiversidad en la ría de Bahía Blanca",
+        "Cómo controlamos los efluentes de la planta",
+        "Día del Medio Ambiente: actividades en la planta"
+      ]
+    };
+
+    var RES = {
+      seguridad: ["La seguridad es la primera condición para producir, y este hito es mérito de cada persona que trabaja en planta.", "Participaron todos los turnos y las empresas contratistas que trabajan con nosotros.", "El objetivo es que cada tarea de riesgo tenga un análisis previo y un responsable claro."],
+      produccion: ["El resultado se explica por la estabilidad operativa de las plantas y el trabajo coordinado entre turnos.", "La parada incluyó tareas de mantenimiento mayor que solo pueden hacerse con la planta detenida.", "Cada tonelada que sale de Ingeniero White llega al campo argentino en plena campaña."],
+      agro: ["Los ensayos se hicieron junto a productores y asesores de la zona, con diseño y análisis del equipo agronómico.", "Una buena nutrición nitrogenada define buena parte del rendimiento y la calidad del grano.", "Las recomendaciones parten de un análisis de suelo y del rendimiento objetivo de cada lote."],
+      comunidad: ["El programa crece cada año con la participación de vecinos, escuelas e instituciones de Ingeniero White.", "Más de cien voluntarios de distintas áreas se sumaron a la jornada.", "Escuchar a la comunidad es parte de cómo trabajamos."],
+      sustentabilidad: ["El reporte sigue estándares internacionales y está disponible para toda la comunidad.", "La mejora se logró con inversiones en eficiencia y cambios en la operación diaria.", "Medir es el primer paso para reducir."],
+      innovacion: ["El proyecto nació de una idea de un equipo de planta y hoy está en etapa de prueba.", "La tecnología permite anticipar fallas antes de que afecten la producción.", "La herramienta ya la usan los equipos de mantenimiento y operaciones."],
+      personas: ["Las personas son las que hacen que la planta funcione todos los días del año.", "La encuesta tuvo una participación récord y los resultados ya se están trabajando por área.", "El programa combina formación, rotación por áreas y acompañamiento de mentores."],
+      institucional: ["Un repaso por los hitos del año y los desafíos que vienen.", "La compañía reafirmó su compromiso con el desarrollo del agro argentino.", "El nuevo sistema ordena cómo se usa la marca en todas las piezas, internas y externas."],
+      logistica: ["La logística en temporada alta exige coordinación entre planta, puerto y transportistas.", "El objetivo es reducir los tiempos de espera y llegar antes al productor.", "Cada buque se carga con controles de calidad en todo el proceso."],
+      educacion: ["La propuesta acerca la industria a estudiantes que están eligiendo qué estudiar.", "Las becas acompañan a estudiantes de escuelas técnicas de la región.", "Los productores se llevaron herramientas concretas para planificar la campaña."],
+      ambiente: ["Los resultados se comparten con autoridades y vecinos de forma periódica.", "Las mediciones se realizan con estaciones propias y controles independientes.", "Cuidar el entorno donde trabajamos es parte de producir bien."]
+    };
+
+    var AUTORES = {
+      intranet: function (tema) {
+        var porTema = { seguridad: "Seguridad e Higiene", personas: "Recursos Humanos", produccion: "Operaciones", innovacion: "Sistemas", ambiente: "Medio Ambiente", logistica: "Logística" };
+        return [porTema[tema] || "Comunicación Interna", "@intranet"];
+      },
+      newsletter: function () { return ["Boletín Profertil", "@newsletter"]; },
+      prensa: function () { return [pick(["Diario regional", "Suplemento rural", "Portal agroindustrial", "Medio nacional", "Radio local"]), "@prensa"]; },
+      linkedin: function () { return ["Profertil", "@profertil-sa"]; },
+      instagram: function () { return ["Profertil", "@profertil"]; },
+      youtube: function () { return ["Profertil", "@ProfertilTV"]; }
+    };
+
+    // Que fuente usa cada tema mas seguido (peso relativo).
+    var PESO_FUENTE = {
+      seguridad: [5, 3, 1, 2, 1, 1], produccion: [4, 3, 2, 3, 1, 2], agro: [1, 2, 4, 4, 2, 4],
+      comunidad: [2, 2, 3, 2, 5, 2], sustentabilidad: [2, 2, 3, 4, 2, 2], innovacion: [3, 2, 2, 4, 1, 2],
+      personas: [5, 4, 0, 3, 2, 1], institucional: [3, 3, 4, 4, 2, 2], logistica: [3, 2, 3, 2, 1, 1],
+      educacion: [2, 2, 2, 3, 4, 1], ambiente: [2, 2, 3, 2, 3, 2]
+    };
+    var PESO_TEMA = { seguridad: 9, produccion: 9, agro: 12, comunidad: 9, sustentabilidad: 6, innovacion: 6, personas: 10, institucional: 8, logistica: 6, educacion: 5, ambiente: 5 };
+    var RELACION = {
+      seguridad: ["produccion", "personas", "logistica"], produccion: ["innovacion", "seguridad", "ambiente"],
+      agro: ["sustentabilidad", "educacion", "innovacion"], comunidad: ["educacion", "ambiente", "personas"],
+      sustentabilidad: ["ambiente", "agro", "institucional"], innovacion: ["produccion", "agro", "personas"],
+      personas: ["institucional", "educacion", "seguridad"], institucional: ["comunidad", "sustentabilidad", "personas"],
+      logistica: ["produccion", "agro", "seguridad"], educacion: ["comunidad", "agro", "personas"],
+      ambiente: ["sustentabilidad", "comunidad", "produccion"]
+    };
+
+    function pesado(pares) {
+      var tot = 0, k;
+      for (k = 0; k < pares.length; k++) tot += pares[k][1];
+      var r = rnd() * tot;
+      for (k = 0; k < pares.length; k++) { r -= pares[k][1]; if (r < 0) return pares[k][0]; }
+      return pares[pares.length - 1][0];
+    }
+
+    var desde = new Date(2019, 2, 1).getTime();
+    var hasta = new Date(2026, 8, 28).getTime();
+    var usados = {};
+    var notas = [];
+
+    for (var i = 0; notas.length < total && i < total * 4; i++) {
+      var tema = pesado(Object.keys(PESO_TEMA).map(function (k) { return [k, PESO_TEMA[k]]; }));
+      var fuente = pesado(FUENTES.map(function (f, j) { return [f.id, PESO_FUENTE[tema][j]]; }));
+      // Mas notas recientes que viejas: el archivo crecio con los años.
+      var fecha = new Date(desde + Math.pow(rnd(), 0.62) * (hasta - desde));
+      var anio = fecha.getFullYear();
+
+      var titulo = "", intento = 0;
+      do {
+        titulo = pick(T[tema]).replace(/\{(\w+)\}/g, function (_, k) {
+          if (k === "n") return String(pick([12, 18, 24, 30, 45, 60, 100, 150, 200, 250, 300, 365, 500, 1000]));
+          if (k === "p") return String(entre(6, 32));
+          if (k === "anio") return String(anio);
+          if (k === "mes") return MESES[fecha.getMonth()];
+          if (k === "semestre") return fecha.getMonth() < 6 ? "primer" : "segundo";
+          if (k === "campania") return (anio - 1) + "/" + String(anio).slice(2);
+          if (k === "aniv") return String(anio - 2000);
+          return pick(V[k]);
+        });
+        intento++;
+      } while (usados[titulo] && intento < 8);
+      if (usados[titulo]) continue;
+      usados[titulo] = true;
+
+      var temas = [tema];
+      var extras = rnd() < 0.62 ? (rnd() < 0.38 ? 2 : 1) : 0;
+      var rel = RELACION[tema].slice();
+      while (extras-- > 0 && rel.length) temas.push(rel.splice(Math.floor(rnd() * rel.length), 1)[0]);
+
+      var probArte = { intranet: 0.38, newsletter: 0.34, prensa: 0.42, linkedin: 0.62, instagram: 1, youtube: 1 }[fuente];
+      var arte = null;
+      if (rnd() < probArte) {
+        var forma = fuente === "youtube" ? [5, 3] : fuente === "instagram" ? pick([[3, 3], [3, 4]]) : pick([[2, 2], [3, 2], [4, 3], [3, 4], [2, 3]]);
+        arte = { semilla: Math.floor(rnd() * 1e9), cols: forma[0], filas: forma[1] };
+        if (fuente === "youtube") arte.dur = entre(1, 14) + ":" + String(entre(0, 59)).padStart(2, "0");
+      }
+
+      var autor = AUTORES[fuente](tema);
+      var resumen = [RES[tema][Math.floor(rnd() * RES[tema].length)]];
+      var r2 = RES[temas[1] || tema][Math.floor(rnd() * 3)];
+      if (r2 !== resumen[0]) resumen.push(r2);
+
+      notas.push({
+        id: 0,
+        titulo: titulo,
+        resumen: resumen,
+        fuente: fuente,
+        autor: autor[0],
+        handle: autor[1],
+        fecha: fecha,
+        temas: temas,
+        arte: arte,
+        lecturas: entre(40, 2400)
+      });
+    }
+
+    notas.sort(function (a, b) { return a.fecha - b.fecha; });
+    notas.forEach(function (n, k) { n.id = k + 1; });
+    return notas;
+  }
+
+  var NOTAS = generarNotas(412);
+
+  /* ---------------------------------------------------------------------
+     Arte de tarjeta. Sin fotos: una composicion con el alfabeto de formas
+     sobre una de las terciarias del sistema. La semilla la hace estable.
+     --------------------------------------------------------------------- */
+  var TERCIARIAS = [
+    ["--p-azul", "--p-amarillo", "--p-crema"],
+    ["--p-verde", "--p-azul-claro", "--p-amarillo"],
+    ["--p-amarillo", "--p-naranja", "--p-terra"],
+    ["--p-terra", "--p-verde", "--p-crema"],
+    ["--p-azul", "--p-verde", "--p-crema"],
+    ["--p-azul-claro", "--p-azul", "--p-amarillo"],
+    ["--p-verde-osc", "--p-amarillo", "--p-crema"]
+  ];
+  var FORMAS = ["f-hoja", "f-cuarto", "f-medio", "f-circulo", "f-onda", "f-gota", "f-arco", "f-estrella", "f-c", "f-ondas", "f-espiga"];
+
+  function arteSVG(arte) {
+    var rnd = mulberry32(arte.semilla);
+    var pal = TERCIARIAS[Math.floor(rnd() * TERCIARIAS.length)];
+    var W = arte.cols * 48, H = arte.filas * 48;
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" aria-hidden="true"><rect width="' + W + '" height="' + H + '" fill="' + CSS(pal[0]) + '"/>';
+    for (var y = 0; y < arte.filas; y++) {
+      for (var x = 0; x < arte.cols; x++) {
+        var fondo = rnd() < 0.5 ? pal[0] : pal[1 + Math.floor(rnd() * 2)];
+        var resto = pal.filter(function (c) { return c !== fondo; });
+        var tinta = resto[Math.floor(rnd() * resto.length)];
+        var px = x * 48, py = y * 48;
+        s += '<rect x="' + px + '" y="' + py + '" width="48" height="48" fill="' + CSS(fondo) + '"/>';
+        if (rnd() < 0.86) {
+          var rot = [0, 90, 180, 270][Math.floor(rnd() * 4)];
+          var f = FORMAS[Math.floor(rnd() * FORMAS.length)];
+          s += '<g transform="rotate(' + rot + " " + (px + 24) + " " + (py + 24) + ')"><use href="#' + f + '" x="' + (px - 4) + '" y="' + (py - 4) + '" width="56" height="56" fill="' + CSS(tinta) + '"/></g>';
+        }
+      }
+    }
+    return s + "</svg>";
+  }
+
+  /* --- Utilidades de texto ---------------------------------------------- */
+  function plano(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  // Resalta sin perder tildes: la normalizacion es caracter a caracter, asi
+  // los indices del texto plano coinciden con los del original.
+  function resaltar(texto, q) {
+    if (!q) return esc(texto);
+    var norm = "";
+    for (var i = 0; i < texto.length; i++) norm += plano(texto[i]).charAt(0) || texto[i];
+    var out = "", desde = 0, at;
+    while ((at = norm.indexOf(q, desde)) !== -1) {
+      out += esc(texto.slice(desde, at)) + "<mark>" + esc(texto.slice(at, at + q.length)) + "</mark>";
+      desde = at + q.length;
+    }
+    return out + esc(texto.slice(desde));
+  }
+  function fechaCorta(d) { return MES_CORTO[d.getMonth()] + " " + d.getFullYear(); }
+  function fechaLarga(d) { return d.getDate() + " de " + MESES[d.getMonth()] + " de " + d.getFullYear(); }
+  function pillHTML(t, extra) {
+    var tm = TEMA[t];
+    return '<span class="pill" style="--h:' + CSS(tm.h) + ";--on:" + tm.on + '">' + tm.nombre + (extra || "") + "</span>";
+  }
+
+  NOTAS.forEach(function (n) {
+    n.buscable = plano([n.titulo, n.autor, n.handle, FUENTE[n.fuente].nombre, n.resumen.join(" "), n.temas.map(function (t) { return TEMA[t].nombre; }).join(" ")].join(" "));
+  });
+
+  /* --- Estado ----------------------------------------------------------- */
+  var estado = { q: "", fuentes: {}, temas: {}, anios: {}, orden: "new" };
+  var lista = [];
+  var pintadas = 0;
+  var TANDA = 30;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var grid = $("grid");
+
+  function activos(obj) { return Object.keys(obj).filter(function (k) { return obj[k]; }); }
+
+  function filtrar() {
+    var q = plano(estado.q.trim());
+    var fs = activos(estado.fuentes), ts = activos(estado.temas), as = activos(estado.anios);
+    lista = NOTAS.filter(function (n) {
+      if (q && n.buscable.indexOf(q) === -1) return false;
+      if (fs.length && fs.indexOf(n.fuente) === -1) return false;
+      if (ts.length && !n.temas.some(function (t) { return ts.indexOf(t) !== -1; })) return false;
+      if (as.length && as.indexOf(String(n.fecha.getFullYear())) === -1) return false;
+      return true;
+    });
+    if (estado.orden === "new") lista.reverse();
+  }
+
+  /* --- Masonry: cada tarjeta va a la columna mas corta ------------------ */
+  var cols = [];
+  function cuantasCols() {
+    var w = grid.clientWidth;
+    return w < 700 ? 2 : w < 1020 ? 3 : w < 1260 ? 4 : 5;
+  }
+  function armarCols() {
+    grid.innerHTML = "";
+    cols = [];
+    var n = cuantasCols();
+    for (var i = 0; i < n; i++) {
+      var c = document.createElement("div");
+      c.className = "gcol";
+      grid.appendChild(c);
+      cols.push(c);
+    }
+  }
+
+  function tarjeta(n, idx) {
+    var q = plano(estado.q.trim());
+    var f = FUENTE[n.fuente];
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "card";
+    b.dataset.idx = idx;
+    var tags = n.temas.slice(0, 2).map(function (t) { return pillHTML(t); }).join("");
+    if (n.temas.length > 2) tags += '<span class="more">+' + (n.temas.length - 2) + "</span>";
+    var who = '<p class="who"><b>' + esc(n.autor) + "</b> " + esc(n.handle) + " · " + fechaCorta(n.fecha) + "</p>";
+    var h = "";
+    if (n.arte) {
+      h += '<div class="media">' + arteSVG(n.arte) + '<span class="badge">' + f.ico + "</span>";
+      if (n.fuente === "youtube") h += '<span class="play"><svg viewBox="0 0 12 14"><path d="M0 0l12 7-12 7Z"/></svg></span><span class="dur">' + n.arte.dur + "</span>";
+      h += "</div>";
+      h += '<div class="meta">' + who + '<p class="ttl">' + resaltar(n.titulo, q) + '</p><div class="tags">' + tags + "</div></div>";
+    } else {
+      h += '<div class="lead"><span class="badge">' + f.ico + "</span><h3>" + resaltar(n.titulo, q) + "</h3></div>";
+      h += '<div class="meta">' + who + '<p class="ttl exc">' + esc(n.resumen[0]) + '</p><div class="tags">' + tags + "</div></div>";
+    }
+    b.innerHTML = h;
+    b.setAttribute("aria-label", n.titulo + ". " + f.nombre + ", " + fechaCorta(n.fecha));
+    return b;
+  }
+
+  function pintarTanda() {
+    var hasta = Math.min(pintadas + TANDA, lista.length);
+    for (var i = pintadas; i < hasta; i++) {
+      var corta = cols[0];
+      for (var c = 1; c < cols.length; c++) if (cols[c].offsetHeight < corta.offsetHeight) corta = cols[c];
+      corta.appendChild(tarjeta(lista[i], i));
+    }
+    pintadas = hasta;
+  }
+
+  function repintar(mantener) {
+    var objetivo = mantener ? Math.max(pintadas, TANDA) : TANDA;
+    armarCols();
+    pintadas = 0;
+    while (pintadas < Math.min(objetivo, lista.length)) pintarTanda();
+    $("empty").hidden = lista.length > 0;
+  }
+
+  /* --- Textos de resultado y conteos ------------------------------------ */
+  function resumenTexto() {
+    var partes = [];
+    var fs = activos(estado.fuentes).map(function (k) { return FUENTE[k].nombre; });
+    var ts = activos(estado.temas).map(function (k) { return TEMA[k].nombre; });
+    var as = activos(estado.anios);
+    if (ts.length) partes.push(ts.join(", "));
+    if (fs.length) partes.push(fs.join(", "));
+    if (as.length) partes.push(as.join(", "));
+    var q = estado.q.trim();
+    var t = "<b>" + lista.length + "</b> " + (lista.length === 1 ? "nota" : "notas");
+    if (q) t += " con «" + esc(q) + "»";
+    if (partes.length) t += " en " + esc(partes.join(" · "));
+    if (!q && !partes.length) t = "Todas las notas · <b>" + lista.length + "</b>";
+    $("resultText").innerHTML = t;
+    $("qCount").textContent = lista.length;
+    var nFiltros = activos(estado.fuentes).length + activos(estado.temas).length + activos(estado.anios).length;
+    $("fCount").hidden = nFiltros === 0;
+    $("fCount").textContent = nFiltros;
+    $("fClear").hidden = nFiltros === 0 && !q;
+    $("qClear").hidden = !q;
+    $("emptyText").textContent = q
+      ? "Ninguna nota coincide con «" + q + "»" + (nFiltros ? " con esos filtros" : "") + ". Probá con otra palabra o limpiá los filtros."
+      : "Ninguna nota cumple esa combinación de filtros. Sacá alguno para ver más.";
+  }
+
+  // Cuantas notas hay por opcion con el resto de los filtros aplicados.
+  function contar(campo, valor) {
+    var q = plano(estado.q.trim());
+    var fs = activos(estado.fuentes), ts = activos(estado.temas), as = activos(estado.anios);
+    return NOTAS.reduce(function (acc, n) {
+      if (q && n.buscable.indexOf(q) === -1) return acc;
+      if (campo !== "fuente" && fs.length && fs.indexOf(n.fuente) === -1) return acc;
+      if (campo !== "tema" && ts.length && !n.temas.some(function (t) { return ts.indexOf(t) !== -1; })) return acc;
+      if (campo !== "anio" && as.length && as.indexOf(String(n.fecha.getFullYear())) === -1) return acc;
+      var ok = campo === "fuente" ? n.fuente === valor : campo === "tema" ? n.temas.indexOf(valor) !== -1 : String(n.fecha.getFullYear()) === valor;
+      return acc + (ok ? 1 : 0);
+    }, 0);
+  }
+
+  var ANIOS = [];
+  NOTAS.forEach(function (n) { var a = String(n.fecha.getFullYear()); if (ANIOS.indexOf(a) === -1) ANIOS.push(a); });
+  ANIOS.sort().reverse();
+
+  function pintarFiltros() {
+    $("fSources").innerHTML = FUENTES.map(function (f) {
+      return '<button type="button" class="chip" data-f="fuente" data-v="' + f.id + '" aria-pressed="' + !!estado.fuentes[f.id] + '">' + f.ico + f.nombre + ' <span class="n">' + contar("fuente", f.id) + "</span></button>";
+    }).join("");
+    $("fTopics").innerHTML = TEMAS.map(function (t) {
+      return '<button type="button" class="pill" style="--h:' + CSS(t.h) + ";--on:" + t.on + '" data-f="tema" data-v="' + t.id + '" aria-pressed="' + !!estado.temas[t.id] + '">' + t.nombre + ' <span class="n">' + contar("tema", t.id) + "</span></button>";
+    }).join("");
+    $("fYears").innerHTML = ANIOS.map(function (a) {
+      return '<button type="button" class="chip" data-f="anio" data-v="' + a + '" aria-pressed="' + !!estado.anios[a] + '">' + a + ' <span class="n">' + contar("anio", a) + "</span></button>";
+    }).join("");
+  }
+
+  function aplicar() {
+    filtrar();
+    resumenTexto();
+    pintarFiltros();
+    repintar(false);
+  }
+
+  /* --- Cabecera con cifras reales del archivo --------------------------- */
+  (function cifras() {
+    var porFuente = {};
+    NOTAS.forEach(function (n) { porFuente[n.fuente] = (porFuente[n.fuente] || 0) + 1; });
+    var top = FUENTES.slice().sort(function (a, b) { return (porFuente[b.id] || 0) - (porFuente[a.id] || 0); });
+    $("stats").innerHTML =
+      "<span><b>" + NOTAS.length + "</b> notas</span>" +
+      "<span><b>" + FUENTES.length + "</b> fuentes</span>" +
+      "<span><b>" + TEMAS.length + "</b> temas</span>" +
+      "<span>Desde <b>" + fechaCorta(NOTAS[0].fecha) + "</b></span>" +
+      "<span>Más notas en <b>" + top[0].nombre + "</b></span>";
+  })();
+
+  /* --- Eventos ---------------------------------------------------------- */
+  var tBusqueda;
+  $("q").addEventListener("input", function (e) {
+    clearTimeout(tBusqueda);
+    tBusqueda = setTimeout(function () { estado.q = e.target.value; aplicar(); }, 120);
+  });
+  $("qClear").addEventListener("click", function () { $("q").value = ""; estado.q = ""; aplicar(); $("q").focus(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement !== $("q") && !$("modal").open) { e.preventDefault(); $("q").focus(); }
+  });
+
+  $("filters").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-f]");
+    if (!b) return;
+    var mapa = { fuente: estado.fuentes, tema: estado.temas, anio: estado.anios }[b.dataset.f];
+    mapa[b.dataset.v] = !mapa[b.dataset.v];
+    aplicar();
+  });
+
+  function limpiar() {
+    estado.fuentes = {}; estado.temas = {}; estado.anios = {}; estado.q = "";
+    $("q").value = "";
+    aplicar();
+  }
+  $("fClear").addEventListener("click", limpiar);
+  $("emptyReset").addEventListener("click", limpiar);
+
+  function abrirFiltros(abrir) {
+    $("filters").classList.toggle("open", abrir);
+    $("fToggle").setAttribute("aria-expanded", String(abrir));
+  }
+  $("fToggle").addEventListener("click", function () { abrirFiltros(!$("filters").classList.contains("open")); });
+  abrirFiltros(window.innerWidth >= 900);
+
+  function ordenar(o) {
+    estado.orden = o;
+    $("sortNew").setAttribute("aria-pressed", String(o === "new"));
+    $("sortOld").setAttribute("aria-pressed", String(o === "old"));
+    aplicar();
+  }
+  $("sortNew").addEventListener("click", function () { ordenar("new"); });
+  $("sortOld").addEventListener("click", function () { ordenar("old"); });
+
+  // Carga incremental: 30 tarjetas por vez a medida que se scrollea.
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (ents) {
+      if (ents[0].isIntersecting && pintadas < lista.length) pintarTanda();
+    }, { rootMargin: "900px 0px" }).observe($("sentinel"));
+  } else {
+    TANDA = 1000;
+  }
+
+  var nCols = 0;
+  window.addEventListener("resize", function () {
+    var n = cuantasCols();
+    if (n !== nCols) { nCols = n; repintar(true); }
+  });
+
+  /* --- Detalle ---------------------------------------------------------- */
+  var modal = $("modal");
+  var actual = -1;
+
+  function abrirNota(idx) {
+    actual = idx;
+    var n = lista[idx];
+    var f = FUENTE[n.fuente];
+    var q = plano(estado.q.trim());
+    var arte = n.arte
+      ? { semilla: n.arte.semilla, cols: n.fuente === "youtube" ? 5 : 4, filas: n.fuente === "youtube" ? 3 : 2 }
+      : { semilla: n.id * 7919, cols: 5, filas: 1 };
+    var h = '<div class="modal-art">' + arteSVG(arte) + '<span class="badge">' + f.ico + "</span>" +
+      (n.fuente === "youtube" ? '<span class="play"><svg viewBox="0 0 12 14"><path d="M0 0l12 7-12 7Z"/></svg></span><span class="dur">' + n.arte.dur + "</span>" : "") + "</div>";
+    h += '<div class="m-body">';
+    h += '<div class="m-src"><span class="mono">' + f.nombre + " · " + fechaLarga(n.fecha) + "</span></div>";
+    h += '<h2 id="mTitle">' + resaltar(n.titulo, q) + "</h2>";
+    h += '<p class="m-who">' + esc(n.autor) + " " + esc(n.handle) + "</p>";
+    h += '<div class="m-text">' + n.resumen.map(function (p) { return "<p>" + resaltar(p, q) + "</p>"; }).join("") + "</div>";
+    h += '<div class="tags">' + n.temas.map(function (t) {
+      var tm = TEMA[t];
+      return '<button type="button" class="pill" data-tema="' + t + '" style="--h:' + CSS(tm.h) + ";--on:" + tm.on + '" aria-pressed="false">' + tm.nombre + "</button>";
+    }).join("") + "</div>";
+    h += '<dl class="m-data">' +
+      '<div><dt class="mono">Código</dt><dd>PF-' + String(n.id).padStart(4, "0") + "</dd></div>" +
+      "<div><dt class=\"mono\">Fuente</dt><dd>" + f.nombre + "</dd></div>" +
+      "<div><dt class=\"mono\">Publicada</dt><dd>" + fechaCorta(n.fecha) + "</dd></div>" +
+      "<div><dt class=\"mono\">Lecturas</dt><dd>" + n.lecturas.toLocaleString("es-AR") + "</dd></div></dl>";
+    h += "</div>";
+    $("mScroll").innerHTML = h;
+    $("mScroll").scrollTop = 0;
+    $("mPos").textContent = (idx + 1) + " / " + lista.length;
+    $("mPrev").disabled = idx === 0;
+    $("mNext").disabled = idx === lista.length - 1;
+    if (!modal.open) modal.showModal();
+  }
+
+  grid.addEventListener("click", function (e) {
+    var c = e.target.closest(".card");
+    if (c) abrirNota(Number(c.dataset.idx));
+  });
+  $("mPrev").addEventListener("click", function () { if (actual > 0) abrirNota(actual - 1); });
+  $("mNext").addEventListener("click", function () { if (actual < lista.length - 1) abrirNota(actual + 1); });
+  $("mClose").addEventListener("click", function () { modal.close(); });
+  modal.addEventListener("click", function (e) { if (e.target === modal) modal.close(); });
+  modal.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft" && actual > 0) abrirNota(actual - 1);
+    if (e.key === "ArrowRight" && actual < lista.length - 1) abrirNota(actual + 1);
+  });
+  // Tocar un tema adentro de la nota filtra el archivo por ese tema.
+  $("mScroll").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-tema]");
+    if (!b) return;
+    estado.temas = {}; estado.temas[b.dataset.tema] = true;
+    modal.close();
+    aplicar();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  nCols = cuantasCols();
+  aplicar();
+})();
+</script>
+</body>
+</html>
