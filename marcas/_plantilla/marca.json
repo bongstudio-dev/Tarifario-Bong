@@ -9,9 +9,6 @@
   "descripcion": {
     "pendiente": "Qué es la marca en dos o tres oraciones: quién es el cliente y qué resolvió el sistema."
   },
-  "principios": {
-    "pendiente": "Tres a cinco reglas madre del sistema, en una oración cada una."
-  },
   "responsables": {
     "pendiente": "Quién decide cada parte: lista de { quien, areas, contacto }. Áreas: todo, marca, voz, logo, colores, sistema, web… Siempre del lado del cliente alguien con \"todo\"."
   },
@@ -71,9 +68,6 @@
     }
   },
   "logo": {
-    "reglas": {
-      "pendiente": "Reglas de uso del logo."
-    },
     "area_resguardo": {
       "pendiente": "Área de resguardo y tamaño mínimo."
     },

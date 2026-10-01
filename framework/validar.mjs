@@ -77,8 +77,15 @@ function revisar(id, marca) {
   });
 
   /* Las herramientas que nombra una receta tienen que existir en el MCP. */
-  const tools = new Set(["marca", "que_necesitas_hacer", "colores", "validar_combinacion", "contraste", "buscar_iconos", "icono", "forma", "formas", "generar_patron", "tipografia", "reglas_logo", "glosario", "revisar_texto", "tokens", "changelog", "es_vigente", "responsables", "reportar_hueco"]);
+  const tools = new Set(["marca", "que_necesitas_hacer", "colores", "validar_combinacion", "contraste", "buscar_iconos", "icono", "forma", "formas", "generar_patron", "tipografia", "leer_kit", "glosario", "revisar_texto", "tokens", "changelog", "es_vigente", "responsables", "reportar_hueco"]);
   N.arr(marca.tareas).forEach((t) => N.arr(t.herramientas).forEach((h) => { if (!tools.has(h)) e(`tarea ${t.id}: herramienta "${h}" no existe`); }));
+
+  /* El kit: tiene que tener LEEME.md, y lo que una receta manda a leer
+     tiene que existir. */
+  const dirKit = path.join(RAIZ, "marcas", id, "kit");
+  const kit = fs.existsSync(dirKit) ? fs.readdirSync(dirKit) : [];
+  if (!kit.includes("LEEME.md")) e("kit/LEEME.md no existe");
+  N.arr(marca.tareas).forEach((t) => N.arr(t.leer).forEach((f) => { if (!kit.includes(f)) e(`tarea ${t.id}: manda a leer kit/${f}, que no existe`); }));
 
   /* El manual se versiona como software: la version de la marca es la del
      ultimo cambio anotado. Si se toca el marca.json sin anotar, no pasa. */

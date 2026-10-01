@@ -399,7 +399,6 @@ export function resumen(marca) {
     version: marca.version,
     estudio: marca.estudio,
     descripcion: marca.descripcion,
-    principios: marca.principios,
     contenido: {
       colores: arr(marca.colores).length,
       duplas: marca.paleta?.duplas?.length || 0,

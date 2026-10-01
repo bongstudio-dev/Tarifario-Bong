@@ -24,13 +24,23 @@ persona de la compañía le pide a Claude "armame la portada de la presentación
 para productores" y Claude responde con la paleta, las formas, los íconos y
 las reglas de la marca, no con colores inventados.
 
-Cada marca es un archivo de datos. El código es el mismo para todas.
+Cada marca es un **kit**: markdown que una persona hojea y un agente lee
+(estrategia, voz, dirección de arte con el porqué de cada regla, decisiones),
+más un `marca.json` con los valores que usan las herramientas. Es el mismo
+formato que muestra littleplains con el kit de Sonata. El código es el mismo
+para todas las marcas.
 
 ```
 marcas/
-  _plantilla/marca.json    de acá sale cada marca nueva
-  profertil/marca.json     cargada con lo que tiene la maqueta del caso
-  eyd/marca.json           alta hecha, datos pendientes
+  _plantilla/              de acá sale cada marca nueva
+  profertil/
+    marca.json             valores: colores, duplas, formas, íconos, patrón, recetas
+    kit/LEEME.md           cómo usar el kit y cómo decidir cuando no alcanza
+    kit/estrategia.md
+    kit/voz.md
+    kit/direccion-de-arte.md   cada regla con qué, por qué y dónde
+    kit/decisiones.md      qué se decidió y por qué, por versión
+  eyd/                     alta hecha, todo pendiente
 framework/
   nucleo.mjs               las funciones: color, contraste, íconos, patrón, recetas
   servidor.mjs             el servidor MCP (stdio y HTTP), sin dependencias
@@ -54,7 +64,8 @@ dos versiones parecidas.
 | `buscar_iconos` / `icono` | Búsqueda en la iconografía oficial y SVG listo, en el color de su categoría o en pastilla |
 | `forma` | El alfabeto de formas, en SVG y en color de la marca |
 | `generar_patron` | El patrón del sistema en SVG. Misma semilla, mismo patrón |
-| `tipografia`, `reglas_logo`, `glosario`, `changelog` | El manual, consultable |
+| `leer_kit` | El kit en texto: índice, o la sección que pida la receta |
+| `tipografia`, `glosario`, `changelog` | El manual, consultable |
 | `revisar_texto` | Voz y terminología de la marca |
 | `tokens` | Variables CSS o JSON para proveedores web |
 | `es_vigente` | ¿Este hex, logo, archivo o término es de la versión actual? Si no, qué lo reemplaza |
@@ -70,7 +81,8 @@ publicar una marca a medio cargar sin que la IA rellene los huecos.
 
 ## Dar de alta una marca
 
-1. Copiar `marcas/_plantilla/` a `marcas/<id>/` y poner el `id` y el `nombre`.
+1. Copiar `marcas/_plantilla/` a `marcas/<id>/`, poner el `id` y el `nombre`
+   en `marca.json` y el nombre en los markdown de `kit/`.
 2. Ir reemplazando cada `{ "pendiente": "…" }` por el dato real. Lo que no se
    tenga todavía se deja así: el MCP lo informa como faltante.
 3. Validar y probar:
@@ -144,6 +156,17 @@ Publicado así, el servidor también sirve los SVG por URL (`/patron.svg`,
 `/icono/<id>.svg`, `/forma/<id>.svg`, `/tokens.css`) y las tools devuelven
 el link de descarga junto con el código.
 
+## Por qué markdown y MCP a la vez
+
+El kit en markdown ya funciona solo: Claude Code o Codex abiertos en el repo lo
+leen sin nada más, igual que el de Sonata. El MCP es para quien no abre un
+repo: el equipo de Comunicaciones o un proveedor desde claude.ai, que necesitan
+las mismas reglas y además herramientas que calculen (contraste, combinaciones
+aprobadas, patrón, vigencia) en vez de confiar en que el modelo lo haga bien.
+
+Las reglas en prosa viven solo en el kit y los valores solo en `marca.json`.
+Nada está escrito en los dos lados.
+
 ## Qué falta
 
 - **Profertil**: la lista de lo retirado (`obsoleto`: qué colores de la paleta
@@ -154,6 +177,12 @@ el link de descarga junto con el código.
   que dice el caso y están marcadas `"borrador": true`: hay que pasarlas contra
   el manual. Y los 146 íconos que no están en la maqueta.
 - **E&D**: todo. La carpeta está creada desde la plantilla.
+- **Componentes con código**, como en el kit de Sonata: botón, tarjeta,
+  portada con patrón, firma de mail, en HTML/CSS sobre los tokens. Es lo que
+  deja que el agente arme una pieza entera y no solo que elija bien los colores.
+- **El estudio "¿Qué querés hacer?"**: una página donde alguien de Profertil
+  elige un pedido ("una portada", "un mail a productores") y el agente la arma
+  leyendo el kit, con vista previa y código.
 - **Auth de verdad** si el cliente lo pide: hoy es un token compartido por
   marca. Para usuarios individuales hace falta OAuth.
 - El **portal web** de cada marca sobre `nucleo.mjs` (el generador y el buscador

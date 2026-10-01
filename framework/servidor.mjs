@@ -70,11 +70,29 @@ function argumentos(argv) {
   return a;
 }
 
+/* El kit: los markdown que una persona hojea y un agente lee. Viven en
+   marcas/<id>/kit/ al lado del marca.json. La primera linea "# Titulo" y el
+   primer parrafo hacen de indice. */
+export function cargarKit(dirMarca) {
+  const dir = path.join(dirMarca, "kit");
+  if (!fs.existsSync(dir)) return [];
+  const orden = (n) => (n === "LEEME.md" ? "0" : "1" + n);
+  return fs.readdirSync(dir).filter((n) => n.endsWith(".md")).sort((a, b) => orden(a).localeCompare(orden(b))).map((archivo) => {
+    const texto = fs.readFileSync(path.join(dir, archivo), "utf8");
+    const titulo = (/^#\s+(.+)$/m.exec(texto) || [, archivo])[1].trim();
+    const resumen = texto.split(/\n\s*\n/).map((b) => b.trim()).find((b) => b && !b.startsWith("#")) || "";
+    return { archivo, titulo, resumen: resumen.replace(/\s+/g, " ").slice(0, 240), texto };
+  });
+}
+
 export function cargarMarca({ marca, archivo }) {
   const ruta = archivo ? path.resolve(archivo) : path.join(RAIZ, "marcas", String(marca || ""), "marca.json");
   if (!marca && !archivo) throw new Error("Falta la marca: --marca <id> o MARCA=<id>. Las disponibles están en marcas/.");
   if (!fs.existsSync(ruta)) throw new Error(`No existe ${path.relative(RAIZ, ruta)}.`);
-  return JSON.parse(fs.readFileSync(ruta, "utf8"));
+  const datos = JSON.parse(fs.readFileSync(ruta, "utf8"));
+  /* El kit no se serializa con la marca: va aparte, como texto. */
+  Object.defineProperty(datos, "kit", { value: cargarKit(path.dirname(ruta)), enumerable: false });
+  return datos;
 }
 
 /* --- Tools ----------------------------------------------------------------- */
@@ -100,6 +118,7 @@ export function crearTools(marca, { urlPublica } = {}) {
     return { content: [{ type: "text", text: JSON.stringify(meta, null, 2) }, { type: "text", text: svg }], structuredContent: { ...meta, svg } };
   };
   const paletasPatron = N.arr(marca.patron?.paletas).map((p) => p.id);
+  const kit = marca.kit || [];
 
   return [
     {
@@ -107,7 +126,7 @@ export function crearTools(marca, { urlPublica } = {}) {
       title: `Resumen de ${marca.nombre}`,
       description: `Qué es la marca ${marca.nombre}, sus principios, qué contiene el sistema y qué datos faltan cargar. Llamala primero si no conocés la marca.`,
       inputSchema: { type: "object", properties: {} },
-      run: () => json(N.resumen(marca))
+      run: () => json({ ...N.resumen(marca), kit: (marca.kit || []).map((k) => k.archivo) })
     },
     {
       name: "que_necesitas_hacer",
@@ -209,11 +228,16 @@ export function crearTools(marca, { urlPublica } = {}) {
       run: () => json(marca.tipografia || {})
     },
     {
-      name: "reglas_logo",
-      title: "Reglas del logo",
-      description: "Cómo se usa el logo: área de resguardo, tamaño mínimo, versiones y archivos.",
-      inputSchema: { type: "object", properties: {} },
-      run: () => json(marca.logo || {})
+      name: "leer_kit",
+      title: "Leer el kit de marca",
+      description: "El kit en texto: estrategia, voz, dirección de arte (cada regla con su porqué y dónde aplica) y decisiones. Sin sección, devuelve el índice. Leé LEEME.md primero y después solo las secciones que pida la tarea (que_necesitas_hacer las indica en \"leer\").",
+      inputSchema: { type: "object", properties: { seccion: { type: "string", description: "Archivo del kit, ej. \"direccion-de-arte.md\". Vacío, el índice.", ...conEnum(kit.map((k) => k.archivo)) } } },
+      run: ({ seccion }) => {
+        if (!kit.length) return error("Esta marca todavía no tiene kit escrito.");
+        if (!seccion) return json({ indice: kit.map(({ texto: _, ...k }) => k) });
+        const k = kit.find((x) => x.archivo === seccion);
+        return k ? texto(k.texto) : error(`No hay una sección "${seccion}". Pedí el índice sin sección.`);
+      }
     },
     {
       name: "glosario",
@@ -286,7 +310,8 @@ function instrucciones(marca) {
     `Este servidor es el sistema de marca de ${marca.nombre} (v${marca.version}), diseñado por ${marca.estudio || "Bong Studio"}.`,
     "Lo usan personas de la compañía y proveedores que no son diseñadores: hablales claro y sin jerga.",
     "Reglas:",
-    "- Antes de producir cualquier pieza, llamá a que_necesitas_hacer con lo que te pidieron y seguí la receta.",
+    "- Antes de producir cualquier pieza, llamá a que_necesitas_hacer con lo que te pidieron, leé con leer_kit las secciones que indique en \"leer\" y seguí la receta. No hace falta leer el kit entero.",
+    "- Cada regla del kit tiene su porqué. Cuando una regla frene lo que la persona quiere, explicale el porqué, no solo la regla. Cuando el kit no cubra el caso, seguí el procedimiento de LEEME.md.",
     "- Usá solo colores, combinaciones, formas e íconos que salgan de estas tools. No inventes hex ni dibujes íconos propios.",
     "- Si combinás colores, pasalos por validar_combinacion. Si ponés texto sobre color, pasalo por contraste.",
     "- Si la persona trae un archivo, una pieza vieja, un logo o un color que no salió de estas tools, pasalo por es_vigente antes de usarlo. Hay versiones viejas de la marca dando vueltas.",
@@ -302,6 +327,7 @@ function recursos(marca) {
   const base = `marca://${marca.id}`;
   return [
     { uri: `${base}/marca.json`, name: `${marca.nombre} — sistema completo`, mimeType: "application/json", leer: () => JSON.stringify(marca, null, 2) },
+    ...(marca.kit || []).map((k) => ({ uri: `${base}/kit/${k.archivo}`, name: `${marca.nombre} — ${k.titulo}`, description: k.resumen, mimeType: "text/markdown", leer: () => k.texto })),
     { uri: `${base}/tokens.css`, name: `${marca.nombre} — tokens CSS`, mimeType: "text/css", leer: () => N.tokensCss(marca) },
     { uri: `${base}/pendientes.json`, name: `${marca.nombre} — datos que faltan cargar`, mimeType: "application/json", leer: () => JSON.stringify(N.pendientes(marca), null, 2) },
     { uri: `${base}/huecos.json`, name: `${marca.nombre} — huecos reportados por los agentes`, mimeType: "application/json", leer: () => JSON.stringify(leerHuecos(marca), null, 2) }

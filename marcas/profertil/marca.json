@@ -5,12 +5,6 @@
   "estudio": "Bong Studio",
   "version": "1.4.0",
   "descripcion": "Principal productora de fertilizantes nitrogenados de Argentina. Una marca instalada durante veinticinco años a la que le faltaba un sistema para usarla: del logo se extrajo la hoja de la espiga de trigo y de la hoja, un alfabeto de formas.",
-  "principios": [
-    "Ninguna forma es arbitraria: todas descienden de la hoja del logo.",
-    "Las formas son pregnantes solas y modulares en combinación; funcionan como máscaras y ordenadores del layout.",
-    "No se eligen colores sueltos: se usa una principal, una dupla o una terciaria ya aprobadas.",
-    "El logotipo se conserva tal cual. No se redibuja, no se deforma, no se recolorea fuera de la paleta."
-  ],
   "responsables": [
     {
       "quien": "Comunicaciones Integradas · Profertil",
@@ -36,7 +30,9 @@
         "tipografia",
         "manual"
       ],
-      "contacto": { "pendiente": "Mail de contacto del estudio para consultas del sistema." }
+      "contacto": {
+        "pendiente": "Mail de contacto del estudio para consultas del sistema."
+      }
     }
   ],
   "colores": [
@@ -526,10 +522,6 @@
     ]
   },
   "logo": {
-    "reglas": [
-      "Se usa el archivo vectorial original. Nunca se redibuja ni se reconstruye desde una captura.",
-      "Se respeta el área de resguardo: si algo entra ahí, el logo deja de leerse como logo."
-    ],
     "area_resguardo": {
       "pendiente": "Medida del área de resguardo (en unidades del logo) y tamaño mínimo, según el manual v1.3.2."
     },
@@ -592,7 +584,11 @@
         "buscar_iconos",
         "validar_combinacion"
       ],
-      "borrador": true
+      "borrador": true,
+      "leer": [
+        "direccion-de-arte.md",
+        "voz.md"
+      ]
     },
     {
       "id": "mail",
@@ -614,7 +610,11 @@
         "buscar_iconos",
         "contraste"
       ],
-      "borrador": true
+      "borrador": true,
+      "leer": [
+        "voz.md",
+        "direccion-de-arte.md"
+      ]
     },
     {
       "id": "cartel",
@@ -640,7 +640,10 @@
         "validar_combinacion",
         "contraste"
       ],
-      "borrador": true
+      "borrador": true,
+      "leer": [
+        "direccion-de-arte.md"
+      ]
     },
     {
       "id": "redes",
@@ -662,7 +665,11 @@
         "generar_patron",
         "buscar_iconos"
       ],
-      "borrador": true
+      "borrador": true,
+      "leer": [
+        "direccion-de-arte.md",
+        "voz.md"
+      ]
     }
   ],
   "obsoleto": {

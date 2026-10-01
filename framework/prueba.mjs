@@ -60,7 +60,7 @@ const llamadas = {
   forma: { id: "hoja", color: "verde" },
   generar_patron: { semilla: 42, columnas: 4, ancho: 400 },
   tipografia: {},
-  reglas_logo: {},
+  leer_kit: {},
   glosario: { termino: "dupla" },
   revisar_texto: { texto: "Hola" },
   tokens: { formato: "css" },
@@ -127,6 +127,17 @@ for (const marca of MARCAS) {
     assert.equal(a, b);
     assert.ok(a.startsWith("<svg") && a.includes("#0B3FA8"));
     bien("reglas del sistema: duplas, hex fuera de paleta, recetas, categorías, patrón determinista");
+
+    const indice = await t("leer_kit", {});
+    assert.equal(indice.indice[0].archivo, "LEEME.md");
+    const receta = await t("que_necesitas_hacer", { pedido: "presentación" });
+    for (const f of receta.tarea.leer) {
+      const r = await c.pedir("tools/call", { name: "leer_kit", arguments: { seccion: f } });
+      assert.ok(!r.result.isError && r.result.content[0].text.startsWith("#"), f);
+    }
+    const art = (await c.pedir("tools/call", { name: "leer_kit", arguments: { seccion: "direccion-de-arte.md" } })).result.content[0].text;
+    assert.ok(art.includes("Por qué"));
+    bien("kit: índice, secciones que pide la receta, reglas con su porqué");
 
     assert.equal((await t("es_vigente", { que: "azul" })).vigente, true);
     const ajeno = await t("es_vigente", { que: "#0A40A0" });
