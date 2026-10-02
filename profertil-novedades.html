@@ -227,6 +227,20 @@ button.etq[aria-pressed="true"] .lb { background: var(--tx); color: #fff; }
 a.etq { text-decoration: none; }
 a.etq:hover .fl { background: var(--tx); color: #fff; }
 .media .etq .lb, .m-art .etq .lb { box-shadow: none; }
+.etq .corto { display: none; }
+/* La etiqueta nunca se sale de la tarjeta: la tarjeta es contenedor y, si es
+   angosta, la etiqueta pasa al nombre corto y suelta el año. Si aun asi no
+   entra, el rotulo se corta con puntos suspensivos. */
+.card { container-type: inline-size; }
+.card .etq { max-width: 100%; }
+.card .media .etq { max-width: calc(100% - 20px); }
+.card .etq .lb { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.card .etq .lb > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@container (max-width: 250px) {
+  .etq .full { display: none; }
+  .etq .corto { display: inline; }
+  .etq .dt { display: none; }
+}
 
 /* --- Pastilla principal de la barra: full rounded, relleno con el color de
    la familia del tipo y texto tiza. La activa suma un aro del mismo color. */
@@ -285,7 +299,7 @@ button.sub { cursor: pointer; transition: background 160ms ease, color 160ms eas
 .filters:not(.open) .f-body { display: none; }
 .f-group { display: grid; gap: 8px; }
 .f-label { margin: 0; font-size: 0.74rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
-.f-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.f-row { display: flex; flex-wrap: wrap; gap: 7px; padding: 3px; }
 .f-bar { display: flex; align-items: center; gap: 6px; padding: 9px 8px 9px 10px; }
 .f-main { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding: 5px; }
 .f-main::-webkit-scrollbar { display: none; }
@@ -361,9 +375,6 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   .card { border-radius: 20px; }
   .media { margin: 6px 6px 0; border-radius: 15px; }
   .media .etq { top: 7px; left: 7px; --s: 22px; }
-  .card .etq { max-width: 100%; }
-  .card .etq .dt { display: none; }
-  .card .etq .lb { min-width: 0; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 22px; }
   .play { width: 28px; height: 28px; top: 7px; right: 7px; }
   .lead { padding: 13px 12px 2px; gap: 10px; }
   .lead h3 { font-size: 1.08rem; }
@@ -453,6 +464,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
 
 <section class="filters" id="filters" aria-label="Filtros">
   <div class="f-body" id="fBody">
+    <div class="f-group"><p class="f-label">Categoría</p><div class="f-row" id="fTiposTodas"></div></div>
     <div class="f-group"><p class="f-label">Año</p><div class="f-row" id="fAnios"></div></div>
     <button class="f-clear" id="fClear" type="button" hidden>Limpiar filtros</button>
   </div>
@@ -511,10 +523,10 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   var TIPOS = [
     { id: "institucional", nombre: "Institucional", forma: "escudo", f: fam("azul") },
     { id: "comercial", nombre: "Comercial", forma: "barras", f: fam("naranja") },
-    { id: "somos", nombre: "Somos Profertil", forma: "circulos", f: fam("verde", true) },
-    { id: "tecnico", nombre: "Artículo técnico", forma: "lupa", f: fam("verde") },
-    { id: "aviso", nombre: "Aviso a la comunidad", forma: "casco", f: fam("amarillo") },
-    { id: "financiera", nombre: "Gacetilla financiera", forma: "grafico", f: fam("azul", true) }
+    { id: "somos", nombre: "Somos Profertil", corto: "Somos", forma: "circulos", f: fam("verde", true) },
+    { id: "tecnico", nombre: "Artículo técnico", corto: "Técnico", forma: "lupa", f: fam("verde") },
+    { id: "aviso", nombre: "Aviso a la comunidad", corto: "Aviso", forma: "casco", f: fam("amarillo") },
+    { id: "financiera", nombre: "Gacetilla financiera", corto: "Financiera", forma: "grafico", f: fam("azul", true) }
   ];
   var CULTIVOS = [
     { id: "trigo", nombre: "Trigo", forma: "trigo" }, { id: "maiz", nombre: "Maíz", forma: "hoja" },
@@ -638,7 +650,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     o = o || {};
     var x = POR[id], tag = o.tag || "span";
     return "<" + tag + ' class="etq ' + (o.cls || "") + '" style="' + vars(x) + '"' + (o.attrs || "") + ">" + badge(x) +
-      '<span class="lb">' + x.nombre + "</span>" + (o.dato != null ? '<span class="dt">' + o.dato + "</span>" : "") + (o.flecha ? FLECHA : "") + "</" + tag + ">";
+      '<span class="lb">' + (x.corto ? '<span class="full">' + x.nombre + '</span><span class="corto">' + x.corto + "</span>" : x.nombre) + "</span>" + (o.dato != null ? '<span class="dt">' + o.dato + "</span>" : "") + (o.flecha ? FLECHA : "") + "</" + tag + ">";
   }
 
   /* --- Estado ------------------------------------------------------------- */
@@ -722,10 +734,13 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   }
   function pintarFiltros() {
     var ninguno = !activos(estado.tipos).length;
-    $("fTipos").innerHTML = '<button type="button" class="lbl lbl-todas" data-f="todas" aria-pressed="' + ninguno + '">Todas</button>' +
+    var pills = '<button type="button" class="lbl lbl-todas" data-f="todas" aria-pressed="' + ninguno + '">Todas</button>' +
       TIPOS.map(function (x) {
         return '<button type="button" class="lbl" style="--pc:' + x.f.bg + '" data-f="tipo" data-v="' + x.id + '" aria-pressed="' + !!estado.tipos[x.id] + '">' + x.nombre + "</button>";
       }).join("");
+    // La barra muestra las categorias en una fila que se desliza; el panel abierto las muestra todas.
+    $("fTipos").innerHTML = pills;
+    $("fTiposTodas").innerHTML = pills;
     $("fAnios").innerHTML = ANIOS.map(function (a) {
       return '<button type="button" class="sub sub-anio" data-f="anio" data-v="' + a + '" aria-pressed="' + !!estado.anios[a] + '">' + a + '<b class="n">' + contar("anio", a) + "</b></button>";
     }).join("");
