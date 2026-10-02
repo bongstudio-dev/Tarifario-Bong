@@ -246,20 +246,22 @@ a.etq { text-decoration: none; }
 a.etq:hover .fl { background: var(--tx); color: #fff; }
 .media .etq .lb, .m-art .etq .lb { box-shadow: none; }
 
-/* --- Pastilla principal: solo el rotulo de la Etiqueta (modulo del medio) - */
+/* --- Pastilla principal de la barra: full rounded, relleno con el color de
+   la familia del tipo y texto tiza. La activa suma un aro del mismo color. */
 .lbl {
   --h: 38px;
   display: inline-flex; align-items: center; flex: none;
-  height: var(--h); padding: 0 calc(var(--h) * 0.4);
-  border: 0; border-radius: calc(var(--h) * 0.32);
-  background: #fff; color: var(--tx, var(--azul));
+  height: var(--h); padding: 0 calc(var(--h) * 0.46);
+  border: 0; border-radius: 999px;
+  background: var(--pc, var(--azul)); color: var(--tiza);
   font-family: var(--f-display); font-size: calc(var(--h) * 0.44); font-weight: 400;
   white-space: nowrap; cursor: pointer;
-  transition: background 160ms ease, color 160ms ease;
+  opacity: 0.88;
+  transition: opacity 160ms ease, box-shadow 160ms ease;
 }
-.lbl:hover { box-shadow: inset 0 0 0 1.5px var(--tx, var(--azul)); }
-.lbl[aria-pressed="true"] { background: var(--tx, var(--azul)); color: #fff; box-shadow: none; }
-.lbl-todas { --tx: var(--ink); }
+.lbl:hover { opacity: 1; }
+.lbl[aria-pressed="true"] { opacity: 1; box-shadow: 0 0 0 2px var(--tiza), 0 0 0 4px var(--pc, var(--azul)); }
+.lbl-todas { --pc: var(--ink); }
 
 /* --- Subcategoria (cultivo): relleno del color, texto tiza. Sin badge
    ni flecha, para no competir con la etiqueta principal de la nota. */
@@ -285,7 +287,7 @@ button.sub { cursor: pointer; transition: background 160ms ease, color 160ms eas
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   z-index: 40;
-  width: min(100% - 24px, 900px);
+  width: min(100% - 24px, 1000px);
   max-height: calc(100% - 110px);
   display: grid; grid-template-rows: minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr);
   border-radius: 26px;
@@ -302,7 +304,7 @@ button.sub { cursor: pointer; transition: background 160ms ease, color 160ms eas
 .f-label { margin: 0; font-size: 0.74rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .f-row { display: flex; flex-wrap: wrap; gap: 7px; }
 .f-bar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 10px; }
-.f-main { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding: 2px; }
+.f-main { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding: 5px; }
 .f-main::-webkit-scrollbar { display: none; }
 .f-toggle {
   position: relative; flex: none;
@@ -768,7 +770,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     var ninguno = !activos(estado.tipos).length;
     $("fTipos").innerHTML = '<button type="button" class="lbl lbl-todas" data-f="todas" aria-pressed="' + ninguno + '">Todas</button>' +
       TIPOS.map(function (x) {
-        return '<button type="button" class="lbl" style="--tx:' + x.f.tx + '" data-f="tipo" data-v="' + x.id + '" aria-pressed="' + !!estado.tipos[x.id] + '">' + x.nombre + "</button>";
+        return '<button type="button" class="lbl" style="--pc:' + x.f.bg + '" data-f="tipo" data-v="' + x.id + '" aria-pressed="' + !!estado.tipos[x.id] + '">' + x.nombre + "</button>";
       }).join("");
     function fila(lista, campo, mapa) {
       return lista.map(function (x) { return sub(x.id, { tag: "button", n: contar(campo, x.id), attrs: ' type="button" data-f="' + campo + '" data-v="' + x.id + '" aria-pressed="' + !!mapa[x.id] + '"' }); }).join("");
