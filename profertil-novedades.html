@@ -13,7 +13,7 @@
    Novedades Profertil: maqueta del archivo de notas.
    Layout: banda azul del concepto web (manual p. 110) con el histograma de
    publicaciones por año, buscador fijo en vidrio, grilla masonry de tarjetas
-   y panel de filtros flotante (tipo de nota, pilar, cultivo).
+   y panel de filtros flotante (tipo de nota y cultivo).
    Paleta, pares de color, formas e iconos son los oficiales del manual de
    marca y de las herramientas del sistema. Un solo tema, a proposito: el
    manual define la web sobre tiza y no tiene version oscura.
@@ -261,7 +261,7 @@ a.etq:hover .fl { background: var(--tx); color: #fff; }
 .lbl[aria-pressed="true"] { background: var(--tx, var(--azul)); color: #fff; box-shadow: none; }
 .lbl-todas { --tx: var(--ink); }
 
-/* --- Subcategoria (pilar y cultivo): relleno del color, texto tiza. Sin badge
+/* --- Subcategoria (cultivo): relleno del color, texto tiza. Sin badge
    ni flecha, para no competir con la etiqueta principal de la nota. */
 .sub {
   --h: 22px;
@@ -376,8 +376,9 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   .card { border-radius: 20px; }
   .media { margin: 6px 6px 0; border-radius: 15px; }
   .media .etq { top: 7px; left: 7px; --s: 22px; }
-  .media .etq .dt { display: none; }
-  .media .etq .lb { max-width: calc(100% - 28px); overflow: hidden; text-overflow: ellipsis; display: block; line-height: 22px; }
+  .card .etq { max-width: 100%; }
+  .card .etq .dt { display: none; }
+  .card .etq .lb { min-width: 0; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 22px; }
   .play { width: 28px; height: 28px; top: 7px; right: 7px; }
   .lead { padding: 13px 12px 2px; gap: 10px; }
   .lead h3 { font-size: 1.08rem; }
@@ -475,7 +476,6 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
 
 <section class="filters" id="filters" aria-label="Filtros">
   <div class="f-body" id="fBody">
-    <div class="f-group"><p class="f-label">Pilar de marca</p><div class="f-row" id="fPilares"></div></div>
     <div class="f-group"><p class="f-label">Cultivo</p><div class="f-row" id="fCultivos"></div></div>
     <button class="f-clear" id="fClear" type="button" hidden>Limpiar filtros</button>
   </div>
@@ -505,7 +505,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
      Datos reales: las 471 notas de /noticias-recientes/ del crawl del sitio
      actual (urls.csv, agosto 2026). Por nota: titulo (t), fecha (f), ruta
      (u), palabras (w), imagenes (i), video (v), bajada propia si tiene (b)
-     y subcategoria de WordPress (s). Tipo (tp), pilares (p) y cultivos (c)
+     y subcategoria de WordPress (s). Tipo (tp) y cultivos (c)
      salen de una clasificacion por palabras clave sobre titulo y URL:
      es una propuesta para mostrar, no una carga editorial revisada.
      --------------------------------------------------------------------- */
@@ -520,8 +520,8 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
 
   /* --- Taxonomia ---------------------------------------------------------
      Tipos: las cinco categorias de la plantilla Nota del tablero de
-     auditoria B1. Pilares: los cuatro del manual (p. 14). Cada pilar toma
-     un par de color canonico del generador de patrones. */
+     auditoria B1. El arte de la tarjeta usa un par de color canonico del
+     generador de patrones de otra familia. Cultivo va como subcategoria. */
   // Familias del componente Etiqueta: fondo del badge, forma y texto.
   // La invertida da vuelta fondo y forma; el dato usa la forma de fondo.
   var FAM = {
@@ -538,12 +538,6 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     { id: "aviso", nombre: "Aviso a la comunidad", forma: "casco", f: fam("amarillo") },
     { id: "financiera", nombre: "Gacetilla financiera", forma: "grafico", f: fam("azul", true) }
   ];
-  var PILARES = [
-    { id: "suelos", nombre: "Suelos", c: "#8A4818", forma: "suelo", f: fam("naranja", true), par: ["#E57F19", "#8A4818"] },
-    { id: "alimentos", nombre: "Alimentos", c: "#E57F19", forma: "plantas", f: fam("amarillo", true), par: ["#EABA2C", "#E57F19"] },
-    { id: "energia", nombre: "Energía", c: "#003DA5", forma: "sol", f: fam("azul"), par: ["#003DA5", "#4086FF"] },
-    { id: "comunidades", nombre: "Comunidades", c: "#2D8035", forma: "circulos", f: fam("verde"), par: ["#2D8035", "#5EB53A"] }
-  ];
   var CULTIVOS = [
     { id: "trigo", nombre: "Trigo", forma: "trigo" }, { id: "maiz", nombre: "Maíz", forma: "hoja" },
     { id: "soja", nombre: "Soja", forma: "capas" }, { id: "girasol", nombre: "Girasol", forma: "flor" },
@@ -551,7 +545,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   ];
   CULTIVOS.forEach(function (c) { c.f = fam("verde", true); c.c = "#5EB53A"; });
   var POR = {};
-  TIPOS.concat(PILARES, CULTIVOS).forEach(function (x) { POR[x.id] = x; });
+  TIPOS.concat(CULTIVOS).forEach(function (x) { POR[x.id] = x; });
   var SUB = { "comunicacion-institucional": "Comunicación institucional", "comunicacion-comercial": "Comunicación comercial", "somos-profertil": "Somos Profertil" };
 
   var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -580,12 +574,12 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   NOTAS.forEach(function (n, k) {
     n.id = k;
     n.anio = n.f ? n.f.slice(0, 4) : "";
-    n.buscable = plano([n.t, n.b, n.u.replace(/-/g, " "), POR[n.tp].nombre, n.p.map(function (x) { return POR[x].nombre; }).join(" "), n.c.map(function (x) { return POR[x].nombre; }).join(" ")].join(" "));
+    n.buscable = plano([n.t, n.b, n.u.replace(/-/g, " "), POR[n.tp].nombre, n.c.map(function (x) { return POR[x].nombre; }).join(" ")].join(" "));
   });
 
   /* --- Arte de tarjeta -----------------------------------------------------
      Sin fotos (el sitio actual no se puede bajar desde aca): composiciones
-     con las 18 formas oficiales sobre el par de color del pilar, figura
+     con las 18 formas oficiales sobre el par de color del tipo de nota, figura
      sobre fondo, como en el generador de patrones. */
   function rnd32(a) {
     return function () {
@@ -604,16 +598,24 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     var l = [];
     n.c.forEach(function (c) { l = l.concat(FORMA_TEMA[c]); });
     if (n.tp !== "institucional" && n.tp !== "comercial") l = l.concat(FORMA_TEMA[n.tp]);
-    l = l.concat(FORMA_TEMA[n.p[0]]);
+    if (!l.length) l = l.concat(FORMA_TEMA[n.p[0]]);
     return l;
   }
+  var PARES = { azul: ["#003DA5", "#4086FF"], verde: ["#2D8035", "#5EB53A"], amarillo: ["#EABA2C", "#E57F19"], naranja: ["#E57F19", "#8A4818"] };
+  var PARES_CONTRA = {
+    institucional: ["verde", "amarillo", "naranja"], financiera: ["verde", "amarillo", "naranja"],
+    tecnico: ["azul", "amarillo", "naranja"], comercial: ["azul", "verde"], aviso: ["azul", "verde"]
+  };
   function usar(f, x, y, w, h, rot, color) {
     var cx = x + w / 2, cy = y + h / 2;
     return '<g transform="rotate(' + rot + " " + cx + " " + cy + ')"><use href="#f-' + f + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + color + '"/></g>';
   }
   function arte(n, W, H, semilla) {
     var r = rnd32(semilla);
-    var par = POR[n.p[0]].par;
+    // El par sale de una familia distinta a la del tipo, para que la etiqueta
+    // principal (badge y dato en el color del tipo) no se pierda sobre el arte.
+    var opciones = PARES_CONTRA[n.tp];
+    var par = PARES[opciones[n.id % opciones.length]];
     var inv = r() < 0.3;
     var fig = inv ? par[1] : par[0], fondo = inv ? par[0] : par[1];
     var fs = formasDe(n);
@@ -664,7 +666,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   }
 
   /* --- Estado ------------------------------------------------------------- */
-  var estado = { q: "", tipos: {}, pilares: {}, cultivos: {}, anios: {}, orden: "new" };
+  var estado = { q: "", tipos: {}, cultivos: {}, anios: {}, orden: "new" };
   var lista = [];
   var pintadas = 0;
   var TANDA = 30;
@@ -675,9 +677,8 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   function pasa(n, salvo) {
     var q = plano(estado.q.trim());
     if (q && n.buscable.indexOf(q) === -1) return false;
-    var ts = activos(estado.tipos), ps = activos(estado.pilares), cs = activos(estado.cultivos), as = activos(estado.anios);
+    var ts = activos(estado.tipos), cs = activos(estado.cultivos), as = activos(estado.anios);
     if (salvo !== "tipo" && ts.length && ts.indexOf(n.tp) === -1) return false;
-    if (salvo !== "pilar" && ps.length && !n.p.some(function (x) { return ps.indexOf(x) !== -1; })) return false;
     if (salvo !== "cultivo" && cs.length && !n.c.some(function (x) { return cs.indexOf(x) !== -1; })) return false;
     if (salvo !== "anio" && as.length && as.indexOf(n.anio) === -1) return false;
     return true;
@@ -700,7 +701,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     var q = plano(estado.q.trim());
     var b = document.createElement("button");
     b.type = "button"; b.className = "card"; b.dataset.idx = idx;
-    var temas = n.p.concat(n.c);
+    var temas = n.c;
     var tags = temas.slice(0, 2).map(function (x) { return sub(x); }).join("");
     if (temas.length > 2) tags += '<span class="more">+' + (temas.length - 2) + "</span>";
     var when = '<p class="when"><b>' + fecha(n.f) + "</b>" + (n.s ? " · " + SUB[n.s] : "") + "</p>";
@@ -752,14 +753,14 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     }).join("");
   }
   var pico = ANIOS.slice().sort(function (a, b) { return porAnioTotal[b] - porAnioTotal[a]; })[0];
-  $("lede").innerHTML = "Las <b>" + NOTAS.length + " notas</b> que hoy publica el sitio, de " + ANIOS[0] + " a " + ANIOS[ANIOS.length - 1] + ", en un solo lugar. Buscá por palabra o filtrá por tipo de nota, pilar de marca, cultivo y año.";
+  $("lede").innerHTML = "Las <b>" + NOTAS.length + " notas</b> que hoy publica el sitio, de " + ANIOS[0] + " a " + ANIOS[ANIOS.length - 1] + ", en un solo lugar. Buscá por palabra o filtrá por tipo de nota, cultivo y año.";
   $("histInfo").innerHTML = "Pico en <b>" + pico + "</b> · " + porAnioTotal[pico] + " notas";
 
   /* --- Filtros ------------------------------------------------------------ */
   function contar(campo, v) {
     return NOTAS.reduce(function (s, n) {
       if (!pasa(n, campo)) return s;
-      var ok = campo === "tipo" ? n.tp === v : campo === "pilar" ? n.p.indexOf(v) !== -1 : n.c.indexOf(v) !== -1;
+      var ok = campo === "tipo" ? n.tp === v : n.c.indexOf(v) !== -1;
       return s + (ok ? 1 : 0);
     }, 0);
   }
@@ -772,12 +773,11 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     function fila(lista, campo, mapa) {
       return lista.map(function (x) { return sub(x.id, { tag: "button", n: contar(campo, x.id), attrs: ' type="button" data-f="' + campo + '" data-v="' + x.id + '" aria-pressed="' + !!mapa[x.id] + '"' }); }).join("");
     }
-    $("fPilares").innerHTML = fila(PILARES, "pilar", estado.pilares);
     $("fCultivos").innerHTML = fila(CULTIVOS, "cultivo", estado.cultivos);
   }
   function resumen() {
     var partes = [];
-    [[estado.tipos, TIPOS], [estado.pilares, PILARES], [estado.cultivos, CULTIVOS]].forEach(function (g) {
+    [[estado.tipos, TIPOS], [estado.cultivos, CULTIVOS]].forEach(function (g) {
       var a = activos(g[0]).map(function (k) { return POR[k].nombre; });
       if (a.length) partes.push(a.join(", "));
     });
@@ -790,8 +790,8 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     if (!q && !partes.length) t = "Todas las notas · <b>" + lista.length + "</b>";
     $("resultText").innerHTML = t;
     $("qCount").textContent = lista.length;
-    var nf = activos(estado.tipos).length + activos(estado.pilares).length + activos(estado.cultivos).length + as.length;
-    var nsub = activos(estado.pilares).length + activos(estado.cultivos).length;
+    var nf = activos(estado.tipos).length + activos(estado.cultivos).length + as.length;
+    var nsub = activos(estado.cultivos).length;
     $("fCount").hidden = nsub === 0; $("fCount").textContent = nsub;
     $("fClear").hidden = nf === 0;
     $("qClear").hidden = !q;
@@ -812,14 +812,14 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   $("filters").addEventListener("click", function (e) {
     var b = e.target.closest("[data-f]"); if (!b) return;
     if (b.dataset.f === "todas") { estado.tipos = {}; aplicar(); return; }
-    var m = { tipo: estado.tipos, pilar: estado.pilares, cultivo: estado.cultivos }[b.dataset.f];
+    var m = { tipo: estado.tipos, cultivo: estado.cultivos }[b.dataset.f];
     m[b.dataset.v] = !m[b.dataset.v]; aplicar();
   });
   $("bars").addEventListener("click", function (e) {
     var b = e.target.closest("[data-anio]"); if (!b) return;
     estado.anios[b.dataset.anio] = !estado.anios[b.dataset.anio]; aplicar();
   });
-  function limpiar() { estado.tipos = {}; estado.pilares = {}; estado.cultivos = {}; estado.anios = {}; estado.q = ""; $("q").value = ""; aplicar(); }
+  function limpiar() { estado.tipos = {}; estado.cultivos = {}; estado.anios = {}; estado.q = ""; $("q").value = ""; aplicar(); }
   $("fClear").addEventListener("click", limpiar);
   $("emptyReset").addEventListener("click", limpiar);
   function abrirFiltros(si) { $("filters").classList.toggle("open", si); $("fToggle").setAttribute("aria-expanded", String(si)); }
@@ -846,7 +846,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     actual = idx;
     var n = lista[idx];
     var q = plano(estado.q.trim());
-    var temas = n.p.concat(n.c);
+    var temas = n.c;
     var h = '<div class="m-art">' + arte(n, 720, 300, n.id * 7919 + 13) + etq(n.tp, { dato: n.anio }) + "</div>";
     h += '<div class="m-body"><p class="m-date">' + fecha(n.f, true) + (n.s ? " · " + SUB[n.s] : "") + "</p>";
     h += '<h2 id="mTitle">' + resaltar(n.t, q) + "</h2>";
@@ -880,8 +880,8 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   $("mScroll").addEventListener("click", function (e) {
     var b = e.target.closest("[data-tema]"); if (!b) return;
     var id = b.dataset.tema;
-    estado.tipos = {}; estado.pilares = {}; estado.cultivos = {};
-    (PILARES.some(function (p) { return p.id === id; }) ? estado.pilares : estado.cultivos)[id] = true;
+    estado.tipos = {}; estado.cultivos = {};
+    estado.cultivos[id] = true;
     modal.close(); aplicar();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
