@@ -152,13 +152,14 @@ export function crearTools(marca, { urlPublica } = {}) {
     {
       name: "contraste",
       title: "Contraste de texto",
-      description: "Contraste WCAG de un texto sobre un fondo. Devuelve el ratio y si alcanza AA o AAA para texto normal y grande.",
+      description: "Contraste WCAG de un texto sobre un fondo: el ratio y si alcanza AA o AAA para texto normal y grande. Si la marca define pares fondo/texto, también dice si el manual permite ese par y con qué nivel.",
       inputSchema: { type: "object", properties: { fondo: colorRef, texto: colorRef }, required: ["fondo", "texto"] },
       run: ({ fondo, texto: t }) => {
         const f = N.resolverColor(marca, fondo);
         const x = N.resolverColor(marca, t);
         if (!f || !x) return error("No entiendo uno de los colores. Pasá un id de la marca o un hex.");
-        return json({ fondo: f, texto: x, ...N.contraste(f.hex, x.hex) });
+        const manual = N.textoSobreColor(marca, f.hex, x.hex);
+        return json({ fondo: f, texto: x, ...N.contraste(f.hex, x.hex), ...(manual ? { manual } : {}) });
       }
     },
     {
@@ -173,12 +174,12 @@ export function crearTools(marca, { urlPublica } = {}) {
           limite: { type: "integer", minimum: 1, maximum: 200, default: 24 }
         }
       },
-      run: ({ consulta, categoria, limite }) => json(N.buscarIconos(marca, consulta, { categoria, limite }))
+      run: ({ consulta, categoria, limite }) => json({ ...N.buscarIconos(marca, consulta, { categoria, limite }), ...(marca.iconos?.reconstruccion ? { aviso: marca.iconos.nota } : {}) })
     },
     {
       name: "icono",
       title: "Ícono en SVG",
-      description: "El SVG de un ícono oficial, listo para pegar en un HTML, una presentación o un documento. Sin color va en el color de su categoría; con fondo va en pastilla.",
+      description: "El SVG de un ícono, listo para pegar en un HTML, una presentación o un documento. Sin color va en el color que manda el sistema; con fondo va en pastilla.",
       inputSchema: { type: "object", properties: { id: { type: "string" }, color: colorRef, fondo: colorRef, tamano: { type: "integer", minimum: 8, maximum: 2048, default: 48 } }, required: ["id"] },
       run: ({ id, color, fondo, tamano }) => {
         const svg = N.iconoSvg(marca, id, { color, fondo, tamano });
@@ -193,9 +194,10 @@ export function crearTools(marca, { urlPublica } = {}) {
       inputSchema: { type: "object", properties: { id: { type: "string" }, color: colorRef, fondo: colorRef, tamano: { type: "integer", minimum: 8, maximum: 4096, default: 96 } } },
       run: ({ id, color, fondo, tamano }) => {
         if (!id) return json({ nota: marca.formas?.nota, formas: N.arr(marca.formas?.items).map(({ svg, ...f }) => f) });
+        const aviso = marca.formas?.reconstruccion ? { aviso: "Reconstrucción provisoria, no es el SVG oficial." } : {};
         const svg = N.formaSvg(marca, id, { color, fondo, tamano });
         if (!svg) return error(`No hay una forma "${id}". Llamá a forma sin id para ver la lista.`);
-        return conLink(svg, link(`/forma/${encodeURIComponent(id)}.svg`, { color, fondo, tamano }), { id });
+        return conLink(svg, link(`/forma/${encodeURIComponent(id)}.svg`, { color, fondo, tamano }), { id, ...aviso });
       }
     },
     {

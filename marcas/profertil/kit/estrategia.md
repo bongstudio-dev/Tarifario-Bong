@@ -1,40 +1,80 @@
 # Estrategia
 
-## Quién es Profertil
+## Quiénes somos
 
-La principal productora de fertilizantes nitrogenados de Argentina.
-Veinticinco años de operación, decenas de productos, múltiples programas
-comunitarios.
+La principal empresa argentina de producción y comercialización de
+fertilizantes. Fundada en 2001 por Nutrien e YPF, produce más de 1.320.000
+toneladas anuales de urea granulada y opera desde Bahía Blanca como actor clave
+en la seguridad alimentaria y la agricultura sostenible.
 
-## Para quién habla
+## Propósito
 
-Audiencias que van del **productor agropecuario** a las **escuelas de
-Ingeniero White**, pasando por las siete áreas internas de la compañía y
-decenas de proveedores externos que producen piezas.
+> Convertimos energía en alimentos, acompañando la transformación del agro
+> hacia una agricultura más sostenible.
 
-Eso es lo que hace difícil la marca: la misma identidad tiene que sostener un
-informe técnico, un programa comunitario y un stand comercial.
+Nuestro propósito es nutrir la tierra de forma sostenible para generar más y
+mejores alimentos para el mundo.
 
-## Qué resolvió el sistema
+**Este es el corazón del sistema:** la tensión y el vínculo entre la energía
+(industrial, científica, tecnológica) y los alimentos (tierra, naturaleza,
+vida). No es uno u otro: es la transformación entre ambos. La paleta, las formas
+y el tono salen de acá.
 
-Antes del sistema, la marca estaba profundamente instalada y valorada, pero
-**no existían herramientas accesibles para aplicarla**. La encuesta a más de
-cuarenta personas de siete áreas mostró reconocimiento alto y uso operativo
-bajo: los equipos buscaban en materiales viejos, le preguntaban a
-Comunicaciones o improvisaban desde cero.
+## Misión y pilares
 
-El sistema no rediseñó la marca. Le dio arquitectura: un alfabeto de formas,
-una paleta con jerarquía, iconografía por área, un manual por tarea y
-herramientas para que cualquiera la aplique sin depender del estudio.
+Accionamos desde una mirada integral, que conecta la tierra con el futuro:
 
-## La idea que ordena todo
+1. El futuro de nuestros suelos
+2. El futuro de los alimentos
+3. El futuro de nuestra energía
+4. El futuro de nuestras comunidades
 
-> Un sistema que depende del estudio es un sistema incompleto.
+## Valores
 
-Cada decisión del kit se mide contra eso: ¿esto lo puede aplicar bien alguien
-que no es diseñador y tiene diez minutos?
+Compromiso · Profesionalismo · Transparencia · Seguridad · Cercanía ·
+Sostenibilidad · Innovación
 
-## Posicionamiento y promesa
+Creemos en una producción responsable que cuide el suelo, valore los recursos y
+contribuya a la seguridad alimentaria global. Integramos criterios ambientales,
+sociales y de gobernanza en toda nuestra cadena de valor.
 
-*Pendiente.* La frase de posicionamiento y la promesa de marca no están en el
-material del caso. Cargarlas desde la estrategia entregada a Profertil.
+## Personalidad
+
+**Comprometida, cercana e inspiradora.**
+
+- **Comprometida** con el cuidado del ambiente y el desarrollo local.
+- **Cercana** a las comunidades y la tierra.
+- **Inspiradora**, con la mirada puesta en un futuro mejor y sostenible.
+
+Combina la calidez humana con una visión optimista y proactiva, y convoca a
+colaborar para construir un agro moderno, responsable y lleno de oportunidades.
+
+## Para quién hablamos
+
+- **Local** (Bahía Blanca, Ingeniero White): vecinas y vecinos, comunidades,
+  instituciones educativas.
+- **Sector agro**: productores agropecuarios, clientes, cámaras y asociaciones.
+- **Operativos**: colaboradores/as, proveedores, sindicatos.
+- **Estratégicos y nacional**: autoridades públicas, accionistas, inversionistas,
+  empresas, prensa, opinión pública nacional.
+
+## Arquitectura de marca
+
+Profertil es la marca madre de un portfolio de submarcas.
+
+- **Productos:** Urea Granulada Argentina, eNeTOTAL PLUS, Proterra (ZN, AR, DS),
+  Arnox 32 Proaire, Amoníaco.
+- **Programas comunitarios:** Club de huertas (taller, en tu patio, en tu
+  comunidad, en tu casa), Mesa de proyectos, Creciendo en comunidad, Visitas que
+  siembran, Educar para transformar, Visitas a planta.
+
+Criterio: en primera lectura todo es Profertil; en segunda lectura se
+identifica el subgrupo.
+
+## El problema que resolvió el sistema
+
+Antes, el uso del color era disperso, sin jerarquía; no había coherencia entre
+submarcas y áreas; los recursos visuales se sobreaplicaban; el sistema era
+rígido y cada área aplicaba las normas a su manera. El manual se desarrolló con
+Comunicaciones Integradas a partir de una encuesta interna sobre las
+necesidades reales de los equipos.

@@ -104,6 +104,25 @@ export function contraste(fondo, texto) {
   };
 }
 
+/* Lo que dice el manual de un par fondo/texto: si esta entre los permitidos
+   y, si lo esta, con que nivel de accesibilidad lo declara. Es distinto del
+   calculo de contraste: un manual puede permitir un par para titulares que
+   no alcanza para texto chico. */
+export function textoSobreColor(marca, fondo, texto) {
+  const def = marca.texto_sobre_color;
+  if (!def || esPendiente(def)) return null;
+  const f = resolverColor(marca, fondo);
+  const t = resolverColor(marca, texto);
+  if (!f?.id || !t?.id) return { enManual: false, motivo: "Alguno de los dos colores no es de la marca." };
+  const par = arr(def.pares).find((p) => p.fondo === f.id);
+  const enManual = Boolean(par && arr(par.textos).includes(t.id));
+  let nivel = null;
+  for (const [n, lista] of Object.entries(def.accesibles || {})) {
+    if (arr(lista).some(([a, b]) => a === f.id && b === t.id)) { nivel = n; break; }
+  }
+  return { enManual, nivelManual: nivel, ...(par && !enManual ? { permitidosSobreEseFondo: par.textos } : {}) };
+}
+
 export function colores(marca) {
   const pal = marca.paleta || {};
   const hex = (id) => resolverColor(marca, id)?.hex || id;
@@ -131,6 +150,8 @@ export function validarCombinacion(marca, refs) {
   const pal = marca.paleta || {};
   const niveles = [
     ["principal", arr(pal.principales).map((id) => [id])],
+    /* Las principales juntas son una paleta en si misma (la "primaria"). */
+    ["primaria", arr(pal.principales).length > 1 ? [arr(pal.principales)] : []],
     ["dupla", arr(pal.duplas)],
     ["terciaria", arr(pal.terciarias)]
   ];
@@ -151,7 +172,8 @@ export function validarCombinacion(marca, refs) {
     }
   }
 
-  const resultado = { aprobada: Boolean(nivel), nivel, contraste: pares };
+  const nombreEnManual = nivel && pal.nombres ? pal.nombres[{ principal: "principales", primaria: "principales", dupla: "duplas", terciaria: "terciarias" }[nivel]] : undefined;
+  const resultado = { aprobada: Boolean(nivel), nivel, ...(nombreEnManual ? { nombreEnManual } : {}), ...(nivel && pal.proporciones ? { proporcion: pal.proporciones[{ principal: "principal", primaria: "principal", dupla: "duplas", terciaria: "terciarias" }[nivel]] } : {}), contraste: pares };
   if (fuera.length) {
     resultado.fueraDePaleta = fuera.map((r) => ({ pedido: r.pedido, masCercano: r.color.masCercano }));
   }
@@ -187,20 +209,23 @@ export function buscarIconos(marca, consulta = "", { categoria, limite = 24 } = 
   };
 }
 
-function colorDeCategoria(marca, categoria) {
+/* El color por defecto de un icono: el de la marca si la iconografia es de
+   un solo color, o el de su categoria si cada categoria tiene el suyo. */
+function colorDeIcono(marca, categoria) {
+  if (marca.iconos?.color) return resolverColor(marca, marca.iconos.color)?.hex || null;
   const c = arr(marca.iconos?.categorias).find((x) => normalizar(x.id) === normalizar(categoria));
-  return c ? resolverColor(marca, c.color)?.hex : null;
+  return c?.color ? resolverColor(marca, c.color)?.hex : null;
 }
 
-/* Un icono listo para usar. Por defecto va en el color de su categoria, que
-   es la regla del sistema; con fondo, va como la pastilla del manual. */
+/* Un icono listo para usar, en el color que manda el sistema; con fondo, va
+   en pastilla. */
 export function iconoSvg(marca, id, { color, fondo, tamano = 48 } = {}) {
   const icono = arr(marca.iconos?.items).find((i) => normalizar(i.id) === normalizar(id) || normalizar(i.nombre) === normalizar(id));
   if (!icono) return null;
   const trazo = marca.iconos.trazo || { ancho: 2, terminaciones: "round", uniones: "round" };
   const vb = marca.iconos.viewBox || "0 0 24 24";
   const fondoHex = fondo ? resolverColor(marca, fondo)?.hex : null;
-  const colorHex = (color && resolverColor(marca, color)?.hex) || (fondoHex ? "#FFFFFF" : colorDeCategoria(marca, icono.categoria)) || "#000000";
+  const colorHex = (color && resolverColor(marca, color)?.hex) || (fondoHex ? "#FFFFFF" : colorDeIcono(marca, icono.categoria)) || "#000000";
   const trazoAttrs = `fill="none" stroke="${colorHex}" stroke-width="${trazo.ancho}" stroke-linecap="${trazo.terminaciones}" stroke-linejoin="${trazo.uniones}"`;
   let cuerpo;
   if (fondoHex) {
@@ -306,7 +331,9 @@ export function revisarTexto(marca, texto) {
   const hallazgos = [];
   for (const regla of arr(voz.evitar)) {
     const termino = typeof regla === "string" ? regla : regla.termino;
-    if (plano.includes(normalizar(termino))) {
+    /* La raiz atrapa las conjugaciones: "implement" encuentra implementó,
+       implementamos, implementación. */
+    if (plano.includes(normalizar(regla.raiz || termino))) {
       hallazgos.push({ tipo: "evitar", termino, motivo: regla.motivo, usar: regla.usar });
     }
   }
@@ -342,15 +369,18 @@ export function revisarTexto(marca, texto) {
    chequea contra la marca vigente y contra la lista de lo retirado. */
 export function vigencia(marca, consulta) {
   const q = normalizar(consulta);
-  const retirado = arr(marca.obsoleto).find((o) =>
-    [o.nombre, o.valor, ...arr(o.alias)].filter(Boolean).some((x) => {
-      const n = normalizar(x);
-      return n === q || (q.length > 3 && (n.includes(q) || q.includes(n)));
-    }) || (o.valor && hexNormal(o.valor) && hexNormal(o.valor) === hexNormal(consulta))
+  const claves = (o) => [o.nombre, o.valor, ...arr(o.alias)].filter(Boolean).map(normalizar);
+  const comoRetirado = (o) => ({ vigente: false, que: o.tipo, nombre: o.nombre, reemplazo: o.reemplazo, desde: o.desde, motivo: o.motivo, ...(o.verificar ? { verificar: "Dato a confirmar con el cliente." } : {}), versionActual: marca.version });
+
+  /* En tres pasos, del mas seguro al menos: lo retirado que coincide exacto
+     (nombre, alias o hex), despues lo vigente, y recien al final lo retirado
+     que aparece adentro de lo consultado (un nombre de archivo como
+     logo_2019_final.png). Al reves, "azul" daria retirado por coincidir con
+     "Azul aproximado de la maqueta". */
+  const exacto = arr(marca.obsoleto).find((o) =>
+    claves(o).includes(q) || (o.valor && hexNormal(o.valor) && hexNormal(o.valor) === hexNormal(consulta))
   );
-  if (retirado) {
-    return { vigente: false, que: retirado.tipo, nombre: retirado.nombre, reemplazo: retirado.reemplazo, desde: retirado.desde, motivo: retirado.motivo, versionActual: marca.version };
-  }
+  if (exacto) return comoRetirado(exacto);
 
   const color = resolverColor(marca, consulta);
   if (color?.deLaMarca) return { vigente: true, que: "color", id: color.id, hex: color.hex, versionActual: marca.version };
@@ -359,11 +389,18 @@ export function vigencia(marca, consulta) {
     const x = arr(lista).find((i) => normalizar(i.id) === q || normalizar(i.nombre) === q);
     return x ? { vigente: true, que, id: x.id, nombre: x.nombre, versionActual: marca.version } : null;
   };
+  const familias = Object.values(marca.tipografia || {})
+    .filter((t) => t && typeof t.familia === "string")
+    .map((t) => ({ id: t.familia, nombre: t.familia }));
   const encontrado =
+    enLista(familias, "tipografia") ||
     enLista(marca.iconos?.items, "icono") ||
     enLista(marca.formas?.items, "forma") ||
     enLista(arr(marca.logo?.archivos), "logo");
   if (encontrado) return encontrado;
+
+  const contenido = arr(marca.obsoleto).find((o) => claves(o).some((n) => n.length > 3 && q.includes(n)));
+  if (contenido) return comoRetirado(contenido);
 
   if (color) {
     return { vigente: false, que: "color", hex: color.hex, motivo: "No es un color de la marca.", reemplazo: color.masCercano.id, masCercano: color.masCercano, versionActual: marca.version };
@@ -411,6 +448,7 @@ export function resumen(marca) {
       retirados: arr(marca.obsoleto).length
     },
     responsables: marca.responsables,
+    fuentes: marca.fuentes,
     pendientes: pendientes(marca).length,
     ultimoCambio: marca.changelog?.[0]
   };

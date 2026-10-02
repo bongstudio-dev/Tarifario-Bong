@@ -1,10 +1,25 @@
 {
   "id": "profertil",
   "nombre": "Profertil",
-  "sector": "Agroindustria",
+  "sector": "Agroindustria. Producción y comercialización de fertilizantes.",
   "estudio": "Bong Studio",
-  "version": "1.4.0",
-  "descripcion": "Principal productora de fertilizantes nitrogenados de Argentina. Una marca instalada durante veinticinco años a la que le faltaba un sistema para usarla: del logo se extrajo la hoja de la espiga de trigo y de la hoja, un alfabeto de formas.",
+  "version": "1.1.4",
+  "descripcion": "Principal empresa argentina de producción y comercialización de fertilizantes. Fundada en 2001 por Nutrien e YPF, produce más de 1.320.000 toneladas anuales de urea granulada desde Bahía Blanca. Propósito: convertimos energía en alimentos.",
+  "fuentes": [
+    {
+      "que": "Manual de Marca v1.1.4 (canon, 127 páginas)",
+      "donde": "https://www.figma.com/design/ormUIXsYnC0Ae4R5RSOPp8/"
+    },
+    {
+      "que": "Sistema Visual (Master), biblioteca de variables y componentes",
+      "donde": "https://www.figma.com/design/broRXp9etWG4y2IjFyCC3V/"
+    },
+    {
+      "que": "Brief de Identidad Visual (Bong)",
+      "donde": "https://app.notion.com/p/28d043d370ed8096b229d123b1b9f316"
+    }
+  ],
+  "regla_de_fuentes": "Si el Master y el manual no coinciden, manda el manual.",
   "responsables": [
     {
       "quien": "Comunicaciones Integradas · Profertil",
@@ -13,10 +28,11 @@
         "marca",
         "voz",
         "logo",
-        "aprobaciones"
+        "aprobaciones",
+        "plantillas"
       ],
       "contacto": {
-        "pendiente": "Nombre y mail de la persona de referencia en Comunicaciones Integradas."
+        "pendiente": "Persona de referencia en Comunicaciones Integradas."
       }
     },
     {
@@ -28,79 +44,105 @@
         "patron",
         "iconos",
         "tipografia",
-        "manual"
+        "manual",
+        "kit"
       ],
-      "contacto": {
-        "pendiente": "Mail de contacto del estudio para consultas del sistema."
-      }
+      "contacto": "bongstudiook@gmail.com"
     }
   ],
   "colores": [
     {
       "id": "azul",
-      "nombre": "Azul Profertil",
-      "hex": "#0B3FA8",
-      "rol": "principal"
+      "nombre": "Azul",
+      "hex": "#003DA5",
+      "rol": "primario",
+      "significa": "La energía que transformamos",
+      "rgb": "0, 61, 165",
+      "cmyk": "100, 63, 0, 35",
+      "pms": "293C"
     },
     {
       "id": "verde",
       "nombre": "Verde",
-      "hex": "#5FB52C",
-      "rol": "principal"
+      "hex": "#2D8035",
+      "rol": "primario",
+      "significa": "La tierra que nutrimos",
+      "rgb": "45, 128, 53",
+      "cmyk": "65, 0, 59, 50",
+      "pms": "356C"
     },
     {
       "id": "amarillo",
       "nombre": "Amarillo",
-      "hex": "#F0C419",
-      "rol": "principal"
+      "hex": "#EABA2C",
+      "rol": "primario",
+      "significa": "Los alimentos que generamos",
+      "rgb": "234, 186, 44",
+      "cmyk": "0, 21, 81, 8",
+      "pms": "7408C"
     },
     {
-      "id": "azul-claro",
-      "nombre": "Azul claro",
-      "hex": "#3D8BFD",
-      "rol": "complementario"
+      "id": "celeste",
+      "nombre": "Celeste",
+      "hex": "#4086FF",
+      "rol": "complementario",
+      "rgb": "64, 134, 255",
+      "cmyk": "75, 47, 0, 0",
+      "pms": "2727C"
+    },
+    {
+      "id": "verde-claro",
+      "nombre": "Verde claro",
+      "hex": "#5EB53A",
+      "rol": "complementario",
+      "rgb": "94, 181, 58",
+      "cmyk": "48, 0, 68, 29",
+      "pms": "361C"
     },
     {
       "id": "naranja",
       "nombre": "Naranja",
-      "hex": "#E2801E",
-      "rol": "complementario"
+      "hex": "#E57F19",
+      "rol": "complementario",
+      "rgb": "229, 127, 25",
+      "cmyk": "0, 45, 89, 10",
+      "pms": "138C"
     },
     {
       "id": "terra",
       "nombre": "Terra",
-      "hex": "#7C4A15",
-      "rol": "complementario"
+      "hex": "#8A4818",
+      "rol": "complementario",
+      "rgb": "138, 72, 24",
+      "cmyk": "0, 48, 83, 46",
+      "pms": "2315C"
     },
     {
-      "id": "verde-osc",
-      "nombre": "Verde oscuro",
-      "hex": "#2F7D20",
-      "rol": "complementario"
-    },
-    {
-      "id": "crema",
-      "nombre": "Crema",
-      "hex": "#F2EFE6",
-      "rol": "neutro"
+      "id": "marfil",
+      "nombre": "Marfil",
+      "hex": "#FFFEEF",
+      "rol": "soporte",
+      "nota": "Color de soporte y de texto: en el manual también se lo llama tiza.",
+      "rgb": "255, 254, 239",
+      "cmyk": "0, 0, 10, 0",
+      "pms": "P 1-2 U"
     },
     {
       "id": "blanco",
       "nombre": "Blanco",
       "hex": "#FFFFFF",
-      "rol": "neutro",
-      "nota": "Formas y texto sobre las principales."
+      "rol": "neutro"
     },
     {
-      "id": "tinta",
-      "nombre": "Tinta",
-      "hex": "#16202B",
+      "id": "negro",
+      "nombre": "Negro",
+      "hex": "#000000",
       "rol": "neutro",
-      "nota": "Texto sobre fondos claros."
+      "nota": "Texto sobre marfil."
     }
   ],
   "paleta": {
-    "nota": "Tres niveles, cada uno construido sobre el anterior: 3 principales, 4 duplas, 4 terciarias.",
+    "nota": "Tres niveles de complejidad. Elegí según lo que necesite tu pieza. Todas estas paletas ya funcionan: están balanceadas, tienen buen contraste y mantienen coherencia visual. (Manual p. 46)",
     "principales": [
       "azul",
       "verde",
@@ -109,129 +151,346 @@
     "duplas": [
       [
         "azul",
-        "amarillo"
+        "celeste"
       ],
       [
         "verde",
-        "azul-claro"
+        "verde-claro"
       ],
       [
         "amarillo",
         "naranja"
       ],
       [
-        "terra",
-        "verde"
+        "naranja",
+        "terra"
       ]
     ],
     "terciarias": [
       [
         "azul",
-        "amarillo",
-        "crema"
+        "celeste",
+        "verde"
       ],
       [
         "verde",
-        "azul-claro",
+        "verde-claro",
         "amarillo"
       ],
       [
         "amarillo",
         "naranja",
-        "terra"
+        "verde"
       ],
       [
+        "amarillo",
         "terra",
-        "verde",
-        "crema"
+        "naranja"
       ]
-    ]
+    ],
+    "soporte": "marfil",
+    "proporciones": {
+      "principal": "Tres partes iguales",
+      "duplas": "70 / 30",
+      "terciarias": "60 / 25 / 15",
+      "nota": "Son guías, no reglas rígidas. Pueden usarse solas o sobre fondo marfil. (Manual p. 47)"
+    },
+    "nombres": {
+      "duplas": "secundarias",
+      "terciarias": "terciarias",
+      "principales": "primaria"
+    }
+  },
+  "texto_sobre_color": {
+    "nota": "Pares fondo/texto permitidos (Manual p. 48). Con fondo de color, el texto va en blanco, marfil o el color complementario. Para texto chico usá los que tienen nivel WCAG (p. 49).",
+    "pares": [
+      {
+        "fondo": "marfil",
+        "textos": [
+          "negro",
+          "azul",
+          "verde",
+          "verde-claro",
+          "amarillo",
+          "naranja"
+        ]
+      },
+      {
+        "fondo": "azul",
+        "textos": [
+          "blanco",
+          "marfil",
+          "celeste"
+        ]
+      },
+      {
+        "fondo": "celeste",
+        "textos": [
+          "blanco",
+          "marfil",
+          "azul"
+        ]
+      },
+      {
+        "fondo": "verde",
+        "textos": [
+          "blanco",
+          "marfil",
+          "verde-claro"
+        ]
+      },
+      {
+        "fondo": "verde-claro",
+        "textos": [
+          "blanco",
+          "marfil",
+          "verde"
+        ]
+      },
+      {
+        "fondo": "amarillo",
+        "textos": [
+          "blanco",
+          "marfil",
+          "naranja"
+        ]
+      },
+      {
+        "fondo": "naranja",
+        "textos": [
+          "blanco",
+          "marfil",
+          "terra"
+        ]
+      },
+      {
+        "fondo": "terra",
+        "textos": [
+          "blanco",
+          "marfil",
+          "naranja"
+        ]
+      }
+    ],
+    "accesibles": {
+      "AAA": [
+        [
+          "marfil",
+          "negro"
+        ],
+        [
+          "marfil",
+          "azul"
+        ],
+        [
+          "azul",
+          "blanco"
+        ],
+        [
+          "azul",
+          "marfil"
+        ],
+        [
+          "terra",
+          "blanco"
+        ],
+        [
+          "terra",
+          "marfil"
+        ]
+      ],
+      "AA": [
+        [
+          "verde",
+          "blanco"
+        ],
+        [
+          "verde",
+          "marfil"
+        ],
+        [
+          "marfil",
+          "verde"
+        ]
+      ],
+      "AA titulares": [
+        [
+          "celeste",
+          "blanco"
+        ],
+        [
+          "celeste",
+          "marfil"
+        ]
+      ]
+    }
   },
   "tipografia": {
     "principal": {
-      "rol": "Geométrica. Dialoga con la geometría del sistema de formas.",
-      "familia": {
-        "pendiente": "Nombre de la familia principal, pesos y licencia, según el manual."
-      },
-      "muestra": "Vida para nuestra tierra"
+      "familia": "Familjen Grotesk",
+      "pesos": [
+        "Regular",
+        "Medium",
+        "SemiBold",
+        "Bold"
+      ],
+      "rol": "Títulos y elementos de impacto visual. Profesionalismo sin frialdad, modernidad sin perder cercanía.",
+      "google_fonts": true
     },
     "secundaria": {
-      "rol": "Lectura corrida: texto largo del manual, informes técnicos y comunicación con productores.",
-      "familia": {
-        "pendiente": "Nombre de la familia secundaria, pesos y licencia, según el manual."
+      "familia": "DM Sans",
+      "pesos": [
+        "Light",
+        "Regular",
+        "Medium",
+        "SemiBold",
+        "Bold"
+      ],
+      "rol": "Párrafos, descripciones y textos extensos. Alta legibilidad en pantalla y papel.",
+      "google_fonts": true
+    },
+    "slogan": {
+      "familia": "Gabarito",
+      "nota": {
+        "pendiente": "El Master la declara para el slogan; el manual no la documenta. Confirmar."
       }
+    },
+    "logotipo": {
+      "familia": "Baker Signet",
+      "nota": "Solo existe dentro del logo. No se usa para texto."
+    },
+    "emergencia": {
+      "titulos": "Arial Bold",
+      "texto": "Segoe UI Regular",
+      "nota": "Solo si no están instaladas las oficiales."
+    },
+    "jerarquias": [
+      {
+        "nivel": "H1",
+        "uso": "Titular principal, máximo impacto",
+        "familia": "Familjen Grotesk",
+        "peso": "SemiBold",
+        "tamano": "48-60 pt"
+      },
+      {
+        "nivel": "H2",
+        "uso": "Separar secciones principales",
+        "familia": "Familjen Grotesk",
+        "peso": "Medium",
+        "tamano": "36-42 pt"
+      },
+      {
+        "nivel": "H3",
+        "uso": "Organizar contenido interno",
+        "familia": "Familjen Grotesk",
+        "peso": "Regular",
+        "tamano": "24-28 pt"
+      },
+      {
+        "nivel": "Body",
+        "uso": "Párrafos y descripciones",
+        "familia": "DM Sans",
+        "peso": "Regular",
+        "tamano": "14-16 pt"
+      },
+      {
+        "nivel": "Caption",
+        "uso": "Notas, referencias y datos complementarios",
+        "familia": "DM Sans",
+        "peso": "Light",
+        "tamano": "11-12 pt"
+      }
+    ],
+    "lineamientos": {
+      "interlineado_titulos": "95-110%",
+      "interlineado_texto": "130-145%",
+      "largo_de_linea": "50-75 caracteres",
+      "alineacion": "Izquierda. Justificado solo en documentos formales extensos."
     }
   },
   "formas": {
-    "nota": "Alfabeto de formas. Todas descienden de la hoja de la espiga del logo. viewBox 0 0 48 48, se rellenan con un color de la paleta.",
+    "nota": "Del logo se extrae su elemento más básico, una hoja de la espiga de trigo, y de esa hoja se construye un alfabeto visual: formas que funcionan como máscaras, íconos y elementos compositivos (Manual p. 60-61). El alfabeto oficial tiene 18 formas. Las de abajo son reconstrucciones provisorias de la maqueta del caso: reemplazarlas por los SVG del Master.",
+    "reconstruccion": true,
     "viewBox": "0 0 48 48",
     "items": [
       {
         "id": "hoja",
         "nombre": "Hoja",
         "svg": "<path d=\"M4 44A40 40 0 0 1 44 4 40 40 0 0 1 4 44Z\"/>",
-        "nota": "La pieza de origen, extraída del logo."
+        "nota": "La pieza de origen, extraída del logo.",
+        "reconstruccion": true
       },
       {
         "id": "cuarto",
         "nombre": "Cuarto",
-        "svg": "<path d=\"M4 44V4h40A40 40 0 0 1 4 44Z\"/>"
+        "svg": "<path d=\"M4 44V4h40A40 40 0 0 1 4 44Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "medio",
         "nombre": "Medio",
-        "svg": "<path d=\"M4 34a20 20 0 0 1 40 0Z\"/>"
+        "svg": "<path d=\"M4 34a20 20 0 0 1 40 0Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "circulo",
         "nombre": "Círculo",
-        "svg": "<circle cx=\"24\" cy=\"24\" r=\"20\"/>"
+        "svg": "<circle cx=\"24\" cy=\"24\" r=\"20\"/>",
+        "reconstruccion": true
       },
       {
         "id": "onda",
         "nombre": "Onda",
-        "svg": "<path d=\"M4 44V28q10-13 20 0t20 0v16Z\"/>"
+        "svg": "<path d=\"M4 44V28q10-13 20 0t20 0v16Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "espiga",
         "nombre": "Espiga",
         "svg": "<path d=\"M22 44V16h4v28Z\"/><path d=\"M24 32c0-7 5-12 12-12 0 7-5 12-12 12Z\"/><path d=\"M24 32c0-7-5-12-12-12 0 7 5 12 12 12Z\"/><path d=\"M24 20c0-7 5-12 12-12 0 7-5 12-12 12Z\"/><path d=\"M24 20c0-7-5-12-12-12 0 7 5 12 12 12Z\"/>",
-        "nota": "Referencia directa al logo."
+        "nota": "Referencia directa al logo.",
+        "reconstruccion": true
       },
       {
         "id": "gota",
         "nombre": "Gota",
-        "svg": "<path d=\"M24 5c9 12 13 17 13 22a13 13 0 0 1-26 0c0-5 4-10 13-22Z\"/>"
+        "svg": "<path d=\"M24 5c9 12 13 17 13 22a13 13 0 0 1-26 0c0-5 4-10 13-22Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "arco",
         "nombre": "Arco",
-        "svg": "<path d=\"M4 44A40 40 0 0 1 44 4v14A26 26 0 0 0 18 44Z\"/>"
+        "svg": "<path d=\"M4 44A40 40 0 0 1 44 4v14A26 26 0 0 0 18 44Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "estrella",
         "nombre": "Estrella",
-        "svg": "<path d=\"M24 4c2 11 9 18 20 20-11 2-18 9-20 20-2-11-9-18-20-20 11-2 18-9 20-20Z\"/>"
+        "svg": "<path d=\"M24 4c2 11 9 18 20 20-11 2-18 9-20 20-2-11-9-18-20-20 11-2 18-9 20-20Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "casco",
         "nombre": "Casco",
-        "svg": "<path d=\"M9 33a15 15 0 0 1 30 0Z\"/><path d=\"M4 35h40v6H4Z\"/>"
+        "svg": "<path d=\"M9 33a15 15 0 0 1 30 0Z\"/><path d=\"M4 35h40v6H4Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "c",
         "nombre": "C",
-        "svg": "<path d=\"M24 4a20 20 0 1 0 0 40V33a9 9 0 1 1 0-18Z\"/>"
+        "svg": "<path d=\"M24 4a20 20 0 1 0 0 40V33a9 9 0 1 1 0-18Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "ondas",
         "nombre": "Ondas",
-        "svg": "<path d=\"M4 38q10-9 20 0t20 0v6H4Z\"/><path d=\"M4 26q10-9 20 0t20 0v6q-10-9-20 0T4 32Z\"/><path d=\"M4 14q10-9 20 0t20 0v6q-10-9-20 0T4 20Z\"/>"
+        "svg": "<path d=\"M4 38q10-9 20 0t20 0v6H4Z\"/><path d=\"M4 26q10-9 20 0t20 0v6q-10-9-20 0T4 32Z\"/><path d=\"M4 14q10-9 20 0t20 0v6q-10-9-20 0T4 20Z\"/>",
+        "reconstruccion": true
       }
     ]
   },
   "patron": {
-    "nota": "El patrón se arma con cuatro piezas a sangre que descienden de la hoja, rotadas de a 90°. Es lo mismo que hace el generador web.",
+    "nota": "Generador de la maqueta del caso, armado con piezas del alfabeto. El manual no define un patrón generativo: es una propuesta de Bong, no una regla de marca.",
     "piezas": [
       {
         "id": "hoja",
@@ -256,9 +515,9 @@
         "nombre": "Azul",
         "fondo": "azul",
         "formas": [
-          "amarillo",
-          "crema",
-          "azul-claro"
+          "celeste",
+          "marfil",
+          "amarillo"
         ]
       },
       {
@@ -266,9 +525,9 @@
         "nombre": "Verde",
         "fondo": "verde",
         "formas": [
-          "azul",
-          "crema",
-          "azul-claro"
+          "verde-claro",
+          "marfil",
+          "amarillo"
         ]
       },
       {
@@ -276,20 +535,25 @@
         "nombre": "Terra",
         "fondo": "terra",
         "formas": [
-          "amarillo",
           "naranja",
-          "verde"
+          "amarillo",
+          "marfil"
         ]
       }
     ],
     "defaults": {
       "columnas": 6,
       "vacio": 0.22
-    }
+    },
+    "borrador": true
   },
   "iconos": {
-    "nota": "164 íconos en seis categorías que replican las áreas de la compañía. Trazo unificado, grilla de 24 px. Acá están cargados los 18 de la muestra; el resto se suma exportando del Figma.",
-    "total_en_manual": 164,
+    "nota": "Íconos de línea en un solo color, organizados en 6 categorías operativas (Manual p. 67-69). Los de abajo son reconstrucciones provisorias de la maqueta: reemplazarlos por la biblioteca oficial del Master.",
+    "reconstruccion": true,
+    "total_en_manual": {
+      "pendiente": "Cantidad total de la biblioteca oficial (p. 68-69)."
+    },
+    "color": "azul",
     "viewBox": "0 0 24 24",
     "trazo": {
       "ancho": 2,
@@ -298,64 +562,67 @@
     },
     "categorias": [
       {
-        "id": "Producción",
-        "color": "verde"
+        "id": "Administración",
+        "descripcion": "Áreas financieras, reportes, gestión interna."
+      },
+      {
+        "id": "Agro",
+        "descripcion": "Todo lo relacionado con el sector agropecuario."
+      },
+      {
+        "id": "Industrial",
+        "descripcion": "Operaciones de planta, producción, calidad."
+      },
+      {
+        "id": "Personas",
+        "descripcion": "RRHH, equipo, capacitación, diversidad."
+      },
+      {
+        "id": "Supply chain",
+        "descripcion": "Logística, distribución, almacenamiento."
       },
       {
         "id": "Sostenibilidad",
-        "color": "verde-osc"
-      },
-      {
-        "id": "Comunidad",
-        "color": "amarillo"
-      },
-      {
-        "id": "Comercial",
-        "color": "naranja"
-      },
-      {
-        "id": "Seguridad",
-        "color": "azul-claro"
-      },
-      {
-        "id": "Datos",
-        "color": "terra"
+        "descripcion": "Medio ambiente, energía, compromiso ambiental."
       }
     ],
     "items": [
       {
         "id": "planta",
         "nombre": "Fertilizante",
-        "categoria": "Producción",
+        "categoria": "Agro",
         "claves": [
           "grano",
           "nutriente",
           "urea",
           "planta"
         ],
-        "svg": "<path d=\"M12 21v-8\"/><path d=\"M12 13c0-4 3-7 7-7 0 4-3 7-7 7Z\"/><path d=\"M12 16c0-3-2-5-5-5 0 3 2 5 5 5Z\"/>"
+        "svg": "<path d=\"M12 21v-8\"/><path d=\"M12 13c0-4 3-7 7-7 0 4-3 7-7 7Z\"/><path d=\"M12 16c0-3-2-5-5-5 0 3 2 5 5 5Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "fabrica",
         "nombre": "Planta industrial",
-        "categoria": "Producción",
+        "categoria": "Industrial",
         "claves": [
           "fabrica",
           "industria",
           "bahia"
         ],
-        "svg": "<path d=\"M3 21V10l6 4V10l6 4V7l6 4v10Z\"/><path d=\"M3 21h18\"/>"
+        "svg": "<path d=\"M3 21V10l6 4V10l6 4V7l6 4v10Z\"/><path d=\"M3 21h18\"/>",
+        "reconstruccion": true
       },
       {
         "id": "camion",
         "nombre": "Logística",
-        "categoria": "Producción",
+        "categoria": "Supply chain",
         "claves": [
           "camion",
           "transporte",
           "despacho"
         ],
-        "svg": "<path d=\"M2 7h11v10H2Z\"/><path d=\"M13 10h4l4 4v3h-8Z\"/><circle cx=\"7\" cy=\"19\" r=\"1.6\"/><circle cx=\"17\" cy=\"19\" r=\"1.6\"/>"
+        "svg": "<path d=\"M2 7h11v10H2Z\"/><path d=\"M13 10h4l4 4v3h-8Z\"/><circle cx=\"7\" cy=\"19\" r=\"1.6\"/><circle cx=\"17\" cy=\"19\" r=\"1.6\"/>",
+        "reconstruccion": true
       },
       {
         "id": "hoja",
@@ -367,7 +634,8 @@
           "cultivo",
           "brote"
         ],
-        "svg": "<path d=\"M20 4c-9 0-15 4-15 10a6 6 0 0 0 11 4c4-3 5-9 4-14Z\"/><path d=\"M6 20c1-5 4-9 9-11\"/>"
+        "svg": "<path d=\"M20 4c-9 0-15 4-15 10a6 6 0 0 0 11 4c4-3 5-9 4-14Z\"/><path d=\"M6 20c1-5 4-9 9-11\"/>",
+        "reconstruccion": true
       },
       {
         "id": "gota",
@@ -378,7 +646,8 @@
           "riego",
           "hidrico"
         ],
-        "svg": "<path d=\"M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11Z\"/>"
+        "svg": "<path d=\"M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "ciclo",
@@ -389,268 +658,508 @@
           "reciclaje",
           "circular"
         ],
-        "svg": "<path d=\"M4.5 12a7.5 7.5 0 0 1 13-5\"/><path d=\"M19.5 12a7.5 7.5 0 0 1-13 5\"/><path d=\"M17.5 3v4h-4\"/><path d=\"M6.5 21v-4h4\"/>"
+        "svg": "<path d=\"M4.5 12a7.5 7.5 0 0 1 13-5\"/><path d=\"M19.5 12a7.5 7.5 0 0 1-13 5\"/><path d=\"M17.5 3v4h-4\"/><path d=\"M6.5 21v-4h4\"/>",
+        "reconstruccion": true
       },
       {
         "id": "escuela",
         "nombre": "Escuelas",
-        "categoria": "Comunidad",
+        "categoria": "Personas",
         "claves": [
           "educacion",
           "ingeniero",
           "white",
           "programa"
         ],
-        "svg": "<path d=\"M12 3 21 8v13H3V8Z\"/><path d=\"M9 21v-7h6v7\"/>"
+        "svg": "<path d=\"M12 3 21 8v13H3V8Z\"/><path d=\"M9 21v-7h6v7\"/>",
+        "reconstruccion": true
       },
       {
         "id": "personas",
         "nombre": "Equipos",
-        "categoria": "Comunidad",
+        "categoria": "Personas",
         "claves": [
           "personas",
           "gente",
           "areas"
         ],
-        "svg": "<circle cx=\"9\" cy=\"8\" r=\"3.2\"/><circle cx=\"17.5\" cy=\"9\" r=\"2.4\"/><path d=\"M3 20a6 6 0 0 1 12 0\"/><path d=\"M15.8 20a4.6 4.6 0 0 1 5.2-2.6\"/>"
+        "svg": "<circle cx=\"9\" cy=\"8\" r=\"3.2\"/><circle cx=\"17.5\" cy=\"9\" r=\"2.4\"/><path d=\"M3 20a6 6 0 0 1 12 0\"/><path d=\"M15.8 20a4.6 4.6 0 0 1 5.2-2.6\"/>",
+        "reconstruccion": true
       },
       {
         "id": "manos",
         "nombre": "Alianzas",
-        "categoria": "Comunidad",
+        "categoria": "Personas",
         "claves": [
           "red",
           "vinculo",
           "acuerdo",
           "proveedores"
         ],
-        "svg": "<circle cx=\"12\" cy=\"6.5\" r=\"2.5\"/><circle cx=\"6\" cy=\"17\" r=\"2.5\"/><circle cx=\"18\" cy=\"17\" r=\"2.5\"/><path d=\"M10.4 8.7 7.6 14.6\"/><path d=\"m13.6 8.7 2.8 5.9\"/><path d=\"M8.5 17h7\"/>"
+        "svg": "<circle cx=\"12\" cy=\"6.5\" r=\"2.5\"/><circle cx=\"6\" cy=\"17\" r=\"2.5\"/><circle cx=\"18\" cy=\"17\" r=\"2.5\"/><path d=\"M10.4 8.7 7.6 14.6\"/><path d=\"m13.6 8.7 2.8 5.9\"/><path d=\"M8.5 17h7\"/>",
+        "reconstruccion": true
       },
       {
         "id": "campo",
         "nombre": "Campo",
-        "categoria": "Comercial",
+        "categoria": "Agro",
         "claves": [
           "surco",
           "productor",
           "agro",
           "siembra"
         ],
-        "svg": "<path d=\"M2 20c4.5-2 15.5-2 20 0\"/><path d=\"M4 14.5c3.5-1.5 12.5-1.5 16 0\"/><path d=\"M6 9.5c2.5-1 9.5-1 12 0\"/><path d=\"M12 20V6\"/>"
+        "svg": "<path d=\"M2 20c4.5-2 15.5-2 20 0\"/><path d=\"M4 14.5c3.5-1.5 12.5-1.5 16 0\"/><path d=\"M6 9.5c2.5-1 9.5-1 12 0\"/><path d=\"M12 20V6\"/>",
+        "reconstruccion": true
       },
       {
         "id": "bolsa",
         "nombre": "Producto",
-        "categoria": "Comercial",
+        "categoria": "Supply chain",
         "claves": [
           "bolsa",
           "venta",
           "despacho"
         ],
-        "svg": "<path d=\"M6.5 8h11v13h-11Z\"/><path d=\"M6.5 8 8 4.5h8L17.5 8\"/><path d=\"M10 12h4\"/>"
+        "svg": "<path d=\"M6.5 8h11v13h-11Z\"/><path d=\"M6.5 8 8 4.5h8L17.5 8\"/><path d=\"M10 12h4\"/>",
+        "reconstruccion": true
       },
       {
         "id": "grafico",
         "nombre": "Resultados",
-        "categoria": "Comercial",
+        "categoria": "Administración",
         "claves": [
           "grafico",
           "ventas",
           "rendimiento"
         ],
-        "svg": "<path d=\"M4 20h16\"/><path d=\"M7.5 20v-5\"/><path d=\"M12 20v-9\"/><path d=\"M16.5 20v-3\"/>"
+        "svg": "<path d=\"M4 20h16\"/><path d=\"M7.5 20v-5\"/><path d=\"M12 20v-9\"/><path d=\"M16.5 20v-3\"/>",
+        "reconstruccion": true
       },
       {
         "id": "casco",
         "nombre": "Casco",
-        "categoria": "Seguridad",
+        "categoria": "Industrial",
         "claves": [
           "proteccion",
           "epp",
           "obra"
         ],
-        "svg": "<path d=\"M4.5 16a7.5 7.5 0 0 1 15 0Z\"/><path d=\"M3 16h18\"/><path d=\"M9.5 8.7V6h5v2.7\"/>"
+        "svg": "<path d=\"M4.5 16a7.5 7.5 0 0 1 15 0Z\"/><path d=\"M3 16h18\"/><path d=\"M9.5 8.7V6h5v2.7\"/>",
+        "reconstruccion": true
       },
       {
         "id": "escudo",
         "nombre": "Protección",
-        "categoria": "Seguridad",
+        "categoria": "Industrial",
         "claves": [
           "escudo",
           "seguro",
           "resguardo"
         ],
-        "svg": "<path d=\"M12 3l8 3v6c0 5-3.6 7.9-8 9-4.4-1.1-8-4-8-9V6Z\"/>"
+        "svg": "<path d=\"M12 3l8 3v6c0 5-3.6 7.9-8 9-4.4-1.1-8-4-8-9V6Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "alerta",
         "nombre": "Alerta",
-        "categoria": "Seguridad",
+        "categoria": "Industrial",
         "claves": [
           "riesgo",
           "aviso",
           "emergencia"
         ],
-        "svg": "<path d=\"M12 4l9 16H3Z\"/><path d=\"M12 10v4\"/><path d=\"M12 17h.01\"/>"
+        "svg": "<path d=\"M12 4l9 16H3Z\"/><path d=\"M12 10v4\"/><path d=\"M12 17h.01\"/>",
+        "reconstruccion": true
       },
       {
         "id": "matraz",
         "nombre": "Laboratorio",
-        "categoria": "Datos",
+        "categoria": "Industrial",
         "claves": [
           "analisis",
           "calidad",
           "ensayo"
         ],
-        "svg": "<path d=\"M10 3v6.5L4.5 20h15L14 9.5V3\"/><path d=\"M9 3h6\"/><path d=\"M7.6 15h8.8\"/>"
+        "svg": "<path d=\"M10 3v6.5L4.5 20h15L14 9.5V3\"/><path d=\"M9 3h6\"/><path d=\"M7.6 15h8.8\"/>",
+        "reconstruccion": true
       },
       {
         "id": "grilla",
         "nombre": "Grilla",
-        "categoria": "Datos",
+        "categoria": "Administración",
         "claves": [
           "tabla",
           "datos",
           "estructura"
         ],
-        "svg": "<path d=\"M4 4h7v7H4Z\"/><path d=\"M13 4h7v7h-7Z\"/><path d=\"M4 13h7v7H4Z\"/><path d=\"M13 13h7v7h-7Z\"/>"
+        "svg": "<path d=\"M4 4h7v7H4Z\"/><path d=\"M13 4h7v7h-7Z\"/><path d=\"M4 13h7v7H4Z\"/><path d=\"M13 13h7v7h-7Z\"/>",
+        "reconstruccion": true
       },
       {
         "id": "doc",
         "nombre": "Informe",
-        "categoria": "Datos",
+        "categoria": "Administración",
         "claves": [
           "documento",
           "reporte",
           "datos"
         ],
-        "svg": "<path d=\"M6 3h8l4 4v14H6Z\"/><path d=\"M14 3v4h4\"/><path d=\"M9 13h6\"/><path d=\"M9 17h4\"/>"
+        "svg": "<path d=\"M6 3h8l4 4v14H6Z\"/><path d=\"M14 3v4h4\"/><path d=\"M9 13h6\"/><path d=\"M9 17h4\"/>",
+        "reconstruccion": true
       }
     ]
   },
   "logo": {
-    "area_resguardo": {
-      "pendiente": "Medida del área de resguardo (en unidades del logo) y tamaño mínimo, según el manual v1.3.2."
+    "descripcion": "Símbolo P con la espiga de trigo y la palabra PROFERTIL en Baker Signet. Versión principal: sobre fondos blancos, claros o neutros.",
+    "versiones": [
+      {
+        "id": "principal",
+        "usar": "Siempre que sea posible. Presentaciones institucionales, documentos oficiales, web, redes, papelería."
+      },
+      {
+        "id": "con slogan",
+        "slogan": "Vida para nuestra tierra",
+        "usar": "Contextos institucionales de alto perfil, cuando el espacio permite el mensaje completo."
+      },
+      {
+        "id": "símbolo",
+        "usar": "Espacios muy reducidos (apps, favicons), cuando el logo completo ya apareció, señalética chica. Nunca como primera presentación de marca."
+      },
+      {
+        "id": "monocromática azul",
+        "usar": "Sobre fondo blanco."
+      },
+      {
+        "id": "monocromática",
+        "usar": "Impresiones en blanco y negro, fotocopias, documentos sin color; sobre fondos de color o fotos de bajo contraste."
+      }
+    ],
+    "area_exclusion": "La altura de la letra P de PROFERTIL, en todos los lados.",
+    "tamano_minimo": {
+      "principal": "1 cm / 28,5 px",
+      "con_slogan": "2 cm / 56,7 px",
+      "simbolo": "0,5 cm / 15,5 px"
     },
+    "usos_incorrectos": [
+      "Rotar",
+      "Distorsionar o deformar",
+      "Irrumpir el área de exclusión",
+      "Usarlo en contornos",
+      "Agregar sombras",
+      "Aplicar trazos",
+      "Usar el logo sin símbolo",
+      "Alterar o intercambiar colores",
+      "Modificar la opacidad"
+    ],
+    "cobranding": [
+      "Todas las marcas tienen igual peso visual.",
+      "Tamaños similares; diferencias mínimas y justificadas por el formato.",
+      "El espacio entre marcas equivale al área de exclusión del logo más grande."
+    ],
     "archivos": {
-      "pendiente": "Links a las versiones del logo (positivo, negativo, monocromo) en SVG."
+      "pendiente": "Links a los logos descargables (sección Recursos del manual o SharePoint)."
     }
   },
   "voz": {
-    "nota": {
-      "pendiente": "Tono y reglas de redacción del manual. Hasta cargarlas, revisar_texto solo controla terminología."
-    },
-    "preferir": [],
-    "evitar": []
+    "nota": "Cuatro dimensiones: cercano y empático, inspirador y positivo, claro y accesible, transparente y auténtico. El detalle y los ejemplos están en kit/voz.md.",
+    "preferir": [
+      {
+        "termino": "usar",
+        "en_vez_de": [
+          "utilizar"
+        ],
+        "motivo": "Si existe una palabra más corta que signifique lo mismo, usala."
+      },
+      {
+        "termino": "ayudar",
+        "en_vez_de": [
+          "asistir"
+        ],
+        "motivo": "Si existe una palabra más corta que signifique lo mismo, usala."
+      },
+      {
+        "termino": "mejorar",
+        "en_vez_de": [
+          "optimizar",
+          "optimización"
+        ],
+        "motivo": "Si suena a jerga de negocios, reescribilo."
+      },
+      {
+        "termino": "nosotros/as, nuestro trabajo, acompañamos",
+        "en_vez_de": [
+          "la empresa",
+          "la compañía",
+          "Profertil informa"
+        ],
+        "motivo": "Hablar en primera persona del plural genera cercanía y humaniza la marca."
+      },
+      {
+        "termino": "verbo activo: impulsamos, construimos",
+        "en_vez_de": [
+          "se implementó",
+          "fue desarrollado",
+          "fue implementado"
+        ],
+        "motivo": "Los verbos activos nos muestran como protagonistas, no como espectadores."
+      },
+      {
+        "termino": "estamos trabajando en solucionarlo",
+        "en_vez_de": [
+          "se están evaluando alternativas",
+          "se están evaluando múltiples opciones"
+        ],
+        "motivo": "No uses lenguaje evasivo."
+      }
+    ],
+    "evitar": [
+      {
+        "termino": "implementar",
+        "motivo": "Jerga de negocios.",
+        "usar": "hacer, poner en marcha",
+        "raiz": "implement"
+      },
+      {
+        "termino": "sinergia",
+        "motivo": "Jerga de negocios.",
+        "usar": "trabajo en conjunto"
+      },
+      {
+        "termino": "apalancamiento",
+        "motivo": "Jerga de negocios.",
+        "usar": "una palabra que usarías en una conversación real"
+      },
+      {
+        "termino": "líder en el sector",
+        "motivo": "No dice nada: cualquier empresa podría decirlo.",
+        "usar": "un hecho concreto"
+      },
+      {
+        "termino": "excelencia",
+        "motivo": "Adjetivo genérico.",
+        "usar": "un dato o un hecho"
+      },
+      {
+        "termino": "compromiso con la calidad",
+        "motivo": "Frase vacía.",
+        "usar": "un dato o un hecho"
+      }
+    ]
   },
   "glosario": [
     {
-      "termino": "Área de resguardo",
-      "definicion": "El aire mínimo alrededor del logo. Si algo entra ahí, el logo deja de leerse como logo."
+      "termino": "Logotipo",
+      "definicion": "El nombre \"Profertil\" completo, incluyendo símbolo y texto."
     },
     {
-      "termino": "Vectorial",
-      "definicion": "Un archivo que se agranda todo lo que quieras sin pixelarse. Es el que hay que mandarle al imprentero."
+      "termino": "Área de exclusión",
+      "definicion": "Espacio mínimo que debe rodear al logo, libre de otros elementos."
     },
     {
-      "termino": "Dupla",
-      "definicion": "Una combinación de dos colores del sistema que ya está aprobada. No hace falta elegir: están armadas."
+      "termino": "Paleta de color",
+      "definicion": "Conjunto definido de colores permitidos para usar en comunicaciones de marca."
     },
     {
-      "termino": "Terciaria",
-      "definicion": "Una dupla más un tercer color. Sirve cuando la pieza necesita un acento más sin salirse del sistema.",
-      "borrador": true
+      "termino": "Contraste",
+      "definicion": "Diferencia visual entre colores que garantiza legibilidad. Se mide en ratios (4.5:1, 7:1)."
     },
     {
-      "termino": "Patrón",
-      "definicion": "Una composición hecha con las formas del sistema. Se genera con el generador, no se dibuja a mano.",
-      "borrador": true
+      "termino": "WCAG",
+      "definicion": "Web Content Accessibility Guidelines. Estándares internacionales de accesibilidad digital."
+    },
+    {
+      "termino": "HEX",
+      "definicion": "Código de color para web. Ejemplo: #003DA5."
+    },
+    {
+      "termino": "RGB",
+      "definicion": "Sistema de color para pantallas (Red, Green, Blue)."
+    },
+    {
+      "termino": "CMYK",
+      "definicion": "Sistema de color para impresión (Cyan, Magenta, Yellow, Black)."
+    },
+    {
+      "termino": "Pantone",
+      "definicion": "Sistema de color estandarizado para impresión."
+    },
+    {
+      "termino": "Formato vectorial",
+      "definicion": "Archivo de imagen basado en fórmulas matemáticas que permite escalarse sin perder calidad."
+    },
+    {
+      "termino": "Sistema modular",
+      "definicion": "Elementos visuales que se pueden combinar de múltiples formas manteniendo coherencia."
+    },
+    {
+      "termino": "Submarca",
+      "definicion": "Marca dependiente de la marca madre. Ejemplo: eNeTOTAL PLUS es submarca de Profertil."
+    },
+    {
+      "termino": "Sistema visual",
+      "definicion": "Conjunto de elementos gráficos que complementan el logo y crean coherencia visual."
+    },
+    {
+      "termino": "Iconografía",
+      "definicion": "Biblioteca de íconos del sistema, organizados por categorías de negocio."
+    },
+    {
+      "termino": "Cobranding",
+      "definicion": "Cuando aparecen dos o más marcas juntas."
+    },
+    {
+      "termino": "Arquitectura de marca",
+      "definicion": "Organización y relación jerárquica entre la marca madre y sus submarcas o productos."
+    },
+    {
+      "termino": "Layout",
+      "definicion": "Estructura de diagramación de una pieza gráfica (presentación, documento, etc.)."
+    },
+    {
+      "termino": "Template / Plantilla",
+      "definicion": "Documento prearmado y editable con elementos de marca ya aplicados."
+    },
+    {
+      "termino": "Versión monocromática",
+      "definicion": "Logo en un solo color, utilizado sobre fondos con bajo contraste o fotografías."
+    },
+    {
+      "termino": "Sans serif",
+      "definicion": "Tipografía sin remates. Ejemplo: Familjen Grotesk, DM Sans."
+    },
+    {
+      "termino": "Jerarquía visual",
+      "definicion": "Organización de elementos según importancia, usando tamaño, peso y posición para guiar la lectura."
+    },
+    {
+      "termino": "Interlineado",
+      "definicion": "Espacio vertical entre líneas de texto. Se mide en porcentaje (ej: 130%)."
+    },
+    {
+      "termino": "Peso tipográfico",
+      "definicion": "Grosor del trazo de una tipografía. Variantes: Light, Regular, SemiBold, Bold."
+    },
+    {
+      "termino": "Legibilidad",
+      "definicion": "Capacidad de un texto para ser leído con facilidad según tipografía, tamaño y contraste."
     }
   ],
   "tareas": [
     {
       "id": "presentacion",
-      "titulo": "Armar una presentación",
+      "titulo": "Hacer una presentación",
       "claves": [
         "presentacion",
         "ppt",
+        "powerpoint",
         "slides",
         "diapositivas",
-        "powerpoint",
+        "deck",
         "keynote",
-        "deck"
+        "portada",
+        "lamina"
       ],
       "pasos": [
-        "Elegí una dupla para toda la presentación y no la cambies entre láminas.",
-        "Portada: patrón generado sobre la principal de la dupla, título en la tipografía principal.",
-        "Láminas de contenido: fondo crema, texto en tinta, la dupla como acento.",
-        "Íconos del set oficial en el color de la dupla, nunca íconos de stock."
+        "Partí de la plantilla oficial de PowerPoint (sección Recursos o SharePoint). Es editable: mantené logo, colores y tipografía y adaptá el contenido.",
+        "Estándar para reportes, datos y uso general. Institucional para presentaciones formales externas o ejecutivas.",
+        "Elegí una paleta del sistema (primaria, secundaria o terciaria) y no la cambies entre láminas.",
+        "Títulos en Familjen Grotesk, texto en DM Sans. Si no están instaladas: Arial Bold y Segoe UI.",
+        "Íconos y formas: copialos de la sección de recursos de la plantilla, no los busques afuera."
       ],
-      "herramientas": [
-        "generar_patron",
-        "buscar_iconos",
-        "validar_combinacion"
-      ],
-      "borrador": true,
       "leer": [
-        "direccion-de-arte.md",
-        "voz.md"
-      ]
-    },
-    {
-      "id": "mail",
-      "titulo": "Mandar un mail o newsletter",
-      "claves": [
-        "mail",
-        "email",
-        "correo",
-        "newsletter",
-        "firma"
-      ],
-      "pasos": [
-        "Cabecera con una franja de patrón de pocas filas.",
-        "Texto en tinta sobre blanco o crema; el azul para links y botones.",
-        "Un solo ícono por bloque, del set oficial."
-      ],
-      "herramientas": [
-        "generar_patron",
-        "buscar_iconos",
-        "contraste"
-      ],
-      "borrador": true,
-      "leer": [
-        "voz.md",
+        "aplicaciones.md",
         "direccion-de-arte.md"
-      ]
-    },
-    {
-      "id": "cartel",
-      "titulo": "Hacer un cartel, banner o pieza de vía pública",
-      "claves": [
-        "cartel",
-        "banner",
-        "afiche",
-        "cartel de obra",
-        "señaletica",
-        "via publica",
-        "stand",
-        "lona"
-      ],
-      "pasos": [
-        "Una sola forma grande del alfabeto como máscara u ordenador del layout.",
-        "Una dupla, sin sumar colores.",
-        "Verificá contraste del texto contra el fondo antes de mandar a imprenta.",
-        "Mandá el archivo vectorial al imprentero."
       ],
       "herramientas": [
-        "formas",
+        "validar_combinacion",
+        "contraste",
+        "buscar_iconos",
+        "forma"
+      ],
+      "manual": "Sección 07 (p. 91-101)"
+    },
+    {
+      "id": "colores",
+      "titulo": "Elegir colores",
+      "claves": [
+        "color",
+        "colores",
+        "paleta",
+        "combinar",
+        "combinacion",
+        "fondo",
+        "texto sobre"
+      ],
+      "pasos": [
+        "Usá una paleta armada: primaria (azul, verde, amarillo), secundaria (dupla) o terciaria. No combines colores sueltos.",
+        "Respetá las proporciones: secundarias 70/30, terciarias 60/25/15. El marfil es el color de soporte.",
+        "Con fondo de color, el texto va en blanco, marfil o el color complementario.",
+        "Verificá siempre el contraste antes de aplicar una combinación."
+      ],
+      "leer": [
+        "direccion-de-arte.md"
+      ],
+      "herramientas": [
+        "colores",
         "validar_combinacion",
         "contraste"
       ],
-      "borrador": true,
+      "manual": "Sección 03 (p. 40-49)"
+    },
+    {
+      "id": "logo",
+      "titulo": "Usar el logo",
+      "claves": [
+        "logo",
+        "logotipo",
+        "simbolo",
+        "isotipo",
+        "marca",
+        "cobranding",
+        "sponsor"
+      ],
+      "pasos": [
+        "Usá solo las versiones oficiales; no se cambia el color del logo.",
+        "Principal sobre fondos blancos, claros o neutros. Monocromática sobre color o foto de bajo contraste.",
+        "Respetá el área de exclusión (la altura de la P) y el tamaño mínimo (1 cm la versión principal).",
+        "En cobranding, todas las marcas con el mismo peso visual."
+      ],
       "leer": [
         "direccion-de-arte.md"
-      ]
+      ],
+      "herramientas": [
+        "es_vigente"
+      ],
+      "manual": "Sección 02 (p. 26-38)"
+    },
+    {
+      "id": "texto",
+      "titulo": "Escribir como Profertil",
+      "claves": [
+        "texto",
+        "escribir",
+        "redactar",
+        "copy",
+        "tono",
+        "voz",
+        "comunicado",
+        "nota",
+        "mail interno"
+      ],
+      "pasos": [
+        "Primera persona del plural: nosotros/as, acompañamos, nuestro trabajo.",
+        "Ejemplos concretos y datos en vez de adjetivos.",
+        "Verbos activos. Una idea por párrafo. Escribí para ser escaneado.",
+        "Ajustá el tono según qué decís, dónde, a quién y en qué estado de ánimo está."
+      ],
+      "leer": [
+        "voz.md"
+      ],
+      "herramientas": [
+        "revisar_texto"
+      ],
+      "manual": "Sección 01 (p. 15-21)"
     },
     {
       "id": "redes",
@@ -660,48 +1169,197 @@
         "instagram",
         "linkedin",
         "post",
+        "posteo",
         "historia",
         "story",
-        "posteo"
+        "carrusel"
       ],
       "pasos": [
-        "Fondo en una principal, patrón o forma como recurso.",
-        "Un ícono por categoría para que se lea de qué área es el contenido."
+        "Instagram: visual, inspirador, breve. LinkedIn: profesional pero accesible.",
+        "Usá los lineamientos y ejemplos de la sección Digital: formas del alfabeto como máscara, una paleta por pieza.",
+        "Revisá el texto con las reglas de voz."
+      ],
+      "leer": [
+        "aplicaciones.md",
+        "voz.md"
       ],
       "herramientas": [
-        "generar_patron",
-        "buscar_iconos"
+        "validar_combinacion",
+        "forma",
+        "revisar_texto"
       ],
-      "borrador": true,
+      "manual": "Sección 08 (p. 115-118)"
+    },
+    {
+      "id": "newsletter",
+      "titulo": "Armar un newsletter o mail masivo",
+      "claves": [
+        "newsletter",
+        "mailing",
+        "mail masivo",
+        "email marketing",
+        "boletin"
+      ],
+      "pasos": [
+        "Hero con imagen destacada, titular y descripción breve; secciones secundarias como tarjetas con imagen, etiqueta, titular y descripción.",
+        "Ancho máximo 600 px. Fondo azul. CTA: Ver más.",
+        "Titulares de hasta 80 caracteres, bajadas de hasta 150.",
+        "Familjen Grotesk y DM Sans con respaldo Arial/Helvetica."
+      ],
       "leer": [
-        "direccion-de-arte.md",
-        "voz.md"
-      ]
+        "aplicaciones.md"
+      ],
+      "herramientas": [
+        "contraste",
+        "revisar_texto"
+      ],
+      "manual": "Sección 08 (p. 119-120)"
+    },
+    {
+      "id": "firma",
+      "titulo": "Armar la firma de mail",
+      "claves": [
+        "firma",
+        "firma de mail",
+        "firma de email",
+        "signature"
+      ],
+      "pasos": [
+        "Versión estándar: fondo marfil y logo a color. Más sobria, pondera el logo principal.",
+        "Versión especial: logo en blanco sobre fondo verde y azul, con más elementos del sistema."
+      ],
+      "leer": [
+        "aplicaciones.md"
+      ],
+      "herramientas": [],
+      "manual": "Sección 08 (p. 114)"
+    },
+    {
+      "id": "recursos",
+      "titulo": "Descargar recursos",
+      "claves": [
+        "descargar",
+        "recursos",
+        "fuentes",
+        "tipografias",
+        "ase",
+        "plantillas",
+        "fotos",
+        "banco"
+      ],
+      "pasos": [
+        "Logos, colores (.ASE), tipografías, fotos, íconos y plantillas están en la sección Recursos del manual o en SharePoint.",
+        "Descargá siempre de ahí: los materiales viejos pueden estar desactualizados o en baja calidad."
+      ],
+      "leer": [
+        "LEEME.md"
+      ],
+      "herramientas": [
+        "es_vigente"
+      ],
+      "manual": "Sección 09 (p. 121-127)"
     }
   ],
-  "obsoleto": {
-    "pendiente": "Lo que el sistema retiró: colores de la paleta anterior que no se conservaron, versiones viejas del logo, tipografías y términos en desuso. Cada uno como { tipo, nombre, valor, alias, reemplazo, desde, motivo }. El diagnóstico conservó el logotipo y parte de la paleta: falta listar qué quedó afuera."
-  },
+  "obsoleto": [
+    {
+      "tipo": "color",
+      "nombre": "Azul aproximado de la maqueta del caso",
+      "valor": "#0B3FA8",
+      "reemplazo": "azul",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Verde aproximado de la maqueta del caso",
+      "valor": "#5FB52C",
+      "reemplazo": "verde-claro",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Amarillo aproximado de la maqueta del caso",
+      "valor": "#F0C419",
+      "reemplazo": "amarillo",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Azul claro aproximado de la maqueta del caso",
+      "valor": "#3D8BFD",
+      "reemplazo": "celeste",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Naranja aproximado de la maqueta del caso",
+      "valor": "#E2801E",
+      "reemplazo": "naranja",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Terra aproximado de la maqueta del caso",
+      "valor": "#7C4A15",
+      "reemplazo": "terra",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Verde oscuro aproximado de la maqueta del caso",
+      "valor": "#2F7D20",
+      "reemplazo": "verde",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Crema de la maqueta del caso",
+      "valor": "#F2EFE6",
+      "reemplazo": "marfil",
+      "desde": "1.1.4",
+      "motivo": "Valor aproximado de la maqueta web del caso, no del manual."
+    },
+    {
+      "tipo": "color",
+      "nombre": "Terra mal transcripto en el Design System viejo",
+      "valor": "#8A4718",
+      "reemplazo": "terra",
+      "desde": "1.1.4",
+      "motivo": "Error de transcripción corregido en el Master el 17/09/2026."
+    },
+    {
+      "tipo": "tipografia",
+      "nombre": "Rotis",
+      "reemplazo": "Familjen Grotesk (títulos) y DM Sans (texto)",
+      "motivo": "Figura en la descripción del manual en Notion; el manual v1.1.4 no la usa. Verificar.",
+      "verificar": true
+    },
+    {
+      "tipo": "tipografia",
+      "nombre": "Museo Sans",
+      "reemplazo": "DM Sans",
+      "motivo": "Figura en la descripción del manual en Notion; el manual v1.1.4 no la usa. Verificar.",
+      "verificar": true
+    },
+    {
+      "tipo": "tipografia",
+      "nombre": "Daydreamer",
+      "reemplazo": "Familjen Grotesk",
+      "motivo": "Figura en la descripción del manual en Notion; el manual v1.1.4 no la usa. Verificar.",
+      "verificar": true
+    }
+  ],
   "changelog": [
     {
-      "version": "1.4.0",
+      "version": "1.1.4",
       "fecha": "2026-07",
-      "cambio": "Se incorpora el programa comunitario de escuelas."
-    },
-    {
-      "version": "1.3.2",
-      "fecha": "2026-05",
-      "cambio": "Corrección del área de resguardo en aplicaciones chicas."
-    },
-    {
-      "version": "1.3.0",
-      "fecha": "2026-04",
-      "cambio": "Nuevas paletas terciarias y reglas de combinación."
-    },
-    {
-      "version": "1.0.0",
-      "fecha": "2026-02",
-      "cambio": "Primera versión entregada a las siete áreas."
+      "cambio": "Versión vigente del manual (127 páginas). Es la fuente de este kit."
     }
   ]
 }

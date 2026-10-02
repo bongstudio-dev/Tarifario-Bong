@@ -115,18 +115,38 @@ for (const marca of MARCAS) {
 
   if (marca === "profertil") {
     const t = async (name, args) => JSON.parse((await c.pedir("tools/call", { name, arguments: args })).result.content[0].text);
-    assert.equal((await t("validar_combinacion", { colores: ["amarillo", "azul"] })).nivel, "dupla");
+    /* Las combinaciones son las del manual (p. 46), no las de la maqueta. */
+    assert.equal((await t("validar_combinacion", { colores: ["celeste", "azul"] })).nivel, "dupla");
+    assert.equal((await t("validar_combinacion", { colores: ["verde", "amarillo", "azul"] })).nivel, "primaria");
+    assert.equal((await t("validar_combinacion", { colores: ["amarillo", "azul"] })).aprobada, false);
     const fuera = await t("validar_combinacion", { colores: ["#0A40A0", "naranja"] });
     assert.equal(fuera.aprobada, false);
     assert.equal(fuera.fueraDePaleta[0].masCercano.id, "azul");
     assert.ok(fuera.sugerencias.length > 0);
-    assert.equal((await t("que_necesitas_hacer", { pedido: "cartel de obra" })).tarea.id, "cartel");
-    assert.equal((await t("buscar_iconos", { categoria: "Seguridad" })).total, 3);
+    assert.equal((await t("que_necesitas_hacer", { pedido: "firma de mail" })).tarea.id, "firma");
+    assert.equal((await t("que_necesitas_hacer", { pedido: "un newsletter para clientes" })).tarea.id, "newsletter");
+    const agro = await t("buscar_iconos", { categoria: "Agro" });
+    assert.ok(agro.total > 0 && agro.aviso);
+
+    /* Texto sobre color: lo que permite el manual y lo que mide WCAG son cosas distintas. */
+    const blancoAzul = await t("contraste", { fondo: "azul", texto: "blanco" });
+    assert.equal(blancoAzul.manual.enManual, true);
+    assert.equal(blancoAzul.manual.nivelManual, "AAA");
+    const blancoAmarillo = await t("contraste", { fondo: "amarillo", texto: "blanco" });
+    assert.equal(blancoAmarillo.manual.enManual, true);
+    assert.equal(blancoAmarillo.textoNormal, "no alcanza");
+    const azulVerde = await t("contraste", { fondo: "verde", texto: "azul" });
+    assert.equal(azulVerde.manual.enManual, false);
+
+    /* La voz del manual: jerga, tercera persona y pasivas. */
+    const rev = await t("revisar_texto", { texto: "Profertil informa que la empresa implementó una optimización del proceso. El plan fue desarrollado con excelencia." });
+    const encontrados = rev.hallazgos.map((h) => h.encontrado || h.termino);
+    for (const x of ["Profertil informa", "la empresa", "optimización", "fue desarrollado", "excelencia", "implementar"]) assert.ok(encontrados.includes(x), x);
     const a = (await c.pedir("tools/call", { name: "generar_patron", arguments: { semilla: 7, ancho: 300 } })).result.structuredContent.svg;
     const b = (await c.pedir("tools/call", { name: "generar_patron", arguments: { semilla: 7, ancho: 300 } })).result.structuredContent.svg;
     assert.equal(a, b);
-    assert.ok(a.startsWith("<svg") && a.includes("#0B3FA8"));
-    bien("reglas del sistema: duplas, hex fuera de paleta, recetas, categorías, patrón determinista");
+    assert.ok(a.startsWith("<svg") && a.includes("#003DA5"));
+    bien("reglas del manual: paletas, hex fuera de paleta, recetas, íconos, texto sobre color, voz, patrón");
 
     const indice = await t("leer_kit", {});
     assert.equal(indice.indice[0].archivo, "LEEME.md");
@@ -140,6 +160,11 @@ for (const marca of MARCAS) {
     bien("kit: índice, secciones que pide la receta, reglas con su porqué");
 
     assert.equal((await t("es_vigente", { que: "azul" })).vigente, true);
+    assert.equal((await t("es_vigente", { que: "DM Sans" })).vigente, true);
+    const maqueta = await t("es_vigente", { que: "#0B3FA8" });
+    assert.equal(maqueta.vigente, false);
+    assert.equal(maqueta.reemplazo, "azul");
+    assert.equal((await t("es_vigente", { que: "Rotis" })).verificar !== undefined, true);
     const ajeno = await t("es_vigente", { que: "#0A40A0" });
     assert.equal(ajeno.vigente, false);
     assert.equal(ajeno.reemplazo, "azul");
@@ -148,7 +173,7 @@ for (const marca of MARCAS) {
     assert.equal(hueco.anotado, true);
     assert.equal(hueco.validarCon.quien, "Comunicaciones Integradas · Profertil");
     const leidos = JSON.parse((await c.pedir("resources/read", { uri: "marca://profertil/huecos.json" })).result.contents[0].text);
-    assert.ok(leidos.some((h) => h.falta === "voz en inglés" && h.version === "1.4.0"));
+    assert.ok(leidos.some((h) => h.falta === "voz en inglés" && h.version === "1.1.4"));
     bien("vigencia, responsables y registro de huecos");
   }
   c.cerrar();

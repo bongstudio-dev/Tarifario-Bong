@@ -1,61 +1,68 @@
 # Decisiones
 
-Qué se decidió en el sistema, cuándo y por qué. Sirve para que, meses después,
-alguien pueda entender por qué algo es así sin reconstruir la decisión desde
-archivos viejos. Lo más nuevo, arriba.
-
-Cada cambio al kit entra con su versión en `../marca.json` → `changelog`. Acá
-va el razonamiento; allá, la línea corta.
+Qué se decidió en el sistema y por qué, para que meses después nadie tenga que
+reconstruir una decisión desde archivos viejos. Lo más nuevo, arriba. Cada
+versión tiene su línea en `../marca.json` → `changelog`.
 
 ---
 
-### v1.4.0 · 2026-07 — Programa comunitario de escuelas
-Qué: se incorpora el programa al sistema.
-Por qué: *pendiente de cargar desde el manual.*
+### Kit legible por agentes · 2026-10 *(propuesta Bong, a aprobar)*
 
-### v1.3.2 · 2026-05 — Área de resguardo en aplicaciones chicas
-Qué: se corrige el área de resguardo del logo para tamaños chicos.
-Por qué: *pendiente de cargar desde el manual.*
-
-### v1.3.0 · 2026-04 — Terciarias y reglas de combinación
-Qué: nuevas paletas terciarias y reglas de combinación.
-Por qué: las duplas no alcanzaban cuando una pieza necesitaba un acento más;
-la terciaria lo resuelve sin salir del sistema (es la dupla más un tercero).
-
-### v1.0.0 · 2026-02 — Primera versión, entregada a las siete áreas
-
-**Conservar el logotipo.** Estaba instalado hace veinticinco años; el problema
-no era la marca, era la falta de sistema para usarla.
-
-**Conservar parte de la paleta.** Algunos colores tenían carga simbólica. Se
-seleccionaron, se balancearon los tonos y se les dio estructura de uso.
-
-**La hoja como origen.** Del logo se extrajo su forma más elemental, la hoja
-de la espiga. Ancla el sistema al logo y a la vez es la pieza más elemental
-posible: se duplica, se yuxtapone y genera formas nuevas sin perder el origen.
-
-**Paleta en tres niveles.** La paleta anterior era amplia y sin jerarquía; los
-equipos combinaban a criterio propio. Tres principales, cuatro duplas y cuatro
-terciarias sacan esa decisión de quien no es diseñador.
-
-**Iconografía por área.** 164 íconos en seis categorías que replican las áreas
-reales de la compañía, para que el ícono también diga de dónde viene la pieza.
-
-**Manual por tarea, con glosario.** Se diseñó para alguien que tiene diez
-minutos y una presentación que entregar: el punto de entrada pregunta qué
-necesitás hacer, no en qué sección buscar. El glosario es para no diseñadores.
-
-**Manual versionado como software.** Profertil trabaja con decenas de
-proveedores; el manual es el documento de consenso entre todos y tiene que
-poder cambiar sin perder la historia.
-
-**Herramientas web.** El generador de patrones y el buscador de íconos, porque
-un sistema que depende del estudio es un sistema incompleto.
-
----
-
-### v1.4.x · 2026-10 — Kit legible por agentes *(propuesta Bong)*
-Qué: el manual pasa a este kit (markdown + `marca.json`) servido por MCP.
-Por qué: cada vez más piezas las arman personas con ayuda de agentes; si el
+Qué: el manual pasa a este kit (markdown más `marca.json`) servido por MCP.
+Por qué: cada vez más piezas las arman personas con ayuda de agentes. Si el
 agente no puede leer el sistema, elige algo razonable y sigue, y la marca se
-desarma de a poco. Pendiente de aprobar con Comunicaciones Integradas.
+desarma de a poco. El kit no reemplaza al manual: lo hace consultable.
+
+Decisiones del armado:
+
+- **El manual manda.** Los colores del kit salen de las fichas del manual
+  (p. 43-44) y coinciden con las variables del Master.
+- **Los colores aproximados de la maqueta del caso quedan como retirados**
+  (`obsoleto`), así `es_vigente` los reconoce si aparecen en una pieza.
+- **Formas e íconos del MCP son reconstrucciones provisorias.** Los SVG
+  oficiales viven en el Master y hay que exportarlos.
+- **Quedan afuera del kit** los colores del Master que el manual no documenta
+  (verde oscuro `#154B1A`, gris slogan `#676668`, gris `#D9D9D9`) hasta
+  confirmar su uso.
+
+### Corrección del terra · 17/09/2026
+
+Qué: el terra pasa de `#8A4718` a `#8A4818` en el Master.
+Por qué: era un error de transcripción del Design System viejo. Manda el manual.
+
+### Manual de Marca v1.1.4 · julio 2026
+
+Versión vigente, 127 páginas, desarrollada con Comunicaciones Integradas a
+partir de una encuesta interna a los equipos.
+
+**Mantener el logotipo.** Podía refinarse pero no rediseñarse: es el activo
+más reconocido de la marca.
+
+**Paleta desde el propósito.** Azul (energía), verde (tierra) y amarillo
+(alimentos) visualizan "convertimos energía en alimentos". Antes el color se
+usaba disperso y sin jerarquía; por eso las paletas vienen armadas en tres
+niveles con proporciones.
+
+**El alfabeto de formas sale del logo.** La hoja de la espiga es el elemento
+más básico del logo; construir el sistema desde ahí lo hace singular (no
+podría ser de cualquier empresa del agro) y coherente.
+
+**Familjen Grotesk y DM Sans.** Sans serif contemporáneas, disponibles en
+Google Fonts, con fallback de sistema para Office.
+
+**Aplicable en Microsoft Office.** Las herramientas internas son PowerPoint y
+Word, así que las plantillas son la vía principal de aplicación.
+
+**Funciona en monocromo.** No todo se imprime a color: el logo tiene versión
+monocromática y el sistema no depende del color para leerse.
+
+**Manual por tarea.** El punto de entrada pregunta qué necesitás hacer, con
+glosario para no diseñadores y preguntas frecuentes.
+
+### Brief de Identidad Visual · septiembre-octubre 2025
+
+El problema: color disperso, falta de coherencia entre submarcas y áreas,
+recursos sobreaplicados, un sistema rígido que no escalaba. El objetivo: un
+sistema escalable, permeable y cohesivo que simplifique la producción de piezas.
+Criterio de evaluación: ¿comunica "convertimos energía en alimentos"? ¿Simplifica
+o complica la vida de quien tiene que crear piezas?

@@ -60,7 +60,13 @@ function revisar(id, marca) {
   }
 
   const cats = new Set();
-  N.arr(marca.iconos?.categorias).forEach((c) => { cats.add(c.id); existe(c.color, `iconos.categorias.${c.id}`); });
+  N.arr(marca.iconos?.categorias).forEach((c) => { cats.add(c.id); if (c.color) existe(c.color, `iconos.categorias.${c.id}`); });
+  if (marca.iconos?.color) existe(marca.iconos.color, "iconos.color");
+  const tsc = marca.texto_sobre_color;
+  if (tsc && !N.esPendiente(tsc)) {
+    N.arr(tsc.pares).forEach((p) => { existe(p.fondo, "texto_sobre_color.fondo"); N.arr(p.textos).forEach((x) => existe(x, `texto_sobre_color[${p.fondo}]`)); });
+    Object.entries(tsc.accesibles || {}).forEach(([n, l]) => N.arr(l).forEach((par) => par.forEach((x) => existe(x, `texto_sobre_color.accesibles.${n}`))));
+  }
   const iconos = new Set();
   N.arr(marca.iconos?.items).forEach((i) => {
     if (iconos.has(i.id)) e(`ícono repetido: ${i.id}`);

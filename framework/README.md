@@ -124,7 +124,7 @@ En un host con disco efímero, `REGISTRO` tiene que apuntar a un volumen persist
 claude mcp add profertil -- node /ruta/al/repo/framework/servidor.mjs --marca profertil
 ```
 
-**Claude Desktop** — en `claude_desktop_config.json`:
+**Claude Desktop.** En `claude_desktop_config.json`:
 
 ```json
 {
@@ -137,7 +137,7 @@ claude mcp add profertil -- node /ruta/al/repo/framework/servidor.mjs --marca pr
 }
 ```
 
-**claude.ai (conector para todo el equipo del cliente)** — necesita el servidor
+**claude.ai (conector para todo el equipo del cliente).** Necesita el servidor
 publicado por HTTPS en cualquier host de Node (GitHub Pages no sirve, es
 estático):
 
@@ -169,14 +169,17 @@ Nada está escrito en los dos lados.
 
 ## Qué falta
 
-- **Profertil**: la lista de lo retirado (`obsoleto`: qué colores de la paleta
-  vieja quedaron afuera, versiones anteriores del logo), los contactos de
-  `responsables`, las familias tipográficas, la medida del área de resguardo,
-  los archivos del logo y las reglas de voz. Las cuatro recetas de
-  `tareas` y dos entradas del glosario las escribimos nosotros a partir de lo
-  que dice el caso y están marcadas `"borrador": true`: hay que pasarlas contra
-  el manual. Y los 146 íconos que no están en la maqueta.
-- **E&D**: todo. La carpeta está creada desde la plantilla.
+- **Profertil** (cargado desde el Manual de Marca v1.1.4 en Figma, que es el
+  canon): faltan los SVG oficiales de las 18 formas y de la biblioteca de
+  íconos (las del MCP son reconstrucciones de la maqueta, marcadas
+  `reconstruccion`), los links a logos y recursos descargables, el contacto en
+  Comunicaciones Integradas, la tipografía del slogan (el Master dice Gabarito,
+  el manual no lo documenta) y las reglas de documentos, papelería y
+  señalética, que en el manual son láminas visuales. Exportar desde Figma no se
+  puede desde la nube: el entorno bloquea figma.com; se hace desde la Mac.
+- **E&D Herbs**: la carpeta está creada desde la plantilla. Fuentes: el manual en
+  Figma (`9ra05S5WOcK9ihSZ7Dlprg`, 100 páginas) y las páginas de Manual,
+  Brandkit y Brandboard en Notion.
 - **Componentes con código**, como en el kit de Sonata: botón, tarjeta,
   portada con patrón, firma de mail, en HTML/CSS sobre los tokens. Es lo que
   deja que el agente arme una pieza entera y no solo que elija bien los colores.

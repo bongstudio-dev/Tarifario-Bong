@@ -5,6 +5,6 @@ entrada acá tiene su línea en `../marca.json` → `changelog`.
 
 ---
 
-### v0.1.0 · 2026-10 — Alta de la marca en el framework
+### v0.1.0 · 2026-10 · Alta de la marca en el framework
 Qué: se crea el kit.
 Por qué: *pendiente.*
