@@ -246,15 +246,49 @@ a.etq { text-decoration: none; }
 a.etq:hover .fl { background: var(--tx); color: #fff; }
 .media .etq .lb, .m-art .etq .lb { box-shadow: none; }
 
-/* --- Panel de filtros ----------------------------------------------------- */
+/* --- Pastilla principal: solo el rotulo de la Etiqueta (modulo del medio) - */
+.lbl {
+  --h: 38px;
+  display: inline-flex; align-items: center; flex: none;
+  height: var(--h); padding: 0 calc(var(--h) * 0.4);
+  border: 0; border-radius: calc(var(--h) * 0.32);
+  background: #fff; color: var(--tx, var(--azul));
+  font-family: var(--f-display); font-size: calc(var(--h) * 0.44); font-weight: 400;
+  white-space: nowrap; cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.lbl:hover { box-shadow: inset 0 0 0 1.5px var(--tx, var(--azul)); }
+.lbl[aria-pressed="true"] { background: var(--tx, var(--azul)); color: #fff; box-shadow: none; }
+.lbl-todas { --tx: var(--ink); }
+
+/* --- Subcategoria (pilar y cultivo): relleno del color, texto tiza. Sin badge
+   ni flecha, para no competir con la etiqueta principal de la nota. */
+.sub {
+  --h: 22px;
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  height: var(--h); padding: 0 calc(var(--h) * 0.42);
+  border: 0; border-radius: calc(var(--h) * 0.32);
+  background: var(--c); color: var(--tiza);
+  font-family: var(--f-body); font-size: calc(var(--h) * 0.5); font-weight: 500; line-height: 1;
+  white-space: nowrap;
+}
+button.sub { cursor: pointer; transition: background 160ms ease, color 160ms ease; }
+.f-body .sub { --h: 32px; background: color-mix(in srgb, var(--c) 16%, #fff); color: var(--c); }
+.f-body .sub:hover { background: color-mix(in srgb, var(--c) 28%, #fff); }
+.f-body .sub[aria-pressed="true"] { background: var(--c); color: var(--tiza); }
+.sub .n { font-weight: 400; opacity: 0.7; font-variant-numeric: tabular-nums; }
+.m-body .sub { --h: 28px; }
+
+/* --- Panel de filtros: barra fija con las pastillas principales; arriba se
+   despliegan las subcategorias. */
 .filters {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   z-index: 40;
-  width: min(100% - 24px, 780px);
+  width: min(100% - 24px, 900px);
   max-height: calc(100% - 110px);
-  display: grid; grid-template-rows: minmax(0, 1fr) auto;
-  border-radius: 30px;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr);
+  border-radius: 26px;
   background: var(--glass);
   border: 1px solid rgba(255, 255, 255, 0.92);
   box-shadow: 0 24px 60px -24px rgba(10, 30, 74, 0.5);
@@ -262,20 +296,25 @@ a.etq:hover .fl { background: var(--tx); color: #fff; }
   -webkit-backdrop-filter: blur(22px) saturate(1.4);
   overflow: hidden;
 }
-.f-body { overflow-y: auto; padding: 20px 22px 8px; display: grid; gap: 16px; }
+.f-body { overflow-y: auto; padding: 18px 20px 14px; display: grid; gap: 14px; border-bottom: 1px solid var(--line); }
 .filters:not(.open) .f-body { display: none; }
-.f-group { display: grid; gap: 9px; }
-.f-label { margin: 0; font-size: 0.76rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
-.f-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.f-row .etq { --s: 32px; }
-.f-foot { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--line); }
-.filters:not(.open) .f-foot { border-top: 0; }
-.f-toggle { display: inline-flex; align-items: center; gap: 10px; border: 0; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 999px; font-family: var(--f-display); font-size: 1.12rem; color: var(--azul); }
-.f-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 300ms var(--ease); }
+.f-group { display: grid; gap: 8px; }
+.f-label { margin: 0; font-size: 0.74rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.f-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.f-bar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 10px; }
+.f-main { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding: 2px; }
+.f-main::-webkit-scrollbar { display: none; }
+.f-toggle {
+  position: relative; flex: none;
+  width: 40px; height: 40px; border: 0; border-radius: 13px;
+  background: transparent; color: var(--ink-2); cursor: pointer;
+  display: grid; place-items: center;
+}
+.f-toggle:hover { background: var(--line); }
+.f-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 300ms var(--ease); }
 .filters.open .f-toggle svg { transform: rotate(180deg); }
-.f-count { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 7px; background: var(--verde); color: #fff; display: inline-grid; place-items: center; font-size: 0.76rem; font-variant-numeric: tabular-nums; }
-.f-clear { border: 0; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 999px; color: var(--azul); font-size: 0.9rem; }
-.f-clear:hover { background: var(--line); }
+.f-count { position: absolute; top: 2px; right: 2px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 6px; background: var(--verde); color: #fff; display: grid; place-items: center; font-size: 0.66rem; font-variant-numeric: tabular-nums; }
+.f-clear { justify-self: start; border: 0; background: transparent; cursor: pointer; padding: 4px 0; color: var(--azul); font-size: 0.88rem; text-decoration: underline; text-underline-offset: 3px; }
 
 /* --- Vacio ---------------------------------------------------------------- */
 .empty { padding: 60px 0 200px; display: grid; justify-items: center; gap: 14px; text-align: center; }
@@ -309,8 +348,6 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
 .m-date { margin: 0; color: var(--ink-3); font-size: 0.92rem; }
 .m-body h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: clamp(1.7rem, 4.4vw, 2.5rem); line-height: 1.02; letter-spacing: -0.035em; color: var(--azul); text-wrap: balance; }
 .m-bajada { margin: 0; max-width: 62ch; font-size: 1.06rem; line-height: 1.55; }
-.m-aviso { margin: 0; max-width: 62ch; padding: 12px 14px; border-radius: 14px; background: rgba(234, 186, 44, 0.16); color: var(--ink-2); font-size: 0.92rem; line-height: 1.5; }
-.m-aviso b { color: var(--ink); font-weight: 600; }
 .m-data { margin: 2px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border-radius: 16px; overflow: hidden; }
 .m-data div { background: var(--card); padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
 .m-data dt { font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
@@ -351,7 +388,8 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   .etq-sm { --s: 21px; }
   .search-mark { width: 38px; height: 38px; }
   .search input { font-size: 1rem; }
-  .f-body { padding: 18px 16px 6px; }
+  .f-body { padding: 16px 14px 12px; }
+  .lbl { --h: 34px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -437,13 +475,13 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
 
 <section class="filters" id="filters" aria-label="Filtros">
   <div class="f-body" id="fBody">
-    <div class="f-group"><p class="f-label">Tipo de nota</p><div class="f-row" id="fTipos"></div></div>
     <div class="f-group"><p class="f-label">Pilar de marca</p><div class="f-row" id="fPilares"></div></div>
     <div class="f-group"><p class="f-label">Cultivo</p><div class="f-row" id="fCultivos"></div></div>
+    <button class="f-clear" id="fClear" type="button" hidden>Limpiar filtros</button>
   </div>
-  <div class="f-foot">
-    <button class="f-toggle" id="fToggle" type="button" aria-expanded="false" aria-controls="fBody">Filtros <span class="f-count" id="fCount" hidden>0</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
-    <button class="f-clear" id="fClear" type="button" hidden>Limpiar</button>
+  <div class="f-bar">
+    <div class="f-main" id="fTipos" role="group" aria-label="Tipo de nota"></div>
+    <button class="f-toggle" id="fToggle" type="button" aria-expanded="false" aria-controls="fBody" aria-label="Más filtros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg><span class="f-count" id="fCount" hidden>0</span></button>
   </div>
 </section>
 
@@ -501,17 +539,17 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     { id: "financiera", nombre: "Gacetilla financiera", forma: "grafico", f: fam("azul", true) }
   ];
   var PILARES = [
-    { id: "suelos", nombre: "Suelos", forma: "suelo", f: fam("naranja", true), par: ["#E57F19", "#8A4818"] },
-    { id: "alimentos", nombre: "Alimentos", forma: "plantas", f: fam("amarillo", true), par: ["#EABA2C", "#E57F19"] },
-    { id: "energia", nombre: "Energía", forma: "sol", f: fam("azul"), par: ["#003DA5", "#4086FF"] },
-    { id: "comunidades", nombre: "Comunidades", forma: "circulos", f: fam("verde"), par: ["#2D8035", "#5EB53A"] }
+    { id: "suelos", nombre: "Suelos", c: "#8A4818", forma: "suelo", f: fam("naranja", true), par: ["#E57F19", "#8A4818"] },
+    { id: "alimentos", nombre: "Alimentos", c: "#E57F19", forma: "plantas", f: fam("amarillo", true), par: ["#EABA2C", "#E57F19"] },
+    { id: "energia", nombre: "Energía", c: "#003DA5", forma: "sol", f: fam("azul"), par: ["#003DA5", "#4086FF"] },
+    { id: "comunidades", nombre: "Comunidades", c: "#2D8035", forma: "circulos", f: fam("verde"), par: ["#2D8035", "#5EB53A"] }
   ];
   var CULTIVOS = [
     { id: "trigo", nombre: "Trigo", forma: "trigo" }, { id: "maiz", nombre: "Maíz", forma: "hoja" },
     { id: "soja", nombre: "Soja", forma: "capas" }, { id: "girasol", nombre: "Girasol", forma: "flor" },
     { id: "pasturas", nombre: "Pasturas", forma: "ondas" }, { id: "cebada-arroz", nombre: "Cebada, arroz y otros", forma: "estrella" }
   ];
-  CULTIVOS.forEach(function (c) { c.f = fam("verde", true); });
+  CULTIVOS.forEach(function (c) { c.f = fam("verde", true); c.c = "#5EB53A"; });
   var POR = {};
   TIPOS.concat(PILARES, CULTIVOS).forEach(function (x) { POR[x.id] = x; });
   var SUB = { "comunicacion-institucional": "Comunicación institucional", "comunicacion-comercial": "Comunicación comercial", "somos-profertil": "Somos Profertil" };
@@ -612,6 +650,11 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   }
   var FLECHA = '<span class="fl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 8v10H8"/></svg></span>';
   function vars(x) { return "--eb:" + x.f.bg + ";--fo:" + x.f.fo + ";--tx:" + x.f.tx; }
+  function sub(id, o) {
+    o = o || {};
+    var tag = o.tag || "span";
+    return "<" + tag + ' class="sub" style="--c:' + POR[id].c + '"' + (o.attrs || "") + ">" + POR[id].nombre + (o.n != null ? '<b class="n">' + o.n + "</b>" : "") + "</" + tag + ">";
+  }
   // o = { dato, flecha, cls, tag, attrs }
   function etq(id, o) {
     o = o || {};
@@ -658,7 +701,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     var b = document.createElement("button");
     b.type = "button"; b.className = "card"; b.dataset.idx = idx;
     var temas = n.p.concat(n.c);
-    var tags = temas.slice(0, 2).map(function (x) { return etq(x, { cls: "etq-sm" }); }).join("");
+    var tags = temas.slice(0, 2).map(function (x) { return sub(x); }).join("");
     if (temas.length > 2) tags += '<span class="more">+' + (temas.length - 2) + "</span>";
     var when = '<p class="when"><b>' + fecha(n.f) + "</b>" + (n.s ? " · " + SUB[n.s] : "") + "</p>";
     var h;
@@ -709,7 +752,6 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     }).join("");
   }
   var pico = ANIOS.slice().sort(function (a, b) { return porAnioTotal[b] - porAnioTotal[a]; })[0];
-  var sinBajada = NOTAS.filter(function (n) { return !n.b; }).length;
   $("lede").innerHTML = "Las <b>" + NOTAS.length + " notas</b> que hoy publica el sitio, de " + ANIOS[0] + " a " + ANIOS[ANIOS.length - 1] + ", en un solo lugar. Buscá por palabra o filtrá por tipo de nota, pilar de marca, cultivo y año.";
   $("histInfo").innerHTML = "Pico en <b>" + pico + "</b> · " + porAnioTotal[pico] + " notas";
 
@@ -721,13 +763,17 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
       return s + (ok ? 1 : 0);
     }, 0);
   }
-  function chip(x, campo, mapa) {
-    return etq(x.id, { tag: "button", dato: contar(campo, x.id), attrs: ' type="button" data-f="' + campo + '" data-v="' + x.id + '" aria-pressed="' + !!mapa[x.id] + '"' });
-  }
   function pintarFiltros() {
-    $("fTipos").innerHTML = TIPOS.map(function (x) { return chip(x, "tipo", estado.tipos); }).join("");
-    $("fPilares").innerHTML = PILARES.map(function (x) { return chip(x, "pilar", estado.pilares); }).join("");
-    $("fCultivos").innerHTML = CULTIVOS.map(function (x) { return chip(x, "cultivo", estado.cultivos); }).join("");
+    var ninguno = !activos(estado.tipos).length;
+    $("fTipos").innerHTML = '<button type="button" class="lbl lbl-todas" data-f="todas" aria-pressed="' + ninguno + '">Todas</button>' +
+      TIPOS.map(function (x) {
+        return '<button type="button" class="lbl" style="--tx:' + x.f.tx + '" data-f="tipo" data-v="' + x.id + '" aria-pressed="' + !!estado.tipos[x.id] + '">' + x.nombre + "</button>";
+      }).join("");
+    function fila(lista, campo, mapa) {
+      return lista.map(function (x) { return sub(x.id, { tag: "button", n: contar(campo, x.id), attrs: ' type="button" data-f="' + campo + '" data-v="' + x.id + '" aria-pressed="' + !!mapa[x.id] + '"' }); }).join("");
+    }
+    $("fPilares").innerHTML = fila(PILARES, "pilar", estado.pilares);
+    $("fCultivos").innerHTML = fila(CULTIVOS, "cultivo", estado.cultivos);
   }
   function resumen() {
     var partes = [];
@@ -745,8 +791,9 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     $("resultText").innerHTML = t;
     $("qCount").textContent = lista.length;
     var nf = activos(estado.tipos).length + activos(estado.pilares).length + activos(estado.cultivos).length + as.length;
-    $("fCount").hidden = nf === 0; $("fCount").textContent = nf;
-    $("fClear").hidden = nf === 0 && !q;
+    var nsub = activos(estado.pilares).length + activos(estado.cultivos).length;
+    $("fCount").hidden = nsub === 0; $("fCount").textContent = nsub;
+    $("fClear").hidden = nf === 0;
     $("qClear").hidden = !q;
     $("emptyText").textContent = q
       ? "Ninguna nota coincide con «" + q + "»" + (nf ? " con esos filtros" : "") + ". Probá con otra palabra o limpiá los filtros."
@@ -764,6 +811,7 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
   });
   $("filters").addEventListener("click", function (e) {
     var b = e.target.closest("[data-f]"); if (!b) return;
+    if (b.dataset.f === "todas") { estado.tipos = {}; aplicar(); return; }
     var m = { tipo: estado.tipos, pilar: estado.pilares, cultivo: estado.cultivos }[b.dataset.f];
     m[b.dataset.v] = !m[b.dataset.v]; aplicar();
   });
@@ -802,11 +850,9 @@ dialog.modal::backdrop { background: rgba(0, 30, 82, 0.55); backdrop-filter: blu
     var h = '<div class="m-art">' + arte(n, 720, 300, n.id * 7919 + 13) + etq(n.tp, { dato: n.anio }) + "</div>";
     h += '<div class="m-body"><p class="m-date">' + fecha(n.f, true) + (n.s ? " · " + SUB[n.s] : "") + "</p>";
     h += '<h2 id="mTitle">' + resaltar(n.t, q) + "</h2>";
-    h += n.b
-      ? '<p class="m-bajada">' + resaltar(n.b, q) + "</p>"
-      : '<p class="m-aviso"><b>Sin bajada propia.</b> La nota usa la descripción genérica del sitio, igual que ' + sinBajada + " de las " + NOTAS.length + " notas. En el sitio nuevo cada nota necesita la suya.</p>";
+    if (n.b) h += '<p class="m-bajada">' + resaltar(n.b, q) + "</p>";
     h += '<div class="tags">' + temas.map(function (x) {
-      return etq(x, { tag: "button", flecha: true, attrs: ' type="button" data-tema="' + x + '" aria-pressed="false"' });
+      return sub(x, { tag: "button", attrs: ' type="button" data-tema="' + x + '"' });
     }).join("") + "</div>";
     h += '<dl class="m-data">' +
       "<div><dt>Publicada</dt><dd>" + fecha(n.f) + "</dd></div>" +
