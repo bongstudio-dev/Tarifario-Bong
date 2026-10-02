@@ -240,7 +240,7 @@ export function iconoSvg(marca, id, { color, fondo, tamano = 48 } = {}) {
 export function formaSvg(marca, id, { color, fondo, tamano = 96 } = {}) {
   const forma = arr(marca.formas?.items).find((f) => normalizar(f.id) === normalizar(id) || normalizar(f.nombre) === normalizar(id));
   if (!forma) return null;
-  const vb = marca.formas.viewBox || "0 0 48 48";
+  const vb = forma.viewBox || marca.formas.viewBox || "0 0 48 48";
   const relleno = (color && resolverColor(marca, color)?.hex) || resolverColor(marca, marca.paleta?.principales?.[0])?.hex || "#000000";
   const fondoHex = fondo ? resolverColor(marca, fondo)?.hex : null;
   const [, , w, h] = vb.split(/\s+/).map(Number);
